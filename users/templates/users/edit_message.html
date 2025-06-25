@@ -1,0 +1,704 @@
+{% extends 'base_generic.html' %}
+{% load static %}
+{% block title %}Mesaj Düzenle{% endblock %}
+{% block content %}
+<style>
+    /* Using theme variables from base_generic.html */
+    :root[data-theme="pink"] {
+        --paper-color: #ffeeee;
+        --glass-frame: var(--yearbook-bg);
+        --shadow-color: rgba(238, 110, 110, 0.20);
+        --footer-height: 60px;
+    }
+    
+    :root[data-theme="black"] {
+        --paper-color: var(--card-paper-bg);
+        --glass-frame: var(--yearbook-bg);
+        --shadow-color: rgba(0, 0, 0, 0.7);
+        --footer-height: 60px;
+    }
+    
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Footer styling */
+    footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 100;
+        background: var(--glass-color, #fff);
+        backdrop-filter: blur(var(--blur, 12px));
+        -webkit-backdrop-filter: blur(var(--blur, 12px));
+        border-top: var(--border, 1px solid rgba(255,255,255,0.3));
+        height: var(--footer-height);
+    }
+    
+    .yearbook-container {
+        width: 100%;
+        height: calc(90vh - var(--nav-height) - var(--footer-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 10;
+        pointer-events: none; /* container tıklanmasın, sadece içerik tıklansın */
+    }
+    
+    .yearbook-glass {
+        pointer-events: auto; /* kart tıklanabilir olsun */
+        background: var(--yearbook-bg, #fcc3c3);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 24px;
+        box-shadow:
+            0 4px 12px var(--shadow-color),
+            inset 0 0 8px rgba(255, 255, 255, 0.3);
+        height: 500px;
+        width: 1000px;
+        max-width: 90vw;
+        max-height: 90vh;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Modified card styles for black theme */
+    :root[data-theme="black"] .yearbook-glass {
+        background: #444444;
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0; /* off-white text */
+    }
+    .yearbook-content {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 24px;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .profile-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .profile-photo {
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 15px;
+        position: relative;
+        background: #fff;
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px rgba(255, 255, 255, 0.8),
+            0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+        border: none;
+    }
+
+    :root[data-theme="black"] .profile-photo {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px rgba(255, 255, 255, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.3);
+        background: #444;
+    }
+
+    .profile-photo:hover {
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px var(--glass-frame),
+            0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    :root[data-theme="black"] .profile-photo:hover {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px #bbbbbb,
+            0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .profile-photo .initials {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: var(--glass-frame);
+    }
+
+    .profile-info {
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    .profile-name {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 5px;
+    }
+
+    .profile-class {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 12px;
+    }
+
+    .profile-details {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        color: var(--text-color);
+        width: 100%;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .detail-item i {
+        color: var(--glass-frame);
+    }
+
+    .profile-section, .review-section {
+        background: var(--paper-color);
+        border-radius: 19.2px;
+        padding: 20px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Improve text clarity */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Modified card styles for black theme */
+    :root[data-theme="black"] .profile-section, 
+    :root[data-theme="black"] .review-section {
+        background: #333333; /* darker gray background */
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0; /* off-white text */
+    }
+
+    .review-section {
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .review-content {
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 0.9rem;
+        flex-grow: 1;
+        width: 100%;
+        resize: none;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: inherit;
+        padding: 0;
+    }
+
+    .save-btn {
+        align-self: flex-end;
+        padding: 8px 24px;
+        background: var(--glass-frame);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        background: #f8a8a8;
+    }
+    
+    .save-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .save-btn:hover::after {
+        animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+        0% {
+            transform: scale(0, 0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: scale(20, 20);
+            opacity: 0;
+        }
+    }
+    
+    :root[data-theme="black"] .save-btn {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    :root[data-theme="black"] .save-btn:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .review-content::-webkit-scrollbar,
+    .edit_messages::-webkit-scrollbar {
+        width: 8px;
+        height: 0;
+        background: rgba(252,195,195,0.08); /* glass frame, ultra light */
+        border-radius: 12px;
+    }
+
+    .review-content::-webkit-scrollbar-thumb,
+    .edit_messages::-webkit-scrollbar-thumb {
+        background: var(--glass-frame, #fcc3c3);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px 0 rgba(252,195,195,0.25), 0 1.5px 6px 0 rgba(255,255,255,0.18) inset;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 2px solid rgba(255,255,255,0.18);
+        min-height: 24px;
+        transition: background 0.3s;
+    }
+
+    .review-content::-webkit-scrollbar-thumb:hover,
+    .edit_messages::-webkit-scrollbar-thumb:hover {
+        background: #f8a8a8;
+    }
+
+    .review-content::-webkit-scrollbar-track,
+    .edit_messages::-webkit-scrollbar-track {
+        background: rgba(252,195,195,0.08);
+        border-radius: 12px;
+        box-shadow: 0 1px 4px 0 rgba(252,195,195,0.07) inset;
+    }
+
+    /* Firefox */
+    .review-content,
+    .edit_messages {
+        scrollbar-width: thin;
+        scrollbar-color: var(--glass-frame, #fcc3c3) rgba(252,195,195,0.08);
+    }
+    
+    .review-date {
+        text-align: right;
+        color: #888;
+        font-size: 0.8rem;
+        margin-top: 15px;
+    }
+
+    .cancel-btn {
+        align-self: flex-start;
+        padding: 8px 24px;
+        background: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--glass-frame);
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cancel-btn:hover {
+        background: rgba(252, 195, 195, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .cancel-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .cancel-btn:hover::after {
+        animation: ripple 1s ease-out;
+    }
+    
+    :root[data-theme="black"] .cancel-btn {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0;
+    }
+    
+    :root[data-theme="black"] .cancel-btn:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .button-group {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    /* Save button styling with theme support */
+    .save-btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: var(--primary-color);
+        color: var(--white);
+        box-shadow: none;
+        text-shadow: none;
+    }
+    
+    .save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-color);
+    }
+    
+    .save-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Black theme specific styles for save button */
+    :root[data-theme="black"] .save-btn {
+        background: var(--primary-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    :root[data-theme="black"] .save-btn:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 1100px) {
+        body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .yearbook-glass {
+            width: 95vw;
+            padding: 20px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        
+        .yearbook-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+        
+        .yearbook-content {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .yearbook-content {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            width: 100%;
+        }
+        
+        .profile-section {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+        }
+        
+        .profile-name {
+            font-size: 1.4rem;
+            text-align: center;
+        }
+        
+        .profile-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        .profile-class {
+            text-align: center;
+            margin: 0 auto 15px;
+        }
+        
+        .detail-item {
+            justify-content: center;
+        }
+        
+        .review-section {
+            padding: 16px;
+            border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .button-group {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .save-btn, .cancel-btn {
+            margin: 5px;
+            flex: 1 1 auto;
+            min-width: 120px;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 600px) {
+        body, html {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+        
+        .yearbook-glass {
+            padding: 16px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: 90vh;
+            box-sizing: border-box;
+        }
+        
+        .yearbook-container {
+            height: auto;
+            min-height: calc(100vh - var(--nav-height) - var(--footer-height));
+            padding: 10px;
+        }
+        
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .profile-name {
+            font-size: 1.3rem;
+        }
+        
+        .review-content {
+            min-height: 200px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .button-group {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+        
+        .save-btn, .cancel-btn {
+            width: 100%;
+            margin: 5px 0;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .yearbook-glass {
+            padding: 12px;
+            border-radius: 12px;
+        }
+        
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+        }
+
+        .profile-photo .initials {
+            font-size: 1.8rem;
+        }
+        
+        .profile-name {
+            font-size: 1.2rem;
+        }
+        
+        .profile-class {
+            font-size: 0.85rem;
+        }
+        
+        .review-content {
+            min-height: 180px;
+            font-size: 0.95rem;
+        }
+        
+        .save-btn, .cancel-btn {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<div class="yearbook-container">
+    <div class="yearbook-glass">
+        <div class="yearbook-content">
+            <div class="profile-section">
+                <div class="profile-photo">
+                    {% if message.receiver.profile_photo %}
+                        <img src="{{ message.receiver.profile_photo.url }}" 
+                             alt="{{ message.receiver.get_full_name }}"
+                             onerror="handlePhotoError(this)"
+                             onload="handlePhotoLoad(this)">
+                    {% endif %}
+                    <div class="initials">
+                        {{ message.receiver.get_initials }}
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <h2 class="profile-name">{{ message.receiver.get_full_name }}</h2>
+                    <div class="profile-class">
+                        {{ message.receiver.school.name }}<br>
+                        {{ message.receiver.graduation_year.year }}
+                    </div>
+                    <div class="profile-details">
+                        {% if message.receiver.department %}
+                        <div class="detail-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>{{ message.receiver.department }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="review-section">
+                <form method="post" style="height:100%;display:flex;flex-direction:column;justify-content:space-between;width:100%;">
+                    {% csrf_token %}
+                    <textarea class="review-content" name="content" rows="8" placeholder="Mesajınızı düzenleyin...">{{ message.content }}</textarea>
+                    <div class="button-group" style="margin-top: 15px;">
+                        <a href="{% url 'my_notes' %}" class="cancel-btn" style="text-align: center;">
+                            <i class="fas fa-times"></i> İptal
+                        </a>
+                        <a href="{% url 'delete_sent_message' message.id %}" class="cancel-btn" style="color: #ff4d4d; text-align: center;">
+                            <i class="fas fa-trash-alt"></i> Sil
+                        </a>
+                        <button type="submit" class="save-btn">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle photo error
+    function handlePhotoError(img) {
+        img.style.display = 'none';
+        const container = img.parentElement;
+        const initials = container.querySelector('.initials');
+        if (initials) {
+            initials.style.display = 'block';
+        }
+    }
+
+    // Set focus to end of text in textarea
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.querySelector('.message-textarea');
+        if (textarea) {
+            textarea.focus();
+            const len = textarea.value.length;
+            textarea.setSelectionRange(len, len);
+        }
+    });
+</script>
+{% endblock %}

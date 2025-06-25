@@ -1,0 +1,1545 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Giriş / Kayıt</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ee6e6e;
+            --secondary-color: #fec5c5;
+            --glass-color: rgba(255, 255, 255, 0.25);
+            --blur: 12px;
+            --border-radius: 24px;
+            --border: 1px solid rgba(255, 255, 255, 0.3);
+            --shadow: 0 0 12px rgba(252, 195, 195, 0.2);
+            --text-color: #333;
+            --white: #fff;
+            --spacing: 40px;
+            --transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --success-color: #4CAF50;
+            --error-color: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            max-height: 100vh;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            overscroll-behavior: none;
+        }
+
+        body {
+            cursor: default;
+            min-height: 100vh;
+            display: flex;
+            background: #f69a9a;
+            background-size: cover;
+            background-attachment: fixed;
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+
+
+        input, textarea, select, button, a {
+            cursor: pointer;
+        }
+
+        *::-webkit-scrollbar {
+            width: 8px;
+            height: 0;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 40px;
+        }
+
+        *::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .split-screen {
+            display: flex;
+            width: 100%;
+        }
+
+        .left-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing);
+            color: var(--white);
+            background: #fec5c5;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .illustration-container {
+            width: 100%;
+            max-width: 550px;
+            height: auto;
+            margin-bottom: 0px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .welcome-illustration {
+            width: 100%;
+            height: auto;
+            max-width: 550px;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        /* Logo styles */
+        .logo-desktop {
+            display: block;
+            max-width: 150px;
+            height: auto;
+        }
+
+        .logo-mobile {
+            display: none;
+        }
+
+
+
+            .back-btn {
+                font-size: 1.2rem;
+            }
+
+            .info-tooltip-inside .tooltip-text {
+                font-size: 0.8rem;
+                max-width: 60vw;
+            }
+
+            .input-group-info-right .info-tooltip-inside {
+                height: 20px;
+                width: 20px;
+            }
+        }
+
+
+
+            .btn {
+                font-size: 0.95rem;
+                padding: 10px;
+            }
+
+
+            input, select {
+                font-size: 0.95rem;
+                padding: 10px 10px 10px 36px;
+            }
+
+
+            .tooltip-text {
+                font-size: 0.75rem;
+                width: 60vw;
+            }
+
+            .alert {
+                font-size: 0.85rem;
+            }
+
+            .form-note {
+                font-size: 0.7rem;
+            }
+
+            .password-requirements ul {
+                font-size: 0.75rem;
+            }
+
+            .back-btn {
+                font-size: 1rem;
+            }
+        }
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .left-section {
+                padding: 20px;
+                min-height: 40vh;
+            }
+            
+            .illustration-container {
+                max-width: 300px;
+                margin-bottom: 20px;
+            }
+            
+            .welcome-illustration {
+                max-width: 180px;
+            }
+
+            .left-section {
+                justify-content: flex-end;
+                padding-top: 40px;
+                padding-bottom: 40px;
+            }
+            
+            .welcome-illustration {
+                max-width: 200px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .illustration-container {
+                max-width: 190px;
+                margin-top: 70px;
+            }
+            
+            .welcome-illustration {
+                max-width: 200px;
+            }
+        }
+
+        .right-section {
+            width: 50%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing);
+            transition: var(--transition);
+        }
+
+        .card {
+            background: var(--glass-color);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border-radius: var(--border-radius);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: var(--spacing);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            max-height: 90vh;
+        }
+
+        .form-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .login-form {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            width: 100%;
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .register-form {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-height: 100%;
+            overflow-y: auto;
+            padding-bottom: 20px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+        }
+
+        .register-form.active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .login-form.slide-out {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 500;
+            color: var(--white);
+            font-size: 28px;
+            letter-spacing: -0.5px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .input-group-info-right {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-group-info-right input {
+            padding-right: 40px !important;
+        }
+        .input-group-info-right .info-tooltip-inside {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            cursor: help;
+            display: flex;
+            align-items: center;
+            background: transparent;
+            border: none;
+            padding: 0;
+            height: 24px;
+            width: 24px;
+            z-index: 2;
+        }
+        .input-group-info-right .info-tooltip-inside .tooltip-text {
+            left: 120%;
+            top: 50%;
+            right: auto;
+            bottom: auto;
+            transform: translateY(-50%);
+            white-space: normal;
+            margin-left: 8px;
+            margin-top: 0;
+            z-index: 10;
+        }
+        .input-group-info-right .info-tooltip-inside .tooltip-text::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 7px 7px 7px 0;
+            border-style: solid;
+            border-color: transparent rgba(0,0,0,0.8) transparent transparent;
+        }
+
+        .input-group-info-right input {
+            padding-right: 40px !important;
+        }
+        .input-group-info-right .info-tooltip-inside .tooltip-text {
+            left: auto;
+            right: 100%;
+            transform: translateY(-50%);
+        }
+        .input-group {
+            overflow: visible;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-group-info-right input {
+            width: 100%;
+        }
+
+        body, html {
+            overflow-x: hidden !important;
+        }
+        .right-section {
+            overflow-x: hidden !important;
+        }
+        .register-form {
+            overflow-x: hidden !important;
+            padding-right: 5px;
+        }
+
+        .info-tooltip {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            cursor: help;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+        }
+
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        input, select {
+            padding: 15px 15px 15px 45px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-color);
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s ease;
+            appearance: none;
+        }
+
+        input::placeholder {
+            color: #888;
+            opacity: 1;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(238, 110, 110, 0.2);
+        }
+
+        .btn {
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            background: var(--white);
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--white);
+            color: var(--white);
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 7px;
+            left: 20px;
+            background: transparent;
+            border: none;
+            color: var(--white);
+            font-size: 20px;
+            transition: all 0.3s ease;
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            transform: translateX(-3px);
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: -15px;
+        }
+
+        .forgot-password a {
+            color: var(--white);
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--white);
+            font-size: 14px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .divider::before {
+            margin-right: 15px;
+        }
+
+        .divider::after {
+            margin-left: 15px;
+        }
+
+        .form-note {
+            font-size: 12px;
+            color: var(--white);
+            margin-top: 5px;
+            padding-left: 10px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .password-requirements {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 5px;
+        }
+
+        .password-requirements ul {
+            list-style-type: none;
+            padding-left: 5px;
+            font-size: 12px;
+            color: var(--white);
+        }
+
+        .password-requirements li {
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .password-requirements li.invalid {
+            color: var(--error-color);
+        }
+
+        .password-requirements li.valid {
+            color: var(--success-color);
+        }
+
+        .password-requirements li::before {
+            content: "•";
+            font-size: 16px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .alert-hidden {
+            display: none;
+        }
+
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid var(--success-color);
+            color: var(--white);
+        }
+
+        .alert-error {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid var(--error-color);
+            color: var(--white);
+        }
+
+        .alert i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .split-screen {
+                flex-direction: column;
+            }
+
+            .left-section {
+                padding: 20px;
+                text-align: center;
+                min-height: 30vh;
+            }
+
+            .right-section {
+                width: 100%;
+                padding: 20px;
+                min-height: 70vh;
+            }
+
+            .card {
+                max-height: 65vh;
+            }
+        }
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            .card {
+                max-height: 100vh;
+                height: 100%;
+            }
+
+            .register-form {
+                overflow-y: auto;
+                max-height: 100vh;
+            }
+
+            .logo-desktop {
+                display: none;
+            }
+
+            .logo-mobile {
+                display: block;
+                max-width: 120px;
+                height: auto;
+            }
+
+            h2 {
+                font-size: 5vw;
+            }
+
+            input, select {
+                font-size: 1rem;
+                padding: 12px 12px 12px 40px;
+            }
+
+
+            .btn {
+                font-size: 1rem;
+                padding: 12px;
+            }
+
+            .divider {
+                font-size: 0.9rem;
+            }
+
+            .forgot-password a {
+                font-size: 0.85rem;
+            }
+
+            .tooltip-text {
+                font-size: 0.8rem;
+                width: 50vw;
+            }
+
+            .alert {
+                font-size: 0.9rem;
+                padding: 10px;
+            }
+
+            .alert i {
+                font-size: 1rem;
+            }
+
+            .form-note {
+                font-size: 0.75rem;
+            }
+
+            .password-requirements ul {
+                font-size: 0.8rem;
+            }
+        }
+
+
+        /* Smaller Mobile Devices */
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 6vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10;">
+        <img src="{% static 'yearbook/images/split.png' %}" alt="Logo" class="logo-desktop">
+        <img src="{% static 'yearbook/images/a (12).png' %}" alt="Mobil Logo" class="logo-mobile">
+    </div>
+
+    <div class="split-screen">
+        <!-- Sol Bölüm (Yeni Tasarım) -->
+        <div class="left-section">
+            <div class="illustration-container">
+                <img src="{% static 'yearbook/images/illustration8.png' %}" alt="Welcome Illustration" class="welcome-illustration">
+            </div>
+        </div>
+
+        <!-- Sağ Bölüm (Formlar) -->
+        <div class="right-section">
+            <div class="card">
+                <div class="form-container">
+                    <!-- Giriş Yap Formu -->
+                    <div class="login-form" id="loginForm">
+                        <!-- Django mesajlarını göster (başlangıçta hidden) -->
+                        <div id="messageContainer">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %} {% if not request.POST %}alert-hidden{% endif %}">
+                                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <h2>Giriş Yap</h2>
+                        <form method="post" action="{% url 'login_register' %}" id="loginFormElement">
+                            {% csrf_token %}
+
+                            <div class="input-group">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" name="email" placeholder="E-posta" autocomplete="email" required>
+                            </div>
+
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="password" placeholder="Şifre" autocomplete="current-password" required>
+                            </div>
+                            <div class="forgot-password">
+                                <a href="{% url 'password_reset' %}">Şifremi unuttum</a>
+                            </div>
+
+                            <button type="submit" name="login_submit" class="btn btn-primary">
+                                Giriş Yap
+                            </button>
+                        </form>
+
+                        <div class="divider">veya</div>
+
+                        <button id="showRegister" class="btn btn-outline">
+                            Kayıt Ol
+                        </button>
+                    </div>
+
+                    <!-- Kayıt Ol Formu -->
+                    <div class="register-form" id="registerForm">
+                        <button class="back-btn" id="backToLogin">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h2>Yeni Hesap</h2>
+
+                        <div id="registerMessages"></div>
+
+                        <form method="post" id="registerFormElement" action="{% url 'login_register' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="input-group input-group-info-right">
+    <i class="fas fa-user"></i>
+    <input type="text" name="first_name" placeholder="Ad" required>
+</div>
+
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" name="last_name" placeholder="Soyad" required>
+                            </div>
+
+                            <div class="input-group input-group-info-right">
+    <i class="fas fa-envelope"></i>
+    <input type="email" name="email" id="email" placeholder="E-posta Adresi" required>
+    <div class="info-tooltip info-tooltip-inside">
+        <i class="fas fa-info-circle"></i>
+        <span class="tooltip-text">Doğrulama kodu göndermek için kullanılacak</span>
+    </div>
+    <div id="email-error" class="error-message" style="display:none; color: #ff4d4d; font-size: 0.85em; margin-top: 5px;"></div>
+</div>
+
+                            <div class="input-group input-group-info-right verification-code-group" style="display: none;">
+                                <i class="fas fa-key"></i>
+                                <input type="text" name="verification_code" id="verification_code" placeholder="Doğrulama Kodu" autocomplete="one-time-code" required>
+                                <div class="info-tooltip info-tooltip-inside">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span class="tooltip-text">E-posta adresinize gönderilen 6 haneli kodu girin</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <i class="fas fa-graduation-cap"></i>
+                                <select name="school" id="schoolSelect" required>
+                                    <option value="" disabled selected>Okul Seçiniz</option>
+                                    <option value="other">Okul </option>
+                                    {% for school in schools %}
+                                        <option value="{{ school.id }}">{{ school.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="input-group" id="customSchoolGroup" style="display: none;">
+                                <i class="fas fa-pen"></i>
+                                <input type="text" name="custom_school" id="customSchoolInput" placeholder="Okul İsmini Giriniz">
+                            </div>
+
+                            <div class="input-group">
+                                <i class="fas fa-calendar-alt"></i>
+                                <select name="graduation_year" id="graduationYearSelect" required>
+                                    <option value="" disabled selected>Mezuniyet Yılı</option>
+                                    {% for year in graduation_years %}
+                                        <option value="{{ year.id }}">{{ year.year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="password1" id="password1" placeholder="Şifre" autocomplete="new-password" required>
+                            </div>
+                            <div class="password-requirements">
+                                <ul>
+                                    <li id="req1">Şifreniz diğer kişisel bilgilerinize çok benzeyemez</li>
+                                    <li id="req2">Şifreniz en az 8 karakter içermelidir</li>
+                                    <li id="req3">Şifreniz çok yaygın bir şifre olamaz</li>
+                                    <li id="req4">Şifreniz tamamen sayısal olamaz</li>
+                                </ul>
+                            </div>
+
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="password2" id="password2" placeholder="Şifre Tekrar" autocomplete="new-password" required>
+                            </div>
+
+                            <button type="submit" name="register_submit" class="btn btn-primary" id="registerSubmit" disabled>
+                                Kaydı Tamamla
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show messages only after POST
+            const isPostRequest = {% if request.POST %}true{% else %}false{% endif %};
+            if (isPostRequest) {
+                document.querySelectorAll('.alert-hidden').forEach(alert => {
+                    alert.classList.remove('alert-hidden');
+                });
+            }
+
+            // Form transitions
+            document.getElementById('showRegister')?.addEventListener('click', function() {
+                document.getElementById('loginForm').classList.add('slide-out');
+                document.getElementById('registerForm').classList.add('active');
+            });
+
+            document.getElementById('backToLogin')?.addEventListener('click', function() {
+                document.getElementById('loginForm').classList.remove('slide-out');
+                document.getElementById('registerForm').classList.remove('active');
+            });
+
+            // Password validation
+            const password1 = document.getElementById('password1');
+            if (password1) {
+                password1.addEventListener('input', validatePassword);
+            }
+
+            // Password confirmation
+            const password2 = document.getElementById('password2');
+            if (password2) {
+                password2.addEventListener('input', validatePasswordMatch);
+            }
+
+            // School selection handling
+                const schoolSelect = document.getElementById('schoolSelect');
+                const customSchoolGroup = document.getElementById('customSchoolGroup');
+
+                schoolSelect.addEventListener('change', function () {
+                    if (this.value === 'other') {
+                        customSchoolGroup.style.display = 'flex'; // input-group flex olduğu için
+                    } else {
+                        customSchoolGroup.style.display = 'none';
+                    }
+                });
+            if (schoolSelect) {
+                schoolSelect.addEventListener('change', function() {
+                    console.log('School changed:', this.value);
+                    // Validate the selection
+                    if (!this.value) {
+                        showMessage('Lütfen okul seçiniz', 'error', 'registerMessages');
+                    } else {
+                        // Clear any previous error messages
+                        const registerMessages = document.getElementById('registerMessages');
+                        if (registerMessages) {
+                            registerMessages.innerHTML = '';
+                        }
+
+                        // Update graduation years based on selected school
+                        updateGraduationYears(this.value);
+                    }
+                });
+            }
+
+            // Function to update graduation years based on selected school
+            async function updateGraduationYears(schoolId) {
+                const graduationYearSelect = document.getElementById('graduationYearSelect');
+                if (!graduationYearSelect) {
+                    console.error('Graduation year select element not found');
+                    return;
+                }
+
+                // Show loading state
+                graduationYearSelect.disabled = true;
+                graduationYearSelect.innerHTML = '<option value="" disabled selected>Yükleniyor...</option>';
+
+                try {
+                    console.log('Fetching graduation years');
+                    const response = await fetch(`/get-graduation-years/`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    console.log('Response status:', response.status);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Received graduation years:', data);
+
+                    // Clear existing options
+                    graduationYearSelect.innerHTML = '<option value="" disabled selected>Mezuniyet Yılı</option>';
+
+                    if (data.graduation_years && data.graduation_years.length > 0) {
+                        // Add new options
+                        data.graduation_years.forEach(year => {
+                            const option = document.createElement('option');
+                            option.value = year.id;
+                            option.textContent = year.year;
+                            graduationYearSelect.appendChild(option);
+                        });
+                    } else {
+                        graduationYearSelect.innerHTML = '<option value="" disabled selected>Mezuniyet yılı bulunamadı</option>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching graduation years:', error);
+                    graduationYearSelect.innerHTML = '<option value="" disabled selected>Hata oluştu</option>';
+                    showMessage('Mezuniyet yılları yüklenirken bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.', 'error', 'registerMessages');
+                } finally {
+                    graduationYearSelect.disabled = false;
+                }
+            }
+
+            // Form submission
+            const registerForm = document.getElementById('registerFormElement');
+            if (registerForm) {
+                console.log('Register form found, attaching submit handler');
+                registerForm.addEventListener('submit', async function(e) {
+                    console.log('Form submit event triggered');
+                    e.preventDefault();
+
+                    // Clear previous error messages
+                    document.querySelectorAll('.error-message').forEach(el => {
+                        el.textContent = '';
+                        el.style.display = 'none';
+                    });
+
+                    const form = e.target;
+                    const formData = new FormData(form);
+
+                    // Validate required fields
+                    const requiredFields = ['first_name', 'last_name', 'email', 'school', 'graduation_year', 'password1', 'password2'];
+                    const missingFields = requiredFields.filter(field => !formData.get(field));
+
+                    if (missingFields.length > 0) {
+                        showMessage(`Lütfen tüm alanları doldurun: ${missingFields.join(', ')}`, 'error', 'registerMessages');
+                        return;
+                    }
+
+                    // Log form data and verification info
+                    const formDataObj = Object.fromEntries(formData.entries());
+                    console.log('Form data:', formDataObj);
+
+                    // Debug email verification
+                    const emailFromForm = formData.get('email');
+                    console.log('Email used for verification:', verificationEmail);
+                    console.log('Email in form:', emailFromForm);
+                    console.log('Verification code:', formData.get('verification_code'));
+                    console.log('Are emails matching?', verificationEmail === emailFromForm);
+
+                    // Verify the email and code before proceeding with registration
+                    try {
+                        console.log('Verifying email and code before registration...');
+                        const verifyResponse = await fetch('{% url "verify_email_code" %}', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: JSON.stringify({
+                                email: emailFromForm,
+                                code: formData.get('verification_code')
+                            })
+                        });
+
+                        const verifyData = await verifyResponse.json();
+                        console.log('Pre-registration verification response:', verifyData);
+
+                        if (!verifyData.success) {
+                            showMessage(verifyData.error || 'E-posta doğrulaması başarısız. Lütfen tekrar deneyin.', 'error', 'registerMessages');
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error during pre-registration verification:', error);
+                        showMessage('Doğrulama sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error', 'registerMessages');
+                        return;
+                    }
+
+                    // Disable submit button
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Gönderiliyor...';
+                    }
+
+                    try {
+                        console.log('Sending request to:', form.action);
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            credentials: 'same-origin',
+                            cache: 'no-cache',
+                            redirect: 'follow',
+                            referrerPolicy: 'same-origin'
+                        });
+
+                        console.log('Response status:', response.status);
+                        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Server error:', errorText);
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const contentType = response.headers.get('content-type');
+                        console.log('Response content type:', contentType);
+
+                        let data;
+                        if (contentType && contentType.includes('application/json')) {
+                            data = await response.json();
+                        } else {
+                            const text = await response.text();
+                            console.log('Non-JSON response:', text);
+                            throw new Error('Unexpected response format');
+                        }
+
+                        console.log('Response data:', data);
+
+                        if (data.success) {
+                            showMessage(data.message || 'Kayıt başarılı!', 'success', 'registerMessages');
+                            if (data.redirect_url) {
+                                setTimeout(() => {
+                                    window.location.href = data.redirect_url;
+                                }, 1500);
+                            }
+                        } else {
+                            if (data.errors) {
+                                // Handle field-specific errors
+                                Object.entries(data.errors).forEach(([field, errors]) => {
+                                    if (Array.isArray(errors)) {
+                                        errors.forEach(error => {
+                                            showMessage(`${field}: ${error}`, 'error', 'registerMessages');
+                                        });
+                                    } else {
+                                        showMessage(`${field}: ${errors}`, 'error', 'registerMessages');
+                                    }
+                                });
+                            } else {
+                                showMessage(data.error || 'Kayıt başarısız!', 'error', 'registerMessages');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error during form submission:', error);
+                        if (error.response) {
+                            // Handle JSON response with field errors
+                            error.response.json().then(errData => {
+                                if (errData.field_errors) {
+                                    // Handle field-specific errors
+                                    Object.entries(errData.field_errors).forEach(([field, messages]) => {
+                                        const errorElement = document.getElementById(`${field}-error`);
+                                        if (errorElement && messages && messages.length > 0) {
+                                            errorElement.textContent = messages[0];
+                                            errorElement.style.display = 'block';
+                                        }
+                                    });
+                                }
+                                // Show general error message if exists
+                                if (errData.error) {
+                                    showMessage(errData.error, 'error');
+                                }
+                            }).catch(() => {
+                                showMessage('Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+                            });
+                        } else {
+                            showMessage(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+                        }
+                    } finally {
+                        // Re-enable submit button
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Kaydı Tamamla';
+                        }
+                    }
+                });
+            } else {
+                console.error('Register form not found!');
+            }
+
+            // Email verification handling
+            const emailInput = document.getElementById('email');
+            const verificationCodeGroup = document.querySelector('.verification-code-group');
+            const verificationCodeInput = document.getElementById('verification_code');
+            const registerSubmit = document.getElementById('registerSubmit');
+            let verificationCode = '';
+            let verificationEmail = ''; // Global variable to track the email used for verification
+
+            if (emailInput) {
+                emailInput.addEventListener('blur', async function() {
+                    const email = this.value;
+                    if (!email) return;
+
+                    try {
+                        console.log('Sending verification code request for email:', email);
+                        verificationEmail = email; // Store the email being verified
+                        const response = await fetch('{% url "send_verification_code" %}', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: JSON.stringify({ email })
+                        });
+
+                        console.log('Verification code response status:', response.status);
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Server error response:', errorText);
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        console.log('Verification code response data:', data);
+
+                        if (data.success) {
+                            verificationCode = data.code;
+                            verificationCodeGroup.style.display = 'block';
+                            showMessage('Doğrulama kodu e-posta adresinize gönderildi', 'success', 'registerMessages');
+
+                            // Update the email used for verification in the form
+                            const emailField = document.getElementById('email');
+                            if (emailField) {
+                                emailField.dataset.verifiedEmail = verificationEmail;
+                            }
+                        } else {
+                            verificationEmail = ''; // Reset on failure
+                            showMessage(data.error || 'Doğrulama kodu gönderilemedi', 'error', 'registerMessages');
+                        }
+                    } catch (error) {
+                        console.error('Error sending verification code:', error);
+                        if (error.message.includes('Failed to fetch')) {
+                            showMessage('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.', 'error', 'registerMessages');
+                        } else {
+                            showMessage('Bir hata oluştu. Lütfen tekrar deneyin.', 'error', 'registerMessages');
+                        }
+                    }
+                });
+            }
+
+            if (verificationCodeInput) {
+                verificationCodeInput.addEventListener('input', async function() {
+                    const enteredCode = this.value;
+                    if (enteredCode.length === 6) {
+                        try {
+                            console.log('Verifying code on server...');
+                            const response = await fetch('{% url "verify_email_code" %}', {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                },
+                                body: JSON.stringify({
+                                    email: verificationEmail,
+                                    code: enteredCode
+                                })
+                            });
+
+                            console.log('Verification response status:', response.status);
+                            const data = await response.json();
+                            console.log('Verification response data:', data);
+
+                            if (data.success) {
+                                registerSubmit.disabled = false;
+                                showMessage('Doğrulama kodu doğru', 'success', 'registerMessages');
+                            } else {
+                                showMessage(data.error || 'Doğrulama kodu yanlış', 'error', 'registerMessages');
+                                registerSubmit.disabled = true;
+                            }
+                        } catch (error) {
+                            console.error('Error verifying code:', error);
+                            showMessage('Doğrulama sırasında bir hata oluştu', 'error', 'registerMessages');
+                            registerSubmit.disabled = true;
+                        }
+                    } else {
+                        registerSubmit.disabled = true;
+                    }
+                });
+            }
+        });
+
+        function validatePassword() {
+            const password = this.value;
+            const req1 = document.getElementById('req1');
+            const req2 = document.getElementById('req2');
+            const req3 = document.getElementById('req3');
+            const req4 = document.getElementById('req4');
+
+            // Check similarity to personal info
+            const firstName = document.querySelector('input[name="first_name"]')?.value.toLowerCase() || '';
+            const lastName = document.querySelector('input[name="last_name"]')?.value.toLowerCase() || '';
+            const similarToPersonal = password.toLowerCase().includes(firstName) ||
+                                   password.toLowerCase().includes(lastName);
+
+            toggleClass(req1, 'invalid', similarToPersonal);
+            toggleClass(req1, 'valid', !similarToPersonal);
+
+            // Length check
+            const isLengthValid = password.length >= 8;
+            toggleClass(req2, 'invalid', !isLengthValid);
+            toggleClass(req2, 'valid', isLengthValid);
+
+            // Common password check
+            const commonPasswords = ['password', '12345678', 'qwerty'];
+            const isCommon = commonPasswords.includes(password.toLowerCase());
+            toggleClass(req3, 'invalid', isCommon);
+            toggleClass(req3, 'valid', !isCommon);
+
+            // Numeric check
+            const isNumeric = /^\d+$/.test(password);
+            toggleClass(req4, 'invalid', isNumeric);
+            toggleClass(req4, 'valid', !isNumeric);
+        }
+
+        function validatePasswordMatch() {
+            const password1 = document.getElementById('password1')?.value;
+            const password2 = this.value;
+
+            if (password2 && password1 !== password2) {
+                this.style.borderColor = 'var(--error-color)';
+            } else {
+                this.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            }
+        }
+
+        function toggleClass(element, className, condition) {
+            if (element) {
+                element.classList.toggle(className, condition);
+            }
+        }
+
+        function validateFormData(formData) {
+            if (!formData.get('first_name') || !formData.get('last_name')) {
+                return 'Lütfen ad ve soyad bilgilerinizi giriniz';
+            }
+
+            if (!formData.get('school') || !formData.get('graduation_year')) {
+                return 'Lütfen okul ve mezuniyet yılı bilgilerinizi seçiniz';
+            }
+
+            const password1 = formData.get('password1');
+            const password2 = formData.get('password2');
+
+            if (password1 !== password2) {
+                return 'Şifreler eşleşmiyor';
+            }
+
+            if (password1.length < 8) {
+                return 'Şifre en az 8 karakter olmalıdır';
+            }
+
+            // Check if password is too similar to personal info
+            const firstName = formData.get('first_name').toLowerCase();
+            const lastName = formData.get('last_name').toLowerCase();
+            const password = password1.toLowerCase();
+
+            if (password.includes(firstName) || password.includes(lastName)) {
+                return 'Şifreniz ad veya soyadınızı içeremez';
+            }
+
+            // Check if password is numeric only
+            if (/^\d+$/.test(password)) {
+                return 'Şifreniz tamamen sayısal olamaz';
+            }
+
+            // Check for common passwords
+            const commonPasswords = ['password', '12345678', 'qwerty'];
+            if (commonPasswords.includes(password)) {
+                return 'Lütfen daha güvenli bir şifre seçin';
+            }
+
+            return null;
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            console.log('Form submission started');
+            
+            const form = e.target;
+            const registerMessages = document.getElementById('registerMessages');
+
+            if (registerMessages) {
+                registerMessages.innerHTML = '';
+            }
+
+            // Client-side validation
+            const formData = new FormData(form);
+            
+            // Debug: Log all form data
+            console.log('=== Form Data Debug ===');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            console.log('=====================');
+
+            const validationError = validateFormData(formData);
+
+            if (validationError) {
+                console.log('Validation error:', validationError);
+                showMessage(validationError, 'error', 'registerMessages');
+                return;
+            }
+
+            try {
+                // Get CSRF token from form data
+                const csrftoken = formData.get('csrfmiddlewaretoken');
+                console.log('CSRF Token from form:', csrftoken);
+                
+                // Debug: Log request details
+                console.log('=== Request Debug ===');
+                console.log('URL:', form.action);
+                console.log('Method: POST');
+                console.log('===================');
+
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrftoken
+                    },
+                    credentials: 'same-origin'
+                });
+
+                // Debug: Log response details
+                console.log('=== Response Debug ===');
+                console.log('Status:', response.status);
+                console.log('Status Text:', response.statusText);
+                console.log('Headers:', Object.fromEntries(response.headers.entries()));
+                console.log('====================');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await processResponse(response);
+                console.log('Processed response data:', data);
+                handleResponseData(data, registerMessages);
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                console.error('Error stack:', error.stack);
+                showMessage(
+                    'Bir hata oluştu. Lütfen tekrar deneyin.',
+                    'error',
+                    'registerMessages'
+                );
+            }
+        }
+
+        async function processResponse(response) {
+            if (response.redirected) {
+                console.log('Response redirected to:', response.url);
+                window.location.href = response.url;
+                return null;
+            }
+
+            const contentType = response.headers.get('content-type');
+            console.log('Response content type:', contentType);
+
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+
+            try {
+                const data = JSON.parse(responseText);
+                console.log('Parsed data:', data);
+                return data;
+            } catch (e) {
+                console.error('Failed to parse response as JSON:', e);
+                console.error('Response text that failed to parse:', responseText);
+                throw new Error('Sunucu hatası: Beklenmeyen yanıt formatı');
+            }
+        }
+
+        function handleResponseData(data, messageContainer) {
+            console.log('Handling response data:', data);
+            
+            if (!data) {
+                console.log('No data to handle');
+                return;
+            }
+
+            if (data.success) {
+                console.log('Success response:', data.message);
+                showMessage(data.message || 'Kayıt başarılı!', 'success', 'registerMessages');
+                if (data.redirect_url) {
+                    console.log('Redirecting to:', data.redirect_url);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
+                }
+            } else {
+                console.log('Error response:', data);
+                if (data.errors) {
+                    if (Array.isArray(data.errors)) {
+                        data.errors.forEach(error => {
+                            console.log('Array error:', error);
+                            showMessage(error, 'error', 'registerMessages');
+                        });
+                    } else {
+                        Object.entries(data.errors).forEach(([field, errors]) => {
+                            console.log('Field error:', field, errors);
+                            if (Array.isArray(errors)) {
+                                errors.forEach(error => {
+                                    showMessage(`${field}: ${error}`, 'error', 'registerMessages');
+                                });
+                            } else {
+                                showMessage(`${field}: ${errors}`, 'error', 'registerMessages');
+                            }
+                        });
+                    }
+                } else if (data.error) {
+                    console.log('Single error:', data.error);
+                    showMessage(data.error, 'error', 'registerMessages');
+                } else {
+                    console.log('Unknown error format');
+                    showMessage('Bilinmeyen bir hata oluştu', 'error', 'registerMessages');
+                }
+            }
+        }
+
+        function showMessage(message, type, containerId = 'registerMessages') {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error('Message container not found:', containerId);
+                return;
+            }
+
+            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            const messageDiv = document.createElement('div');
+
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.innerHTML = `<i class="fas ${iconClass}"></i> ${message}`;
+            container.appendChild(messageDiv);
+
+            // Scroll to the message
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            setTimeout(() => {
+                messageDiv.style.transition = 'opacity 0.5s ease';
+                messageDiv.style.opacity = '0';
+                setTimeout(() => messageDiv.remove(), 500);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

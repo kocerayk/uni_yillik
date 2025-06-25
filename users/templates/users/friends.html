@@ -1,0 +1,2162 @@
+{% extends 'base_generic.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.get_full_name }} - Yıllık{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+<style>
+    /* Using theme variables from base_generic.html */
+    :root[data-theme="pink"] {
+        --paper-color: #ffeeee;
+        --glass-frame: var(--yearbook-bg);
+        --shadow-color: rgba(238, 110, 110, 0.20);
+    }
+
+    :root[data-theme="black"] {
+        --paper-color: var(--card-paper-bg);
+        --glass-frame: var(--yearbook-bg);
+        --shadow-color: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Removed pink accent hover effects for black theme */
+    
+    .benim-notlarim {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease;
+    }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+    .yearbook-container {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 120px;
+        position: relative;
+        min-height: calc(100vh - var(--nav-height) - 100px);
+        padding-bottom: 0px;
+        perspective: 1000px;
+    }
+
+    .yearbook-glass {
+        background: var(--yearbook-bg);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 24px;
+        box-shadow:
+            0 4px 12px var(--shadow-color),
+            inset 0 0 8px rgba(255, 255, 255, 0.3);
+        position: sticky;
+        top: calc(var(--nav-height) + 60px);
+        transform-origin: top;
+        transition: transform 0.3s ease;
+        height: 500px;
+        width: 1000px;
+        margin: 0 auto;
+        z-index: 2;
+        transform-style: preserve-3d;
+        /* Improve text rendering during transformations */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        backface-visibility: hidden;
+        will-change: transform;
+        /* Prevent text pixelation during scaling */
+        font-smooth: always;
+        filter: none !important;
+    }
+
+    .yearbook-cover {
+        background: var(--yearbook-bg, #fcc3c3);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow:
+            0 4px 12px var(--shadow-color),
+            inset 0 0 8px rgba(255, 255, 255, 0.3);
+        position: sticky;
+        top: calc(var(--nav-height) + 60px);
+        transform-origin: top;
+        transition: transform 0.3s ease;
+        height: 500px;
+        width: 1000px;
+        margin: 0 auto;
+        z-index: 2;
+        transform-style: preserve-3d;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        backface-visibility: hidden;
+        will-change: transform;
+        font-smooth: always;
+        filter: none !important;
+    }
+
+    /* New yearbook-cover-content to match yearbook-content grid layout */
+    .yearbook-cover-content {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 24px;
+        height: 100%;
+    }
+
+    /* Update image-container to fit in the right column like review-section */
+    /* Yearbook cover with same settings */
+    .yearbook-cover .image-container {
+        width: 100%;
+        height: 100%;
+        background-color: var(--card-paper-bg);
+        border-radius: 19.2px;
+        overflow: visible;
+        position: relative;
+        margin: 0;
+        padding: 22px 22px 80px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        transform: rotate(1deg);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .graduation-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    /* Create a profile section equivalent for the cover */
+    .yearbook-cover .cover-profile-section {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-smooth: always;
+        filter: none !important;
+        transform: translateZ(0);
+    }
+
+    /* Profile info section */
+    .yearbook-cover .profile-info {
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+
+    .yearbook-cover .profile-name {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 5px;
+    }
+
+    .yearbook-cover .profile-class {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 12px;
+    }
+
+    /* Theme-specific styles */
+    :root[data-theme="black"] .yearbook-cover .cover-profile-section,
+    :root[data-theme="black"] .yearbook-cover .profile-info {
+        background: transparent !important;
+        color: inherit;
+    }
+
+    :root[data-theme="black"] .yearbook-cover .profile-class {
+        color: #aaa;
+    }
+
+    /* Style the graduation image within the new layout */
+    .yearbook-cover .graduation-img {
+        width: calc(100% - 44px);
+        height: calc(100% - 102px);
+        object-fit: cover;
+        border-radius: 4px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        filter: none !important;
+    }
+
+    /* Profile photo styling for cover card */
+    .yearbook-cover .profile-photo {
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 15px;
+        position: relative;
+        background: #fff;
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px rgba(255, 255, 255, 0.8),
+            0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+        border: none;
+    }
+
+    :root[data-theme="black"] .yearbook-cover .profile-photo {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px rgba(255, 255, 255, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.3);
+        background: #444;
+    }
+
+    .yearbook-cover .profile-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .yearbook-cover .profile-photo .initials {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: var(--glass-frame);
+    }
+
+    /* Profile info styling for cover card */
+    .yearbook-cover .profile-info {
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    .yearbook-cover .profile-name {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 5px;
+    }
+
+    .yearbook-cover .profile-class {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 12px;
+    }
+
+        /* Modified card styles for black theme */
+    :root[data-theme="black"] .yearbook-cover {
+        background: var(--yearbook-bg);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        color: #fff;
+    }
+
+    /* Modified card styles for black theme */
+    :root[data-theme="black"] .yearbook-glass {
+        background: var(--yearbook-bg);
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0; /* off-white text */
+    }
+
+    .yearbook-glass {
+        margin-top: 600px;
+        transform-style: preserve-3d;
+    }
+
+    .staggered-card {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%) scale(0.9) translateY(-50px) rotateX(10deg);
+        z-index: -1;
+        opacity: 0.8;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        /* Improve text rendering during transformations */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        backface-visibility: hidden;
+        will-change: transform;
+        /* Prevent pixelation during scaling */
+        image-rendering: high-quality;
+        font-smooth: always;
+        filter: none !important;
+    }
+
+    .staggered-card:nth-child(2) {
+        transform: translateX(-50%) scale(0.8) translateY(-100px) rotateX(15deg);
+        opacity: 0.6;
+    }
+
+    .staggered-card:nth-child(3) {
+        transform: translateX(-50%) scale(0.7) translateY(-150px) rotateX(20deg);
+        opacity: 0.4;
+    }
+
+    .staggered-card:nth-child(4) {
+        transform: translateX(-50%) scale(0.6) translateY(-200px) rotateX(25deg);
+        opacity: 0.2;
+    }
+
+    /* Polaroid-style image container with equal padding */
+    .image-container {
+        width: 100%;
+        height: 350px;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        margin: 0 auto 300px;
+        padding: 15px;
+        padding-bottom: 60px;
+        box-shadow:
+            0 1px 3px rgba(0,0,0,0.12),
+            0 1px 2px rgba(0,0,0,0.24),
+            0 0 0 1px rgba(0,0,0,0.05);
+        transform: rotate(-1deg);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .graduation-img {
+        width: calc(100% - 44px); /* Adjust based on padding */
+        height: calc(100% - 44px);
+        object-fit: cover;
+        border-radius: 4px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        filter: none !important; /* Remove all filters */
+    }
+
+    /* Review content styling with theme support */
+    .review-content {
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 0.9rem;
+        flex-grow: 1;
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--secondary-color) var(--card-paper-bg);
+    }
+
+    .review-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .review-content::-webkit-scrollbar-track {
+        background: var(--card-paper-bg);
+        border-radius: 3px;
+    }
+
+    .review-content::-webkit-scrollbar-thumb {
+        background-color: var(--secondary-color);
+        border-radius: 3px;
+    }
+
+    /* Black theme styling for image container */
+    :root[data-theme="black"] .image-container {
+        background-color: var(--card-paper-bg);
+        box-shadow:
+            0 1px 3px rgba(0,0,0,0.5),
+            0 1px 2px rgba(0,0,0,0.6),
+            0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .yearbook-content {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 24px;
+        height: 100%;
+    }
+
+    .profile-section, .review-section {
+        background: var(--paper-color);
+        border-radius: 19.2px;
+        padding: 20px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Improve text clarity */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        /* Prevent text pixelation during scaling */
+        font-smooth: always;
+        filter: none !important;
+        transform: translateZ(0);
+    }
+
+        /* Apply filter reset only to direct children that need it */
+    .profile-section > *:not(.graduation-img),
+    .review-section > *:not(.graduation-img) {
+        filter: none !important;
+    }
+
+    /* Modified card styles for black theme */
+    :root[data-theme="black"] .profile-section,
+    :root[data-theme="black"] .review-section {
+        background: #333333; /* darker gray background */
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0; /* off-white text */
+    }
+
+    .profile-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .profile-photo {
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 15px;
+        position: relative;
+        background: #fff;
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px rgba(255, 255, 255, 0.8),
+            0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+        border: none;
+    }
+
+    :root[data-theme="black"] .profile-photo {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px rgba(255, 255, 255, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.3);
+        background: #444;
+    }
+
+    .profile-photo:hover {
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px var(--glass-frame),
+            0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    :root[data-theme="black"] .profile-photo:hover {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px #bbbbbb,
+            0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .profile-photo .initials {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: var(--glass-frame);
+    }
+
+    .profile-info {
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    .profile-name {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 5px;
+    }
+
+    .profile-class {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 12px;
+    }
+
+    .profile-details {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        color: var(--text-color);
+        width: 100%;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .detail-item i {
+        color: var(--secondary-color);
+    }
+
+    .review-section {
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .review-content {
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 0.9rem;
+        flex-grow: 1;
+    }
+
+    .review-date {
+        text-align: right;
+        color: #888;
+        font-size: 0.8rem;
+        margin-top: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .yearbook-container {
+            padding: 12px;
+            margin: 12px auto;
+        }
+
+        .yearbook-content {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .yearbook-glass {
+            padding: 18px;
+        }
+
+        .profile-section, .review-section {
+            padding: 15px;
+        }
+
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+        }
+
+        .review-header {
+            font-size: 1.2rem;
+        }
+
+        .review-content {
+            font-size: 0.85rem;
+        }
+    }
+
+
+    /* Polaroid-style image container */
+    .image-container {
+        width: 100%;
+        height: 350px;
+        background-color: var(--card-paper-bg);
+        border-radius: 12px;
+        overflow: visible;
+        position: relative;
+        margin: 0 auto 30px;
+        padding: 22px 22px 80px;
+        box-shadow:
+            0 1px 3px rgba(237, 109, 109, 0.12),
+            0 1px 2px rgba(237, 109, 109, 0.24),
+            0 0 0 1px rgba(237, 109, 109, 0.05);
+        transform: rotate(1deg);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Polaroid frame effect */
+    .image-container::before {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        right: 22px;
+        bottom: 80px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px var(--inset-highlight);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Yearbook cover frame effect */
+    .yearbook-cover .image-container::before {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        right: 22px;
+        bottom: 80px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px var(--inset-highlight);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Remove theme-specific filters */
+    :root[data-theme="pink"] .graduation-img,
+    :root[data-theme="black"] .graduation-img {
+        filter: none !important;
+        mix-blend-mode: normal;
+        background-color: transparent;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .image-container:hover {
+        transform: rotate(0deg) translateY(-5px);
+        box-shadow:
+            0 12px 24px rgba(238, 110, 110, 0.2),
+            0 6px 12px rgba(238, 110, 110, 0.1),
+            0 0 0 1px rgba(237, 109, 109, 0.05);
+    }
+
+    .graduation-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    /* Create a frame effect with pseudo-element */
+    .image-container::before {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        right: 22px;
+        bottom: 80px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px var(--inset-highlight);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+
+    /* Black theme styling for image container */
+    :root[data-theme="black"] .image-container {
+        background-color: rgba(20,20,20);
+        box-shadow:
+            0 1px 3px rgba(0,0,0,0.5),
+            0 1px 2px rgba(0,0,0,0.6),
+            0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    :root[data-theme="black"] .image-container::before {
+        box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+    }
+
+    :root[data-theme="black"] .image-container:hover {
+        box-shadow:
+        0 12px 24px rgba(0,0,0,0.3),
+        0 6px 12px rgba(0,0,0,0.2),
+        0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    :root[data-theme="pink"] .edit-message-btn i {
+    color: var(--yearbook-bg);
+    }
+
+    :root[data-theme="black"] .image-container:hover {
+        box-shadow:
+            0 12px 24px rgba(0,0,0,0.3),
+            0 6px 12px rgba(0,0,0,0.2),
+            0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    /* Photo Upload Modal */
+    .photo-upload-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .photo-upload-modal .modal-content {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 25px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .photo-upload-modal .modal-content.active {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .photo-upload-modal .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .photo-upload-modal .section-title {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #f5f5f5;
+    }
+
+    .photo-upload-modal .edit-button {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+    }
+
+    .photo-upload-modal .edit-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .photo-preview-area {
+        width: 100%;
+        height: 300px;
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        margin: 20px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .photo-preview-area:hover {
+        border-color: var(--white);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .photo-preview-area.dragging {
+        border-color: var(--primary-color);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .photo-preview-area i {
+        font-size: 3rem;
+        color: #f5f5f5;
+        opacity: 0.7;
+    }
+
+    .preview-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .preview-image {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 8px;
+        position: relative;
+    }
+
+    .crop-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 33%; /* 3:1 aspect ratio (width/3 = height) */
+        border: 2px dashed rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .crop-instruction {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: white;
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 5px;
+        border-radius: 4px;
+        margin: 0 10px;
+        z-index: 3;
+    }
+
+    .photo-preview-area p {
+        margin: 0;
+        color: #f5f5f5;
+        text-align: center;
+        max-width: 80%;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+
+    .btn i {
+        font-size: 0.9em;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: #f5f5f5;
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: #f5f5f5;
+        border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .image-container {
+        width: 100%;
+        height: 350px;
+        background-color: var(--card-paper-bg);
+        border-radius: 12px;
+        overflow: visible;
+        position: relative;
+        margin: 0 auto 30px;
+        padding: 22px 22px 80px;
+        box-shadow:
+            0 1px 3px rgba(237, 109, 109, 0.12),
+            0 1px 2px rgba(237, 109, 109, 0.24),
+            0 0 0 1px rgba(237, 109, 109, 0.05),
+            0 8px 16px rgba(237, 109, 109, 0.08);
+        transform: rotate(1deg);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .image-container:hover {
+        transform: rotate(0deg) translateY(-5px);
+        box-shadow:
+            0 12px 24px rgba(238, 110, 110, 0.2),
+            0 6px 12px rgba(238, 110, 110, 0.1),
+            0 0 0 1px rgba(237, 109, 109, 0.05);
+    }
+
+    .image-upload-overlay {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateY(5px);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+    }
+
+    .image-container::before {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        right: 22px;
+        bottom: 80px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px var(--inset-highlight);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    :root[data-theme="black"] .image-container {
+        background-color: rgba(20,20,20);
+        box-shadow:
+            0 1px 3px rgba(0,0,0,0.5),
+            0 1px 2px rgba(0,0,0,0.6),
+            0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    :root[data-theme="black"] .image-container::before {
+        box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+    }
+
+    :root[data-theme="black"] .image-container:hover {
+        box-shadow:
+        0 12px 24px rgba(0,0,0,0.3),
+        0 6px 12px rgba(0,0,0,0.2),
+        0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    .image-upload-overlay {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .image-upload-overlay:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px) scale(1.05);
+    }
+
+    .image-upload-overlay i {
+        color: var(--card-paper-bg);
+        font-size: 0.9rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .benim-notlarim {
+        width: 100%;
+        max-width: 300px; /* sınırlayıcı genişlik */
+        height: 350px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        transform: translateY(30px);
+        text-align: center;
+        padding: 0 10px;
+        overflow: visible;
+        margin: 0 auto;
+        gap: 0px;
+        opacity: 1 !important;
+        transition: none !important;
+        padding-bottom: 50px;
+    }
+
+    .benim {
+        font-weight: 800;
+        color: var(--background-color);
+        text-transform: uppercase;
+        transform: scaleY(1.1);
+        line-height: 1.8;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: ellipsis;
+        line-height: 1;
+        margin: 0;
+        padding: 0;
+        font-size: 100px;
+    }
+
+        /* Mobile Responsive Design */
+    @media (max-width: 1100px) {
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 95%;
+            max-width: 900px;
+            height: 900px;
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .yearbook-container {
+            padding: 10px;
+            gap: 80px;
+            max-width: 100%;
+        }
+
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 98%;
+            height: 800px;
+            padding: 18px;
+            top: calc(var(--nav-height) + 40px);
+        }
+
+        .yearbook-content,
+        .yearbook-cover-content {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .profile-section,
+        .review-section,
+        .cover-profile-section {
+            padding: 16px;
+        }
+
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 12px;
+        }
+
+        .profile-name {
+            font-size: 1.4rem;
+        }
+
+        .profile-class {
+            font-size: 0.85rem;
+        }
+
+        .review-content {
+            font-size: 0.88rem;
+            line-height: 1.5;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--card-paper-bg);
+        }
+        
+        .review-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .review-content::-webkit-scrollbar-track {
+            background: var(--card-paper-bg);
+            border-radius: 2px;
+        }
+        
+        .review-content::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 2px;
+        }
+
+        .image-container {
+            height: 500px;
+            padding: 18px 18px 50px;
+            margin-bottom: 20px;
+        }
+
+        .image-container::before,
+        .yearbook-cover .image-container::before {
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            bottom: 50px;
+        }
+
+        .graduation-img {
+            width: calc(100% - 36px);
+            height: calc(100% - 68px);
+            top: 18px;
+            left: 18px;
+        }
+
+        .yearbook-cover .graduation-img {
+            width: calc(100% - 36px);
+            height: calc(100% - 68px);
+            top: 18px;
+            left: 18px;
+        }
+
+        .benim-notlarim {
+            height: 120px;
+            gap: 0;
+        }
+
+        .benim {
+            font-size: 60px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .yearbook-container {
+            padding: 8px;
+            gap: 60px;
+            min-height: calc(100vh - var(--nav-height) - 50px);
+        }
+
+
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 100%;
+            height: 700px;
+            padding: 15px;
+            border-radius: 16px;
+            top: calc(var(--nav-height) + 20px);
+        }
+
+
+        .yearbook-content,
+        .yearbook-cover-content {
+            gap: 15px;
+        }
+
+
+        .profile-section,
+        .review-section,
+        .cover-profile-section {
+            padding: 14px;
+            border-radius: 12px;
+        }
+
+
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+
+        .profile-name {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+
+
+        .profile-class {
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+
+        .profile-details {
+            gap: 8px;
+        }
+
+
+        .detail-item {
+            font-size: 0.85rem;
+        }
+
+
+        .review-content {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+
+        .review-date {
+            font-size: 0.75rem;
+            margin-top: 12px;
+        }
+
+
+        .image-container {
+            height: 420px;
+            padding: 15px 15px 40px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+
+
+        .image-container::before,
+        .yearbook-cover .image-container::before {
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 40px;
+            border-radius: 6px;
+        }
+
+
+        .graduation-img {
+            width: calc(100% - 30px);
+            height: calc(100% - 55px);
+            top: 15px;
+            left: 15px;
+            border-radius: 3px;
+        }
+
+
+        .yearbook-cover .graduation-img {
+            width: calc(100% - 30px);
+            height: calc(100% - 55px);
+            top: 15px;
+            left: 15px;
+            border-radius: 3px;
+        }
+
+
+        .benim-notlarim {
+            height: 100px;
+            max-width: 200px;
+            gap: 0;
+        }
+
+
+        .benim {
+            font-size: 45px;
+            line-height: 0.9;
+        }
+
+
+        .image-upload-overlay {
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+        }
+
+
+        .image-upload-overlay i {
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .yearbook-container {
+            padding: 5px;
+            gap: 50px;
+        }
+
+
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 100%;
+            height: 640px;
+            padding: 12px;
+            border-radius: 14px;
+        }
+
+
+        .yearbook-content,
+        .yearbook-cover-content {
+            gap: 12px;
+        }
+
+
+        .profile-section,
+        .review-section,
+        .cover-profile-section {
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 8px;
+        }
+
+
+        .profile-photo .initials {
+            font-size: 1.8rem;
+        }
+
+
+        .profile-name {
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+
+        .profile-class {
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+
+
+        .profile-details {
+            gap: 6px;
+        }
+
+
+        .detail-item {
+            font-size: 0.8rem;
+        }
+
+
+        .detail-item i {
+            font-size: 0.8rem;
+        }
+
+
+        .review-content {
+            font-size: 0.8rem;
+            line-height: 1.3;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+
+        .review-date {
+            font-size: 0.7rem;
+            margin-top: 10px;
+        }
+
+
+        .image-container {
+            height: 380px;
+            padding: 12px 12px 35px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+
+
+        .image-container::before,
+        .yearbook-cover .image-container::before {
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 35px;
+            border-radius: 5px;
+        }
+
+
+        .graduation-img {
+            width: calc(100% - 24px);
+            height: calc(100% - 47px);
+            top: 12px;
+            left: 12px;
+            border-radius: 2px;
+        }
+
+
+        .yearbook-cover .graduation-img {
+            width: calc(100% - 24px);
+            height: calc(100% - 47px);
+            top: 12px;
+            left: 12px;
+            border-radius: 2px;
+        }
+
+
+        .benim-notlarim {
+            height: 90px;
+            max-width: 170px;
+            padding: 0 5px;
+        }
+
+
+        .benim {
+            font-size: 35px;
+            line-height: 0.85;
+        }
+
+
+        .image-upload-overlay {
+            top: 18px;
+            right: 18px;
+            width: 26px;
+            height: 26px;
+        }
+
+
+        .image-upload-overlay i {
+            font-size: 0.7rem;
+        }
+
+
+        /* Modal adjustments for very small screens */
+        .photo-upload-modal .modal-content {
+            width: 95%;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+
+        .photo-upload-modal .section-title {
+            font-size: 1.2rem;
+        }
+
+
+        .photo-preview-area {
+            height: 250px;
+        }
+
+
+        .photo-preview-area i {
+            font-size: 2.5rem;
+        }
+
+
+        .modal-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+
+        .btn {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+        .yearbook-container {
+            gap: 40px;
+        }
+
+
+        .yearbook-glass,
+        .yearbook-cover {
+            height: 640px;
+        }
+
+
+        .image-container {
+            height: 180px;
+        }
+
+
+        .benim-notlarim {
+            height: 100px;
+        }
+
+
+        .benim {
+            font-size: 40px;
+        }
+    }
+
+    @media (max-width: 600px) and (orientation: landscape) {
+        .yearbook-glass,
+        .yearbook-cover {
+            height: 560px;
+        }
+
+
+        .image-container {
+            height: 160px;
+        }
+
+
+        .benim-notlarim {
+            height: 120px;
+        }
+
+
+        .benim {
+            font-size: 35px;
+        }
+    }
+
+    .message-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .message-action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--text-color);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .message-action-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
+    }
+
+    .message-hidden {
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+
+    .message-hidden:hover {
+        opacity: 1;
+    }
+</style>
+
+<div class="yearbook-container">
+    <div class="yearbook-cover">
+    <div class="yearbook-cover-content">
+        <div class="cover-profile-section">
+            <div class="benim-notlarim">
+                <div class="benim" id="firstName">{{ profile_user.first_name }}</div>
+                <div class="benim" id="lastName">{{ profile_user.last_name }}</div>
+            </div>
+
+        </div>
+        <div class="image-container">
+            {% if profile_user.profile_photo and profile_user.profile_photo.name %}
+            <img src="{{ profile_user.profile_photo.url }}" 
+                 class="graduation-img" 
+                 id="graduationImage" 
+                 onclick="window.location.href='{% url 'send_message' profile_user.id %}'"
+                 style="cursor: pointer;"
+                 onerror="handleGraduationImageError(this)" 
+                 onload="updateImageTheme()">
+            {% else %}
+                <img src="{% static 'yearbook/images/b.pp.png' %}"
+                     data-light-src="{% static 'yearbook/images/pp.png' %}"
+                     data-dark-src="{% static 'yearbook/images/b.pp.png' %}"
+                     class="graduation-img" 
+                     id="graduationImage"
+                     onclick="window.location.href='{% url 'send_message' profile_user.id %}'"
+                     style="cursor: pointer;"
+                     onerror="handleGraduationImageError(this)"
+                     onload="updateImageTheme(); updateImageSource(this);">
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+    {% for message in messages %}
+    <div class="yearbook-glass {% if not message.visible %}message-hidden{% endif %}" id="message-card-{{ message.id }}">
+        <div class="yearbook-content">
+            <div class="profile-section">
+                <div class="profile-photo">
+                    {% if message.sender.profile_photo %}
+                        <img src="{{ message.sender.profile_photo.url }}"
+                             alt="{{ message.sender.get_full_name }}"
+                             onerror="handlePhotoError(this)"
+                             onload="handlePhotoLoad(this)">
+                    {% endif %}
+                    <div class="initials">{{ message.sender.get_initials }}</div>
+                </div>
+                <div class="profile-info">
+                    <h2 class="profile-name">{{ message.sender.get_full_name }}</h2>
+                    <div class="profile-class">
+                        {{ message.sender.school.name }}<br>
+                        {{ message.sender.graduation_year.year }}
+                    </div>
+                    <div class="profile-details">
+                        {% if message.sender.department %}
+                        <div class="detail-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>{{ message.sender.department }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="review-section" style="position: relative;">
+                {% if user == profile_user %}
+                <div class="message-actions">
+                    <button class="message-action-btn" onclick="toggleMessageVisibility({{ message.id }})" title="Toggle Visibility">
+                        <i id="visibility-icon-{{ message.id }}" class="fas {% if message.visible %}fa-eye{% else %}fa-eye-slash{% endif %}"></i>
+                    </button>
+                </div>
+                {% endif %}
+                <div class="review-content">
+                    {{ message.content|linebreaks }}
+                </div>
+                <div class="review-date">
+                    {{ message.created_at|date:"d.m.Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    {% endfor %}
+</div>
+
+    <!-- Graduation Photo Upload Modal -->
+<div class="photo-upload-modal" id="graduationPhotoUploadModal">
+    <div class="modal-content">
+        <div class="section-header">
+            <h2 class="section-title">Mezuniyet Fotoğrafı Yükle</h2>
+            <button class="edit-button" onclick="closeGraduationPhotoUpload()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="photo-preview-area"
+             id="graduationPhotoDropArea"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)"
+             ondrop="handleGraduationDrop(event)"
+             onclick="document.getElementById('graduationPhotoInput').click()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Fotoğraf yüklemek için tıklayın veya sürükleyin</p>
+            <input type="file" id="graduationPhotoInput" accept="image/*" style="display: none" onchange="handleGraduationPhotoSelect(event)">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeGraduationPhotoUpload()">
+                <i class="fas fa-times"></i>
+                İptal
+            </button>
+            <button class="btn btn-primary" onclick="saveGraduationPhoto()" id="saveGraduationPhotoBtn" disabled>
+                <i class="fas fa-save"></i>
+                Kaydet
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function handlePhotoError(img) {
+    const container = img.parentElement;
+    const initials = container.querySelector('.initials');
+    img.style.display = 'none';
+    initials.style.display = 'block';
+}
+
+function handlePhotoLoad(img) {
+    const container = img.parentElement;
+    const initials = container.querySelector('.initials');
+    img.style.display = 'block';
+    initials.style.display = 'none';
+}
+
+
+// Graduation photo handling
+let selectedGraduationPhoto = null;
+
+function openGraduationPhotoUpload() {
+    const modal = document.getElementById('graduationPhotoUploadModal');
+    const modalContent = modal.querySelector('.modal-content');
+    modal.style.display = 'flex';
+    setTimeout(() => modalContent.classList.add('active'), 10);
+}
+
+function closeGraduationPhotoUpload() {
+    const modal = document.getElementById('graduationPhotoUploadModal');
+    const modalContent = modal.querySelector('.modal-content');
+    modalContent.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+    selectedGraduationPhoto = null;
+    document.getElementById('saveGraduationPhotoBtn').disabled = true;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('graduationPhotoDropArea').classList.add('dragging');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    document.getElementById('graduationPhotoDropArea').classList.remove('dragging');
+}
+
+function handleGraduationDrop(e) {
+    e.preventDefault();
+    document.getElementById('graduationPhotoDropArea').classList.remove('dragging');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleGraduationPhoto(files[0]);
+    }
+}
+
+function handleGraduationPhotoSelect(e) {
+    const files = e.target.files;
+    if (files.length > 0) {
+        handleGraduationPhoto(files[0]);
+    }
+}
+
+function handleGraduationPhoto(file) {
+    if (!file.type.startsWith('image/')) {
+        showMessage('Lütfen geçerli bir resim dosyası seçin', 'error');
+        return;
+    }
+
+    selectedGraduationPhoto = file;
+    document.getElementById('saveGraduationPhotoBtn').disabled = false;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewArea = document.getElementById('graduationPhotoDropArea');
+        previewArea.innerHTML = `
+            <div class="preview-container">
+                <img src="${e.target.result}"
+                     class="preview-image"
+                     onerror="handleImageError(this)">
+                <div class="crop-overlay"></div>
+            </div>
+        `;
+    };
+    reader.onerror = function(error) {
+        console.error('Error reading file:', error);
+        showMessage('Dosya okunurken bir hata oluştu', 'error');
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleGraduationImageError(img) {
+    console.error('Graduation image failed to load:', img.src);
+    img.onerror = null;
+
+    // If this is not the default image, try to load the default
+    if (!img.src.includes('graduation-default.jpg')) {
+        img.src = '{% static "img/graduation-default.jpg" %}';
+    } else {
+        // If default image also fails, show a placeholder
+        img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" fill="%23cccccc"><rect width="100%" height="100%"/><text x="50%" y="50%" font-family="Arial" font-size="16" text-anchor="middle" fill="%23777777" dy=".3em">Fotoğraf Yüklenemedi</text></svg>';
+        console.warn('Default graduation image not found');
+    }
+}
+
+function handleImageError(img) {
+    console.error('Image failed to load:', img.src);
+    const previewArea = document.getElementById('graduationPhotoDropArea');
+    previewArea.innerHTML = `
+        <i class="fas fa-image"></i>
+        <p>Fotoğraf yüklenemedi</p>
+    `;
+}
+
+async function saveGraduationPhoto() {
+    if (!selectedGraduationPhoto) {
+        showMessage('Lütfen bir fotoğraf seçin', 'error');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveGraduationPhotoBtn');
+    const originalBtnText = saveBtn.innerHTML;
+
+    try {
+        // Show loading state
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yükleniyor...';
+
+        const formData = new FormData();
+        formData.append('graduation_photo', selectedGraduationPhoto);
+
+        // Get CSRF token from cookie
+        const csrftoken = getCookie('csrftoken');
+        if (!csrftoken) {
+            throw new Error('CSRF token bulunamadı. Sayfayı yenileyip tekrar deneyin.');
+        }
+
+        const response = await fetch('/profile/update-graduation-photo/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken
+            },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        }
+
+        if (data.success) {
+            showMessage(data.message || 'Mezuniyet fotoğrafı başarıyla güncellendi', 'success');
+
+            // Update the image source with the new URL from the server
+            const graduationImg = document.getElementById('graduationImage');
+            if (graduationImg) {
+                // Create a new image to preload
+                const newImg = new Image();
+                newImg.onload = function() {
+                    // Only update the source if the image loads successfully
+                    graduationImg.src = data.url + (data.url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                    // Update theme for the new image
+                    updateImageTheme();
+                };
+                newImg.onerror = function() {
+                    console.error('Failed to load new image:', data.url);
+                    showMessage('Fotoğraf yüklenirken bir hata oluştu', 'error');
+                };
+                // Start loading the new image
+                newImg.src = data.url;
+            }
+
+            closeGraduationPhotoUpload();
+        } else {
+            throw new Error(data.error || 'Bilinmeyen bir hata oluştu');
+        }
+    } catch (error) {
+        console.error('Hata:', error);
+        showMessage(`Fotoğraf yüklenirken bir hata oluştu: ${error.message}`, 'error');
+    } finally {
+        // Reset button state
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Kaydet';
+        }
+    }
+}
+
+// Helper function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showMessage(message, type) {
+    // You can implement a toast or alert system here
+    alert(`${type.toUpperCase()}: ${message}`);
+}
+
+// Function to update image source based on theme
+function updateImageSource(img) {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'pink';
+    if (img && img.dataset.lightSrc && img.dataset.darkSrc) {
+        img.src = currentTheme === 'black' ? img.dataset.darkSrc : img.dataset.lightSrc;
+    }
+}
+
+// Function to update image theme
+function updateImageTheme() {
+    const graduationImg = document.getElementById('graduationImage');
+    if (graduationImg) {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'pink';
+        // Only apply filter if it's not the error placeholder
+        if (!graduationImg.src.includes('data:image/svg+xml')) {
+            graduationImg.style.filter = currentTheme === 'black' ? 'brightness(0.9) contrast(1.1)' : 'none';
+        } else {
+            graduationImg.style.filter = 'none';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Update image theme on load
+    updateImageTheme();
+    
+    // Update image source on theme change
+    const themeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'data-theme') {
+                const img = document.getElementById('graduationImage');
+                if (img) updateImageSource(img);
+            }
+        });
+    });
+    
+    // Start observing the document element for attribute changes
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+    
+    // Set initial opacity for notes section
+    const notlarim = document.querySelector('.benim-notlarim');
+    if (notlarim) {
+        notlarim.style.transition = 'opacity 0.3s ease';
+        notlarim.style.opacity = '0';
+    }
+    
+    // Initial adjustments
+    adjustFullName();
+    
+    const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
+    const container = document.querySelector('.yearbook-container');
+
+    function alignUniversityInfo() {
+        const notlarimText = document.querySelector('.benim');
+        const universityInfo = document.querySelector('.university-info');
+        const universityName = document.querySelector('.cover-subtitle');
+        const yearText = document.querySelector('.year');
+
+        if (notlarimText && universityInfo && universityName && yearText) {
+            // Get the position and dimensions of NOTLARIM text
+            const notlarimRect = notlarimText.getBoundingClientRect();
+
+            // Set university info container to match NOTLARIM height
+            universityInfo.style.height = `${notlarimRect.height}px`;
+
+            // Configure university name styling
+            universityName.style.display = 'block';
+            universityName.style.visibility = 'visible';
+            universityName.style.position = 'relative';
+            universityName.style.maxWidth = `${notlarimRect.width}px`; // Match NOTLARIM width
+            universityName.style.width = '100%'; // Use full width
+            universityName.style.textAlign = 'right'; // Right align text
+            universityName.style.whiteSpace = 'nowrap'; // Prevent wrapping
+            universityName.style.overflow = 'hidden'; // Hide overflow
+            universityName.style.textOverflow = 'ellipsis'; // Show ellipsis if needed
+            universityName.style.marginBottom = '5px'; // Exact 5px gap to year
+
+            // Get the school name
+            const schoolName = universityName.textContent.trim();
+
+            // Start with a large size and reduce until it fits
+            const maxPossibleSize = 36; // Maximum font size
+            const minSize = 16; // Minimum font size
+
+            // Reset to measure
+            universityName.style.fontSize = `${maxPossibleSize}px`;
+
+            // Binary search to find the largest font size that fits
+            let low = minSize;
+            let high = maxPossibleSize;
+            let bestSize = minSize;
+
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                universityName.style.fontSize = `${mid}px`;
+
+                if (universityName.scrollWidth <= notlarimRect.width) {
+                    bestSize = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+
+            // Set the best size found
+            universityName.style.fontSize = `${bestSize}px`;
+
+            // Calculate vertical positioning to ensure everything stays within NOTLARIM height
+            const universityNameHeight = universityName.offsetHeight;
+            const yearHeight = yearText.offsetHeight;
+
+            // Calculate total height needed (university name + 5px gap + year)
+            const totalContentHeight = universityNameHeight + 5 + yearHeight;
+
+            // Calculate top padding to center content within NOTLARIM height
+            const topPadding = Math.max(0, (notlarimRect.height - totalContentHeight) / 2);
+
+            // Apply padding
+            universityInfo.style.paddingTop = `${topPadding}px`;
+
+            // Ensure year is positioned correctly
+            yearText.style.marginTop = '5px'; // Exact 5px gap
+
+        }
+    }
+
+    // Run alignment on load and resize
+    alignUniversityInfo();
+    window.addEventListener('resize', alignUniversityInfo);
+    
+    // Adjust name font size on load and resize
+    adjustFullName();
+    window.addEventListener('resize', adjustFullName);
+    
+    // Function to adjust name font size for each line
+    function adjustNameLine(id, maxFontSize = 200, minFontSize = 24) {
+        const el = document.getElementById(id);
+        const container = el.parentElement;
+
+        if (!el || !container) return;
+
+        let fontSize = maxFontSize;
+        el.style.fontSize = fontSize + 'px';
+
+        while ((el.scrollWidth > container.offsetWidth || el.offsetTop + el.offsetHeight > container.offsetHeight) && fontSize > minFontSize) {
+            fontSize -= 2; // Faster reduction by 2px at a time
+            el.style.fontSize = fontSize + 'px';
+        }
+    }
+
+
+    function adjustFullName() {
+        adjustNameLine("firstName");
+        adjustNameLine("lastName");
+        // Make notes section visible after name adjustment
+        const notlarim = document.querySelector('.benim-notlarim');
+        if (notlarim) {
+            notlarim.style.opacity = '1';
+            notlarim.style.visibility = 'visible';
+        }
+    }
+
+    function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function updateCardPositions() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const windowHeight = window.innerHeight;
+        const containerTop = container.offsetTop;
+
+        const secondCard = cards[1];
+        const secondCardRect = secondCard.getBoundingClientRect();
+        const secondCardTop = secondCardRect.top + scrollTop - containerTop;
+
+        const secondCardProgress = (scrollTop - secondCardTop + windowHeight * 0.5) / (windowHeight * 1.2);
+        const easedSecondCardProgress = easeInOutCubic(Math.max(0, Math.min(1, secondCardProgress)));
+
+        // No scaling effect for cover card
+        coverCard.style.transform = 'translateX(0%) scale(1)';
+        coverCard.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+
+        cards.forEach((card, index) => {
+            if (index === 0) return;
+
+            const cardRect = card.getBoundingClientRect();
+            const cardTop = cardRect.top + scrollTop - containerTop;
+            const scrollProgress = (scrollTop - cardTop + windowHeight * 0.5) / (windowHeight * 1.2);
+
+            const easedProgress = easeInOutCubic(Math.max(0, Math.min(1, scrollProgress)));
+
+            if (scrollProgress > 0) {
+                // No scaling effect, only vertical translation
+                const translateY = Math.min(0, -easedProgress * 30);
+                card.style.transform = `translateY(${translateY}px)`;
+                card.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            } else {
+                card.style.transform = 'scale(1) translateY(0)';
+                card.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            }
+        });
+    }
+
+    const lenis = new Lenis({
+        duration: 1.5,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: 'vertical',
+        gestureDirection: 'vertical',
+        smooth: true,
+        smoothTouch: false,
+        touchMultiplier: 2,
+    });
+
+    function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    window.addEventListener('scroll', updateCardPositions);
+    window.addEventListener('resize', updateCardPositions);
+
+    updateCardPositions();
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function toggleMessageVisibility(messageId) {
+    const csrftoken = getCookie('csrftoken');
+    fetch(`/toggle-message-visibility/${messageId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const icon = document.getElementById(`visibility-icon-${messageId}`);
+            const card = document.getElementById(`message-card-${messageId}`);
+            if (data.visible) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                card.classList.remove('message-hidden');
+            } else {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                card.classList.add('message-hidden');
+            }
+        } else {
+            alert('Görünürlük değiştirilemedi: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bir hata oluştu.');
+    });
+}
+</script>
+{% endblock %}

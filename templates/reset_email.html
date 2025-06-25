@@ -1,0 +1,15 @@
+{% autoescape off %}
+Merhaba {{ user.get_full_name|default:user.username }}👋,
+
+Şifre sıfırlama talebiniz başarıyla alındı. Aşağıdaki bağlantıya tıklayarak yeni bir şifre oluşturabilirsiniz:
+
+👉 {{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+⚠️ Bu bağlantı yalnızca bir kez kullanılabilir ve sınırlı bir süre için geçerlidir. Lütfen işlemi kısa sürede tamamlayın.
+
+Eğer bu talebi siz yapmadıysanız, bu e-postayı güvenle yok sayabilirsiniz.
+
+Sevgilerle 😊
+
+🎓 {{ domain }}
+{% endautoescape %}
