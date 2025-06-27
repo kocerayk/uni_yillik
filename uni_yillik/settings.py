@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['209.38.229.98']
+ALLOWED_HOSTS = ['yillik.site', 'www.yillik.site', '209.38.229.98', 'localhost']
 
 # Application definition
 
