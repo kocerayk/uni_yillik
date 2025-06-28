@@ -1,7 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="tr">
-
+<script>
+  // Apply theme immediately before any rendering to prevent flash of default theme
+  (function() {
+    const userTheme = localStorage.getItem('uni-yillik-theme') || 'pink';
+    document.documentElement.setAttribute('data-theme', userTheme);
+  })();
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
