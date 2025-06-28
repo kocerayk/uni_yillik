@@ -9,28 +9,28 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+dotenv_path = BASE_DIR / '.env'
 
+print(f"Loading .env file from: {dotenv_path}")
+if not dotenv_path.exists():
+    raise FileNotFoundError(f".env file not found at {dotenv_path}")
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+load_dotenv(dotenv_path=dotenv_path)
+
+print("DB_PASSWORD from env:", os.getenv('DB_PASSWORD'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['209.38.229.98']
+ALLOWED_HOSTS = ['209.38.229.98', 'yillik.site', 'www.yillik.site']
 
 # Application definition
 
@@ -59,7 +59,9 @@ ROOT_URLCONF = 'uni_yillik.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],  # Global templates dizini
+        'DIRS': [
+            BASE_DIR / "templates",
+            BASE_DIR / "users" / "templates",],
         'APP_DIRS': True,  # Uygulama içindeki templates dizinlerini kullan
         'OPTIONS': {
             'context_processors': [
@@ -170,10 +172,16 @@ GOOGLE_CSE_ID = "64ea4b8fcead34b1a"
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
 
 # Make sure cookies are sent with same-site requests
-CSRF_TRUSTED_ORIGINS = ['http://209.38.229.98', 'https://209.38.229.98']
+CSRF_TRUSTED_ORIGINS = [
+    'https://yillik.site',
+    'https://www.yillik.site',
+    'https://209.38.229.98'
+]
