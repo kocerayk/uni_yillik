@@ -107,33 +107,36 @@ from django.urls import reverse
 @csrf_exempt
 @require_http_methods(["POST"])
 def send_verification_code(request):
+    # Get logger instance
+    logger = logging.getLogger('email_debug')
+    
     try:
-        print("\n=== SEND VERIFICATION CODE ===")
-        print(f"Request method: {request.method}")
-        print(f"Request headers: {dict(request.headers)}")
-        print(f"Request body: {request.body}")
-        print(f"Session ID: {request.session.session_key}")
+        logger.info("=== EMAIL VERIFICATION START ===")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+        logger.info(f"Session ID: {request.session.session_key}")
         
         # Ensure session is created if it doesn't exist
         if not request.session.session_key:
             request.session.create()
-            print(f"Created new session with ID: {request.session.session_key}")
+            logger.info(f"Created new session with ID: {request.session.session_key}")
         
         # Parse JSON data from request body
         try:
             data = json.loads(request.body)
-            print(f"Request data: {data}")
+            logger.info(f"Request data: {data}")
         except json.JSONDecodeError as e:
-            print(f"Invalid JSON data received: {str(e)}")
+            logger.error(f"Invalid JSON data received: {str(e)}")
             return JsonResponse({
                 'success': False, 
                 'error': 'Geçersiz veri formatı. Lütfen tekrar deneyin.'
             })
             
         email = data.get('email', '').strip().lower()
+        logger.info(f"Processing email: {email}")
         
         if not email:
-            print("No email provided")
+            logger.warning("No email provided in request")
             return JsonResponse({
                 'success': False, 
                 'error': 'E-posta adresi gerekli'
@@ -141,7 +144,7 @@ def send_verification_code(request):
             
         # Validate email format
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            print(f"Invalid email format: {email}")
+            logger.warning(f"Invalid email format: {email}")
             return JsonResponse({
                 'success': False, 
                 'error': 'Geçersiz e-posta formatı. Lütfen geçerli bir e-posta adresi girin.'
@@ -149,7 +152,7 @@ def send_verification_code(request):
             
         # Check if email already exists
         if CustomUser.objects.filter(email=email).exists():
-            print(f"Email already exists: {email}")
+            logger.warning(f"Registration attempt with existing email: {email}")
             return JsonResponse({
                 'success': False, 
                 'error': 'Bu e-posta adresi zaten kullanılıyor. Giriş yapmayı deneyin.'
@@ -157,19 +160,17 @@ def send_verification_code(request):
         
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
-        
-        # Store in session with timestamp
-        print(f"Generated code: {code}")
+        logger.info(f"Generated verification code for {email}")
         
         # Ensure we have a valid session
         if not request.session.session_key:
             request.session.create()
-            print(f"Created new session with ID: {request.session.session_key}")
+            logger.info(f"Created new session with ID: {request.session.session_key}")
         
         # Generate timestamp and ensure it's an integer
         verification_timestamp = int(time.time())
         
-        # Write to session with explicit type conversion
+        # Store verification data in session
         request.session['verification_code'] = str(code)
         request.session['verification_email'] = str(email).lower()
         request.session['verification_timestamp'] = int(verification_timestamp)
@@ -182,7 +183,7 @@ def send_verification_code(request):
         request.session.modified = True
         request.session.save()
         
-        print("Session data saved successfully")
+        logger.info("Session data saved successfully")
         
         # SEND THE VERIFICATION EMAIL
         try:
@@ -204,32 +205,28 @@ Teşekkürler!
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [email]
             
-            print(f"Attempting to send email to: {email}")
-            print(f"From: {from_email}")
-            print(f"Subject: {subject}")
-            print(f"SMTP Host: {settings.EMAIL_HOST}")
-            print(f"SMTP Port: {settings.EMAIL_PORT}")
-            print(f"SMTP User: {settings.EMAIL_HOST_USER}")
+            logger.info("=== EMAIL SETTINGS CHECK ===")
+            logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+            logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+            logger.info(f"EMAIL_USE_TLS: {getattr(settings, 'EMAIL_USE_TLS', 'Not set')}")
+            logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+            logger.info(f"DEFAULT_FROM_EMAIL: {from_email}")
+            logger.info(f"Recipient: {email}")
             
             # Test SMTP connection first
-            from django.core.mail import get_connection
+            logger.info("=== TESTING SMTP CONNECTION ===")
             connection = get_connection()
             try:
                 connection.open()
-                print("SMTP connection successful")
+                logger.info("✓ SMTP connection successful")
                 connection.close()
             except Exception as conn_error:
-                print(f"SMTP connection failed: {str(conn_error)}")
+                logger.error(f"✗ SMTP connection failed: {str(conn_error)}")
+                logger.error(f"Connection error type: {type(conn_error).__name__}")
                 raise conn_error
             
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [email]
-            
-            print(f"Attempting to send email to: {email}")
-            print(f"From: {from_email}")
-            print(f"Subject: {subject}")
-            
             # Send the email
+            logger.info("=== SENDING EMAIL ===")
             result = send_mail(
                 subject=subject,
                 message=message,
@@ -238,12 +235,65 @@ Teşekkürler!
                 fail_silently=False,
             )
             
-            print(f"Email sent successfully! Result: {result}")
+            logger.info(f"✓ Email sent successfully! Result: {result}")
+            
+            # Store success in session
+            request.session['email_sent'] = True
+            request.session.save()
+            
+        except SMTPAuthenticationError as auth_error:
+            logger.error(f"✗ SMTP Authentication failed: {str(auth_error)}")
+            logger.error(f"Auth error type: {type(auth_error).__name__}")
+            
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.save()
+            
+            return JsonResponse({
+                'success': False,
+                'error': 'E-posta kimlik doğrulaması başarısız. Lütfen daha sonra tekrar deneyin.',
+                'details': str(auth_error) if settings.DEBUG else None
+            })
+            
+        except SMTPConnectError as conn_error:
+            logger.error(f"✗ SMTP Connection failed: {str(conn_error)}")
+            logger.error(f"Connection error type: {type(conn_error).__name__}")
+            
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.save()
+            
+            return JsonResponse({
+                'success': False,
+                'error': 'E-posta sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.',
+                'details': str(conn_error) if settings.DEBUG else None
+            })
+            
+        except SMTPRecipientsRefused as recip_error:
+            logger.error(f"✗ SMTP Recipients refused: {str(recip_error)}")
+            logger.error(f"Recipients error type: {type(recip_error).__name__}")
+            
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.save()
+            
+            return JsonResponse({
+                'success': False,
+                'error': 'Geçersiz e-posta adresi. Lütfen e-posta adresinizi kontrol edin.',
+                'details': str(recip_error) if settings.DEBUG else None
+            })
             
         except Exception as email_error:
-            print(f"Failed to send email: {str(email_error)}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"✗ Unexpected email error: {str(email_error)}")
+            logger.error(f"Error type: {type(email_error).__name__}")
+            logger.error("Full traceback:")
+            logger.error(traceback.format_exc())
             
             # Clear session data since email failed
             request.session.pop('verification_code', None)
@@ -280,17 +330,21 @@ Teşekkürler!
                           value=str(verification_timestamp), 
                           **cookie_options)
         
-        print("Response created with cookies")
+        logger.info("✓ Response created with cookies")
+        logger.info("=== EMAIL VERIFICATION SUCCESS ===")
         return response
         
     except Exception as e:
-        error_msg = f'Doğrulama kodu gönderilirken bir hata oluştu: {str(e)}'
-        print(error_msg)
-        import traceback
-        traceback.print_exc()
+        logger.critical(f"✗ Critical error in send_verification_code: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error("Full traceback:")
+        logger.error(traceback.format_exc())
+        
         return JsonResponse({
             'success': False, 
-            'error': 'Doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.'
+            'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
+            'details': str(e) if settings.DEBUG else None
+        })
         })
 
 @csrf_exempt
@@ -1424,28 +1478,88 @@ def download_user_data(request):
     return response
 
 
-@require_http_methods(["POST"])
 def send_verification_code(request):
+    """E-posta doğrulama kodu gönder"""
+    
+    # Öncelikle request method kontrolü
+    if request.method != 'POST':
+        print(f"❌ Wrong method: {request.method}")
+        return JsonResponse({'success': False, 'error': 'Geçersiz istek.'})
+    
     try:
-        print("Received verification code request")
-        data = json.loads(request.body)
-        email = data.get('email')
+        print("🔍 === EMAIL VERIFICATION DEBUG START ===")
         
+        # Request body'yi parse et
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+            print(f"📧 Requested email: {email}")
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON decode error: {str(e)}")
+            return JsonResponse({'success': False, 'error': 'Geçersiz veri formatı.'})
+        
+        # Email validasyonu
         if not email:
-            print("No email provided")
-            return JsonResponse({'success': False, 'error': 'E-posta adresi gerekli'})
+            print("❌ Email is empty")
+            return JsonResponse({'success': False, 'error': 'E-posta adresi gerekli.'})
         
-        # Generate a 6-digit verification code
-        code = ''.join(random.choices(string.digits, k=6))
-        print(f"Generated verification code for email: {email}")
+        # Email format kontrolü
+        try:
+            validate_email(email)
+            print(f"✅ Email format is valid: {email}")
+        except ValidationError:
+            print(f"❌ Invalid email format: {email}")
+            return JsonResponse({'success': False, 'error': 'Geçersiz e-posta formatı.'})
         
-        # Store the code in session
-        request.session['verification_code'] = code
-        request.session['verification_email'] = email
+        # Rate limiting kontrolü
+        session_key = f"email_verification_{email}"
+        last_sent = request.session.get(session_key)
+        
+        if last_sent:
+            time_diff = timezone.now().timestamp() - last_sent
+            if time_diff < 60:  # 1 dakika bekleme
+                remaining = 60 - int(time_diff)
+                print(f"⏰ Rate limit hit. Remaining: {remaining} seconds")
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.'
+                })
+        
+        # Doğrulama kodu oluştur
+        code = str(random.randint(100000, 999999))
+        print(f"🔢 Generated verification code: {code}")
+        
+        # E-POSTA GÖNDERME BÖLÜMÜ
+        print("📨 === STARTING EMAIL SEND PROCESS ===")
         
         try:
-            # Prepare email content
-            subject = 'E-posta Doğrulama Kodu'
+            # Email settings kontrolü
+            print(f"⚙️ EMAIL_HOST: {settings.EMAIL_HOST}")
+            print(f"⚙️ EMAIL_PORT: {settings.EMAIL_PORT}")
+            print(f"⚙️ EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+            print(f"⚙️ EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+            print(f"⚙️ DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+            print(f"⚙️ EMAIL_HOST_PASSWORD exists: {'Yes' if settings.EMAIL_HOST_PASSWORD else 'No'}")
+            
+            # SMTP bağlantı testi
+            print("🔌 Testing SMTP connection...")
+            connection = get_connection()
+            
+            try:
+                connection.open()
+                print("✅ SMTP connection successful")
+                connection.close()
+            except Exception as conn_error:
+                print(f"❌ SMTP connection failed: {str(conn_error)}")
+                print(f"❌ Error type: {type(conn_error).__name__}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'E-posta sunucusuna bağlanılamadı.',
+                    'details': str(conn_error) if settings.DEBUG else None
+                })
+            
+            # E-posta içeriği
+            subject = 'Email Doğrulama Kodu'
             message = f'''
 Merhaba,
 
@@ -1453,7 +1567,7 @@ Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
 
 Doğrulama Kodu: {code}
 
-Bu kod 10 dakika geçerlidir.
+Bu kod 5 dakika geçerlidir.
 
 Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
 
@@ -1463,26 +1577,13 @@ Teşekkürler!
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [email]
             
-            # Debug information
-            print(f"Attempting to send email to: {email}")
-            print(f"From: {from_email}")
-            print(f"Subject: {subject}")
-            print(f"SMTP Host: {settings.EMAIL_HOST}")
-            print(f"SMTP Port: {settings.EMAIL_PORT}")
-            print(f"SMTP User: {settings.EMAIL_HOST_USER}")
+            print(f"📧 From: {from_email}")
+            print(f"📧 To: {email}")
+            print(f"📧 Subject: {subject}")
             
-            # Test SMTP connection first
-            from django.core.mail import get_connection
-            connection = get_connection()
-            try:
-                connection.open()
-                print("SMTP connection successful")
-                connection.close()
-            except Exception as conn_error:
-                print(f"SMTP connection failed: {str(conn_error)}")
-                raise conn_error
+            # E-postayı gönder
+            print("🚀 Sending email...")
             
-            # Send the email
             result = send_mail(
                 subject=subject,
                 message=message,
@@ -1491,38 +1592,60 @@ Teşekkürler!
                 fail_silently=False,
             )
             
-            print(f"Email sent successfully! Result: {result}")
-            return JsonResponse({'success': True})
+            print(f"✅ Email sent! Result: {result}")
+            
+            if result == 1:
+                # Session'a kaydet
+                request.session['verification_code'] = code
+                request.session['verification_email'] = email
+                request.session['verification_timestamp'] = timezone.now().timestamp()
+                request.session[session_key] = timezone.now().timestamp()
+                request.session.save()
+                
+                print("✅ Session data saved successfully")
+                print("🎉 === EMAIL VERIFICATION SUCCESS ===")
+                
+                return JsonResponse({'success': True})
+            else:
+                print(f"❌ Email send failed. Result: {result}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'E-posta gönderilemedi. Lütfen tekrar deneyin.'
+                })
             
         except SMTPAuthenticationError as auth_error:
-            print(f"SMTP Authentication failed: {str(auth_error)}")
+            print(f"❌ SMTP Authentication failed: {str(auth_error)}")
             return JsonResponse({
                 'success': False,
-                'error': 'E-posta kimlik doğrulaması başarısız. Lütfen daha sonra tekrar deneyin.',
+                'error': 'E-posta kimlik doğrulaması başarısız.',
                 'details': str(auth_error) if settings.DEBUG else None
             })
             
         except SMTPConnectError as conn_error:
-            print(f"SMTP Connection failed: {str(conn_error)}")
+            print(f"❌ SMTP Connection failed: {str(conn_error)}")
             return JsonResponse({
                 'success': False,
-                'error': 'E-posta sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.',
+                'error': 'E-posta sunucusuna bağlanılamadı.',
                 'details': str(conn_error) if settings.DEBUG else None
             })
             
         except SMTPRecipientsRefused as recip_error:
-            print(f"SMTP Recipients refused: {str(recip_error)}")
+            print(f"❌ SMTP Recipients refused: {str(recip_error)}")
             return JsonResponse({
                 'success': False,
-                'error': 'Geçersiz e-posta adresi. Lütfen e-posta adresinizi kontrol edin.',
+                'error': 'Geçersiz e-posta adresi.',
                 'details': str(recip_error) if settings.DEBUG else None
             })
             
         except Exception as email_error:
-            print(f"Failed to send email: {str(email_error)}")
+            print(f"❌ Unexpected email error: {str(email_error)}")
+            print(f"❌ Error type: {type(email_error).__name__}")
+            
+            import traceback
+            print("❌ Full traceback:")
             traceback.print_exc()
             
-            # Clear session data since email failed
+            # Session'ı temizle
             request.session.pop('verification_code', None)
             request.session.pop('verification_email', None)
             request.session.pop('verification_timestamp', None)
@@ -1530,15 +1653,23 @@ Teşekkürler!
             
             return JsonResponse({
                 'success': False,
-                'error': 'E-posta gönderilemedi. Lütfen e-posta adresinizi kontrol edin ve tekrar deneyin.',
+                'error': 'E-posta gönderilemedi. Lütfen e-posta ayarlarınızı kontrol edin.',
                 'details': str(email_error) if settings.DEBUG else None
             })
+            
+    except Exception as general_error:
+        print(f"❌ General error in send_verification_code: {str(general_error)}")
+        print(f"❌ Error type: {type(general_error).__name__}")
         
-    except json.JSONDecodeError:
-        print("Invalid JSON data received")
-        return JsonResponse({'success': False, 'error': 'Geçersiz veri formatı'})
-    except Exception as e:
-        print(f"Unexpected error in send_verification_code: {str(e)}")
+        import traceback
+        print("❌ Full traceback:")
+        traceback.print_exc()
+        
+        return JsonResponse({
+            'success': False,
+            'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
+            'details': str(general_error) if settings.DEBUG else None
+        })
         return JsonResponse({'success': False, 'error': str(e)})
 
 @require_http_methods(["GET"])
