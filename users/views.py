@@ -230,15 +230,43 @@ Teşekkürler!
                 
             # Send the email
             logger.info("=== SENDING EMAIL ===")
-            result = send_mail(
-                subject=subject,
-                message=message,
-                from_email=from_email,
-                recipient_list=recipient_list,
-                fail_silently=False,
-            )
+            try:
+                result = send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=from_email,
+                    recipient_list=recipient_list,
+                    fail_silently=False,
+                )
                 
-            logger.info(f"✓ Email sent successfully! Result: {result}")
+                if result == 0:
+                    logger.error("✗ Email sending failed: No recipients or other SMTP error")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'E-posta gönderilemedi. Lütfen e-posta adresinizi kontrol edin ve tekrar deneyin.',
+                        'status': 500
+                    }, status=500)
+                    
+                logger.info(f"✓ Email sent successfully! Result: {result}")
+                
+            except Exception as email_error:
+                logger.error(f"✗ Email sending error: {str(email_error)}")
+                logger.error(f"Error type: {type(email_error).__name__}")
+                logger.error("Full traceback:")
+                logger.error(traceback.format_exc())
+                
+                # Clear session data since email failed
+                request.session.pop('verification_code', None)
+                request.session.pop('verification_email', None)
+                request.session.pop('verification_timestamp', None)
+                request.session.save()
+                
+                return JsonResponse({
+                    'success': False,
+                    'error': 'E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
+                    'details': str(email_error) if settings.DEBUG else None,
+                    'status': 500
+                }, status=500)
                 
             # Store success in session
             request.session['email_sent'] = True
@@ -312,10 +340,16 @@ Teşekkürler!
         
         # Create response with cookies as fallback
         max_age = 300  # 5 minutes in seconds
-        response = JsonResponse({
+        response_data = {
             'success': True, 
-            'message': 'Doğrulama kodu e-posta adresinize gönderildi.'
-        })
+            'message': 'Doğrulama kodu e-posta adresinize gönderildi.',
+            'status': 200
+        }
+        
+        response = JsonResponse(response_data, status=200)
+        
+        # Log successful response
+        logger.info(f'✓ Success response: {json.dumps(response_data)}')
         
         # Set secure cookies as fallback
         cookie_options = {
@@ -337,17 +371,33 @@ Teşekkürler!
         logger.info("=== EMAIL VERIFICATION SUCCESS ===")
         return response
         
+    except json.JSONDecodeError as e:
+        logger.error(f'Invalid JSON in request: {str(e)}')
+        return JsonResponse({
+            'success': False,
+            'error': 'Geçersiz istek formatı. Lütfen tekrar deneyin.',
+            'status': 400
+        }, status=400)
+        
     except Exception as e:
-        logger.critical(f"✗ Critical error in send_verification_code: {str(e)}")
-        logger.error(f"Error type: {type(e).__name__}")
-        logger.error("Full traceback:")
+        logger.critical(f'✗ Critical error in send_verification_code: {str(e)}')
+        logger.error(f'Error type: {type(e).__name__}')
+        logger.error('Full traceback:')
         logger.error(traceback.format_exc())
+        
+        # For 500 errors, include more detailed error information
+        error_details = {
+            'error': str(e),
+            'type': type(e).__name__,
+            'traceback': traceback.format_exc() if settings.DEBUG else None
+        }
         
         return JsonResponse({
             'success': False, 
-            'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
-            'details': str(e) if settings.DEBUG else None
-        })
+            'error': 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+            'details': error_details if settings.DEBUG else None,
+            'status': 500
+        }, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
