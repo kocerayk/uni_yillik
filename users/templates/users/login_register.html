@@ -1619,6 +1619,15 @@
         .then(data => {
             console.log('📋 EMAIL DEBUG: Parsed response data:', data);
             
+            // Enhanced error logging - log ALL response properties
+            console.group('🔍 EMAIL DEBUG: Complete response analysis');
+            console.log('🔍 Response keys:', Object.keys(data));
+            console.log('🔍 Success status:', data.success);
+            console.log('🔍 Error message:', data.error);
+            console.log('🔍 Details:', data.details);
+            console.log('🔍 Full response object:', JSON.stringify(data, null, 2));
+            console.groupEnd();
+            
             // Show debug logs if available
             if (data.debug_logs && Array.isArray(data.debug_logs)) {
                 console.group('🐛 EMAIL DEBUG: Server-side logs');
@@ -1632,6 +1641,22 @@
                     }
                 });
                 console.groupEnd();
+            } else {
+                console.warn('⚠️ EMAIL DEBUG: No debug_logs found in response or debug_logs is not an array');
+            }
+            
+            // Check for additional error information fields
+            if (data.error_code) {
+                console.error('❌ EMAIL DEBUG: Error code:', data.error_code);
+            }
+            if (data.error_type) {
+                console.error('❌ EMAIL DEBUG: Error type:', data.error_type);
+            }
+            if (data.stack_trace) {
+                console.error('❌ EMAIL DEBUG: Stack trace:', data.stack_trace);
+            }
+            if (data.validation_errors) {
+                console.error('❌ EMAIL DEBUG: Validation errors:', data.validation_errors);
             }
             
             if (data.success) {
@@ -1649,7 +1674,12 @@
                 
                 if (data.details) {
                     console.error('❌ EMAIL DEBUG: Error details:', data.details);
+                } else {
+                    console.warn('⚠️ EMAIL DEBUG: No details provided in error response');
                 }
+                
+                // Log the raw error for debugging
+                console.error('❌ EMAIL DEBUG: Raw server response for debugging:', data);
                 
                 showMessage(data.error || 'E-posta gönderilemedi.', 'error');
             }
