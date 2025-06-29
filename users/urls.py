@@ -3,6 +3,8 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 from users import views
+from django.contrib.sitemaps.views import sitemap
+from users.sitemaps import StaticViewSitemap, SchoolSitemap, GraduationYearSitemap
 
 def home_redirect(request):
     """Redirect root URL to appropriate page based on authentication status"""
@@ -11,6 +13,12 @@ def home_redirect(request):
     else:
         return redirect('login_register')
 
+sitemaps = {
+    'static': StaticViewSitemap,
+    'schools': SchoolSitemap,
+    'graduation_years': GraduationYearSitemap,
+}
+
 urlpatterns = [
     # Root URL pattern
     path('', home_redirect, name='home'),
@@ -18,6 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # User-related views
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/update-photo/', views.update_profile_photo, name='update_profile_photo'),
     path('profile/update-graduation-photo/', views.update_graduation_photo, name='update_graduation_photo'),
