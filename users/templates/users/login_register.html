@@ -142,60 +142,51 @@
             display: none;
         }
 
-
-
-            .back-btn {
+        .back-btn {
                 font-size: 1.2rem;
-            }
+        }
 
-            .info-tooltip-inside .tooltip-text {
+        .info-tooltip-inside .tooltip-text {
                 font-size: 0.8rem;
                 max-width: 60vw;
-            }
+        }
 
-            .input-group-info-right .info-tooltip-inside {
+        .input-group-info-right .info-tooltip-inside {
                 height: 20px;
                 width: 20px;
-            }
         }
 
-
-
-            .btn {
+        .btn {
                 font-size: 0.95rem;
                 padding: 10px;
-            }
+        }
 
 
-            input, select {
+        input, select {
                 font-size: 0.95rem;
                 padding: 10px 10px 10px 36px;
-            }
+        }
 
 
-            .tooltip-text {
+        .tooltip-text {
                 font-size: 0.75rem;
                 width: 60vw;
-            }
-
-            .alert {
-                font-size: 0.85rem;
-            }
-
-            .form-note {
-                font-size: 0.7rem;
-            }
-
-            .password-requirements ul {
-                font-size: 0.75rem;
-            }
-
-            .back-btn {
-                font-size: 1rem;
-            }
         }
-            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
-            animation: float 3s ease-in-out infinite;
+
+        .alert {
+                font-size: 0.85rem;
+        }
+
+        .form-note {
+                font-size: 0.7rem;
+        }
+
+        .password-requirements ul {
+                font-size: 0.75rem;
+        }
+
+        .back-btn {
+                font-size: 1rem;
         }
 
         @media (max-width: 768px) {
@@ -889,10 +880,11 @@
         </div>
     </div>
 
+    <div id="post-data" data-is-post-request="{% if request.POST %}true{% else %}false{% endif %}"></div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Show messages only after POST
-            const isPostRequest = {% if request.POST %}true{% else %}false{% endif %};
+            const isPostRequest = document.getElementById('post-data').getAttribute('data-is-post-request') === 'true';
             if (isPostRequest) {
                 document.querySelectorAll('.alert-hidden').forEach(alert => {
                     alert.classList.remove('alert-hidden');
@@ -1562,11 +1554,115 @@
             messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             setTimeout(() => {
-                messageDiv.style.transition = 'opacity 0.5s ease';
-                messageDiv.style.opacity = '0';
-                setTimeout(() => messageDiv.remove(), 500);
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
             }, 5000);
         }
+    // Email verification functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailInput = document.getElementById('email');
+        
+        if (emailInput) {
+            emailInput.addEventListener('blur', function() {
+                const email = this.value.trim();
+                console.log('🔍 EMAIL DEBUG: Email blur event triggered with value:', email);
+                
+                if (email && email.includes('@')) {
+                    sendVerificationCode(email);
+                }
+            });
+        }
+    });
+
+    function sendVerificationCode(email) {
+        console.log('🚀 EMAIL DEBUG: Starting sendVerificationCode function');
+        console.log('📧 EMAIL DEBUG: Email parameter:', email);
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        console.log('🔐 EMAIL DEBUG: CSRF token:', csrfToken);
+        
+        // Show loading state
+        console.log('⏳ EMAIL DEBUG: Setting loading state...');
+        
+        // Prepare request data
+        const requestData = {
+            email: email
+        };
+        console.log('📦 EMAIL DEBUG: Request data:', requestData);
+        
+        // Send fetch request
+        console.log('🌐 EMAIL DEBUG: Sending fetch request...');
+        
+        fetch('/send-verification-code/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            console.log('📡 EMAIL DEBUG: Received response');
+            console.log('📊 EMAIL DEBUG: Response status:', response.status);
+            console.log('📊 EMAIL DEBUG: Response statusText:', response.statusText);
+            
+            if (!response.ok) {
+                console.error('❌ EMAIL DEBUG: Response not OK:', response.status, response.statusText);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('📋 EMAIL DEBUG: Parsed response data:', data);
+            
+            // Show debug logs if available
+            if (data.debug_logs && Array.isArray(data.debug_logs)) {
+                console.group('🐛 EMAIL DEBUG: Server-side logs');
+                data.debug_logs.forEach(log => {
+                    if (log.includes('[ERROR]')) {
+                        console.error('🔴', log);
+                    } else if (log.includes('[WARNING]')) {
+                        console.warn('🟡', log);
+                    } else {
+                        console.log('🔵', log);
+                    }
+                });
+                console.groupEnd();
+            }
+            
+            if (data.success) {
+                console.log('✅ EMAIL DEBUG: Verification code sent successfully!');
+                showMessage('Doğrulama kodu e-posta adresinize gönderildi.', 'success');
+                
+                // Show verification code input if it exists
+                const verificationCodeGroup = document.querySelector('.verification-code-group');
+                if (verificationCodeGroup) {
+                    verificationCodeGroup.style.display = 'flex';
+                }
+            } else {
+                console.error('❌ EMAIL DEBUG: Failed to send verification code');
+                console.error('❌ EMAIL DEBUG: Error message:', data.error);
+                
+                if (data.details) {
+                    console.error('❌ EMAIL DEBUG: Error details:', data.details);
+                }
+                
+                showMessage(data.error || 'E-posta gönderilemedi.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('💥 EMAIL DEBUG: Fetch error occurred');
+            console.error('💥 EMAIL DEBUG: Error type:', error.name);
+            console.error('💥 EMAIL DEBUG: Error message:', error.message);
+            console.error('💥 EMAIL DEBUG: Full error:', error);
+            
+            showMessage('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.', 'error');
+        });
+    }
     </script>
 </body>
 </html>

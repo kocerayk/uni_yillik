@@ -204,7 +204,7 @@ Teşekkürler!
             
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [email]
-            
+                
             logger.info("=== EMAIL SETTINGS CHECK ===")
             logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
             logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
@@ -212,7 +212,7 @@ Teşekkürler!
             logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
             logger.info(f"DEFAULT_FROM_EMAIL: {from_email}")
             logger.info(f"Recipient: {email}")
-            
+                
             # Test SMTP connection first
             logger.info("=== TESTING SMTP CONNECTION ===")
             connection = get_connection()
@@ -224,7 +224,7 @@ Teşekkürler!
                 logger.error(f"✗ SMTP connection failed: {str(conn_error)}")
                 logger.error(f"Connection error type: {type(conn_error).__name__}")
                 raise conn_error
-            
+                
             # Send the email
             logger.info("=== SENDING EMAIL ===")
             result = send_mail(
@@ -234,9 +234,9 @@ Teşekkürler!
                 recipient_list=recipient_list,
                 fail_silently=False,
             )
-            
+                
             logger.info(f"✓ Email sent successfully! Result: {result}")
-            
+                
             # Store success in session
             request.session['email_sent'] = True
             request.session.save()
@@ -344,7 +344,6 @@ Teşekkürler!
             'success': False, 
             'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
             'details': str(e) if settings.DEBUG else None
-        })
         })
 
 @csrf_exempt

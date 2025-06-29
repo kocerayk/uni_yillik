@@ -45,6 +45,9 @@ urlpatterns = [
     path('download-user-data/', views.download_user_data, name='download_user_data'),
     path('search/', views.search_users, name='search_users'),
 
+    # Email verification
+    path('send-verification-code/', views.send_verification_code, name='send_verification_code'),
+    
     # Login and Register view (using login_and_register)
     path('login/', views.login_and_register, name='login_register'),
     path('logout/', views.user_logout, name='user_logout'),
