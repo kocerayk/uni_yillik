@@ -54,6 +54,7 @@ from urllib.parse import urljoin
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.core.mail import get_connection
 
 logger = logging.getLogger(__name__)
 
