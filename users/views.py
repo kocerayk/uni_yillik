@@ -1479,36 +1479,54 @@ def download_user_data(request):
 
 def send_verification_code(request):
     """E-posta doğrulama kodu gönder"""
-    
-    # Öncelikle request method kontrolü
-    if request.method != 'POST':
-        print(f"❌ Wrong method: {request.method}")
-        return JsonResponse({'success': False, 'error': 'Geçersiz istek.'})
+    debug_logs = []
     
     try:
-        print("🔍 === EMAIL VERIFICATION DEBUG START ===")
+        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG START ===")
+        
+        # Request method kontrolü
+        if request.method != 'POST':
+            debug_logs.append(f"[ERROR] Invalid request method: {request.method}")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz istek.',
+                'debug_logs': debug_logs
+            })
         
         # Request body'yi parse et
         try:
             data = json.loads(request.body)
             email = data.get('email', '').strip().lower()
-            print(f"📧 Requested email: {email}")
+            debug_logs.append(f"[INFO] Requested email: {email}")
         except json.JSONDecodeError as e:
-            print(f"❌ JSON decode error: {str(e)}")
-            return JsonResponse({'success': False, 'error': 'Geçersiz veri formatı.'})
+            debug_logs.append(f"[ERROR] JSON decode error: {str(e)}")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz veri formatı.',
+                'debug_logs': debug_logs
+            })
         
         # Email validasyonu
         if not email:
-            print("❌ Email is empty")
-            return JsonResponse({'success': False, 'error': 'E-posta adresi gerekli.'})
+            debug_logs.append("[ERROR] Email is empty")
+            return JsonResponse({
+                'success': False, 
+                'error': 'E-posta adresi gerekli.',
+                'debug_logs': debug_logs
+            })
         
         # Email format kontrolü
         try:
             validate_email(email)
-            print(f"✅ Email format is valid: {email}")
-        except ValidationError:
-            print(f"❌ Invalid email format: {email}")
-            return JsonResponse({'success': False, 'error': 'Geçersiz e-posta formatı.'})
+            debug_logs.append(f"[INFO] Email format is valid: {email}")
+        except ValidationError as e:
+            debug_logs.append(f"[ERROR] Invalid email format: {str(e)}")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz e-posta formatı.',
+                'details': str(e),
+                'debug_logs': debug_logs
+            })
         
         # Rate limiting kontrolü
         session_key = f"email_verification_{email}"
@@ -1518,43 +1536,46 @@ def send_verification_code(request):
             time_diff = timezone.now().timestamp() - last_sent
             if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
-                print(f"⏰ Rate limit hit. Remaining: {remaining} seconds")
+                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
                 return JsonResponse({
                     'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.'
+                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
+                    'debug_logs': debug_logs
                 })
         
         # Doğrulama kodu oluştur
         code = str(random.randint(100000, 999999))
-        print(f"🔢 Generated verification code: {code}")
+        debug_logs.append(f"[INFO] Generated verification code: {code}")
         
         # E-POSTA GÖNDERME BÖLÜMÜ
-        print("📨 === STARTING EMAIL SEND PROCESS ===")
+        debug_logs.append("[INFO] === STARTING EMAIL SEND PROCESS ===")
         
         try:
             # Email settings kontrolü
-            print(f"⚙️ EMAIL_HOST: {settings.EMAIL_HOST}")
-            print(f"⚙️ EMAIL_PORT: {settings.EMAIL_PORT}")
-            print(f"⚙️ EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
-            print(f"⚙️ EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-            print(f"⚙️ DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
-            print(f"⚙️ EMAIL_HOST_PASSWORD exists: {'Yes' if settings.EMAIL_HOST_PASSWORD else 'No'}")
+            debug_logs.append(f"[INFO] EMAIL_BACKEND: {getattr(settings, 'EMAIL_BACKEND', 'Not set')}")
+            debug_logs.append(f"[INFO] EMAIL_HOST: {getattr(settings, 'EMAIL_HOST', 'Not set')}")
+            debug_logs.append(f"[INFO] EMAIL_PORT: {getattr(settings, 'EMAIL_PORT', 'Not set')}")
+            debug_logs.append(f"[INFO] EMAIL_USE_TLS: {getattr(settings, 'EMAIL_USE_TLS', 'Not set')}")
+            debug_logs.append(f"[INFO] EMAIL_HOST_USER: {getattr(settings, 'EMAIL_HOST_USER', 'Not set')}")
+            debug_logs.append(f"[INFO] DEFAULT_FROM_EMAIL: {getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set')}")
             
             # SMTP bağlantı testi
-            print("🔌 Testing SMTP connection...")
+            debug_logs.append("[INFO] Testing SMTP connection...")
             connection = get_connection()
             
             try:
                 connection.open()
-                print("✅ SMTP connection successful")
+                debug_logs.append("[SUCCESS] SMTP connection successful")
                 connection.close()
             except Exception as conn_error:
-                print(f"❌ SMTP connection failed: {str(conn_error)}")
-                print(f"❌ Error type: {type(conn_error).__name__}")
+                error_msg = f"SMTP connection failed: {str(conn_error)} (Type: {type(conn_error).__name__})"
+                debug_logs.append(f"[ERROR] {error_msg}")
+                debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
                 return JsonResponse({
                     'success': False,
                     'error': 'E-posta sunucusuna bağlanılamadı.',
-                    'details': str(conn_error) if settings.DEBUG else None
+                    'details': str(conn_error) if settings.DEBUG else None,
+                    'debug_logs': debug_logs
                 })
             
             # E-posta içeriği
@@ -1576,12 +1597,12 @@ Teşekkürler!
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [email]
             
-            print(f"📧 From: {from_email}")
-            print(f"📧 To: {email}")
-            print(f"📧 Subject: {subject}")
+            debug_logs.append(f"[INFO] From: {from_email}")
+            debug_logs.append(f"[INFO] To: {email}")
+            debug_logs.append(f"[INFO] Subject: {subject}")
             
             # E-postayı gönder
-            print("🚀 Sending email...")
+            debug_logs.append("[INFO] Sending email...")
             
             result = send_mail(
                 subject=subject,
@@ -1591,7 +1612,7 @@ Teşekkürler!
                 fail_silently=False,
             )
             
-            print(f"✅ Email sent! Result: {result}")
+            debug_logs.append(f"[INFO] Email send result: {result}")
             
             if result == 1:
                 # Session'a kaydet
@@ -1601,48 +1622,61 @@ Teşekkürler!
                 request.session[session_key] = timezone.now().timestamp()
                 request.session.save()
                 
-                print("✅ Session data saved successfully")
-                print("🎉 === EMAIL VERIFICATION SUCCESS ===")
+                debug_logs.append("[SUCCESS] Session data saved successfully")
+                debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
                 
-                return JsonResponse({'success': True})
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Doğrulama kodu gönderildi.',
+                    'debug_logs': debug_logs
+                })
             else:
-                print(f"❌ Email send failed. Result: {result}")
+                error_msg = f"Email send failed. Result: {result}"
+                debug_logs.append(f"[ERROR] {error_msg}")
                 return JsonResponse({
                     'success': False,
-                    'error': 'E-posta gönderilemedi. Lütfen tekrar deneyin.'
+                    'error': 'E-posta gönderilemedi. Lütfen tekrar deneyin.',
+                    'details': error_msg,
+                    'debug_logs': debug_logs
                 })
             
         except SMTPAuthenticationError as auth_error:
-            print(f"❌ SMTP Authentication failed: {str(auth_error)}")
+            error_msg = f"SMTP Authentication failed: {str(auth_error)}"
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             return JsonResponse({
                 'success': False,
                 'error': 'E-posta kimlik doğrulaması başarısız.',
-                'details': str(auth_error) if settings.DEBUG else None
+                'details': str(auth_error) if settings.DEBUG else None,
+                'debug_logs': debug_logs
             })
             
         except SMTPConnectError as conn_error:
-            print(f"❌ SMTP Connection failed: {str(conn_error)}")
+            error_msg = f"SMTP Connection failed: {str(conn_error)}"
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             return JsonResponse({
                 'success': False,
                 'error': 'E-posta sunucusuna bağlanılamadı.',
-                'details': str(conn_error) if settings.DEBUG else None
+                'details': str(conn_error) if settings.DEBUG else None,
+                'debug_logs': debug_logs
             })
             
         except SMTPRecipientsRefused as recip_error:
-            print(f"❌ SMTP Recipients refused: {str(recip_error)}")
+            error_msg = f"SMTP Recipients refused: {str(recip_error)}"
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             return JsonResponse({
                 'success': False,
                 'error': 'Geçersiz e-posta adresi.',
-                'details': str(recip_error) if settings.DEBUG else None
+                'details': str(recip_error) if settings.DEBUG else None,
+                'debug_logs': debug_logs
             })
             
         except Exception as email_error:
-            print(f"❌ Unexpected email error: {str(email_error)}")
-            print(f"❌ Error type: {type(email_error).__name__}")
-            
-            import traceback
-            print("❌ Full traceback:")
-            traceback.print_exc()
+            error_msg = f"Unexpected email error: {str(email_error)} (Type: {type(email_error).__name__})"
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             
             # Session'ı temizle
             request.session.pop('verification_code', None)
@@ -1653,21 +1687,28 @@ Teşekkürler!
             return JsonResponse({
                 'success': False,
                 'error': 'E-posta gönderilemedi. Lütfen e-posta ayarlarınızı kontrol edin.',
-                'details': str(email_error) if settings.DEBUG else None
+                'details': str(email_error) if settings.DEBUG else None,
+                'error_type': type(email_error).__name__,
+                'stack_trace': traceback.format_exc() if settings.DEBUG else None,
+                'debug_logs': debug_logs
             })
             
     except Exception as general_error:
-        print(f"❌ General error in send_verification_code: {str(general_error)}")
-        print(f"❌ Error type: {type(general_error).__name__}")
+        error_msg = f"General error in send_verification_code: {str(general_error)} (Type: {type(general_error).__name__})"
+        debug_logs.append(f"[ERROR] {error_msg}")
+        debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
         
-        import traceback
-        print("❌ Full traceback:")
-        traceback.print_exc()
+        # Log the error to server logs as well
+        logger.error(error_msg)
+        logger.error(traceback.format_exc())
         
         return JsonResponse({
             'success': False,
             'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
-            'details': str(general_error) if settings.DEBUG else None
+            'details': str(general_error) if settings.DEBUG else None,
+            'error_type': type(general_error).__name__,
+            'stack_trace': traceback.format_exc() if settings.DEBUG else None,
+            'debug_logs': debug_logs
         })
         return JsonResponse({'success': False, 'error': str(e)})
 

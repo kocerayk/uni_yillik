@@ -19,11 +19,22 @@ from django.urls import path, include
 from users import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.sitemaps.views import sitemap
+from users.sitemaps import StaticViewSitemap, SchoolSitemap, GraduationYearSitemap
+
+# Sitemap configuration
+sitemaps = {
+    'static': StaticViewSitemap,
+    'schools': SchoolSitemap,
+    'graduation_years': GraduationYearSitemap,
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
     path('search/', views.search_users, name='search_users'),
+    # Sitemap URL
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     # Account-related views
     path('login/', views.login_and_register, name='login_register'),
     path('logout/', views.user_logout, name='user_logout'),
