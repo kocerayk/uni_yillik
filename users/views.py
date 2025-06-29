@@ -1540,10 +1540,16 @@ def send_verification_code(request):
         # Request method kontrolü
         if request.method != 'POST':
             debug_logs.append(f"[ERROR] Invalid request method: {request.method}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False, 
                 'error': 'Geçersiz istek.',
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'request_validation_failed',
+                    'reason': 'invalid_http_method',
+                    'method': request.method
+                }
             })
         
         # Request body'yi parse et
@@ -1553,19 +1559,31 @@ def send_verification_code(request):
             debug_logs.append(f"[INFO] Requested email: {email}")
         except json.JSONDecodeError as e:
             debug_logs.append(f"[ERROR] JSON decode error: {str(e)}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False, 
                 'error': 'Geçersiz veri formatı.',
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'request_validation_failed',
+                    'reason': 'invalid_json_format',
+                    'error': str(e)
+                }
             })
         
         # Email validasyonu
         if not email:
             debug_logs.append("[ERROR] Email is empty")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False, 
                 'error': 'E-posta adresi gerekli.',
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'validation_failed',
+                    'reason': 'email_required',
+                    'email_provided': False
+                }
             })
         
         # Email format kontrolü
@@ -1574,11 +1592,18 @@ def send_verification_code(request):
             debug_logs.append(f"[INFO] Email format is valid: {email}")
         except ValidationError as e:
             debug_logs.append(f"[ERROR] Invalid email format: {str(e)}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False, 
                 'error': 'Geçersiz e-posta formatı.',
                 'details': str(e),
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'validation_failed',
+                    'reason': 'invalid_email_format',
+                    'email_provided': email,
+                    'validation_error': str(e)
+                }
             })
         
         # Rate limiting kontrolü
@@ -1590,10 +1615,17 @@ def send_verification_code(request):
             if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False, 
                     'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
-                    'debug_logs': debug_logs
+                    'debug_logs': debug_logs,
+                    'debug_info': {
+                        'action': 'rate_limit_exceeded',
+                        'seconds_since_last_request': int(time_diff),
+                        'seconds_remaining': remaining,
+                        'email': email
+                    }
                 })
         
         # Doğrulama kodu oluştur
@@ -1678,52 +1710,88 @@ Teşekkürler!
                 debug_logs.append("[SUCCESS] Session data saved successfully")
                 debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
                 
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': True,
                     'message': 'Doğrulama kodu gönderildi.',
-                    'debug_logs': debug_logs
+                    'debug_logs': debug_logs,
+                    'debug_info': {
+                        'action': 'verification_code_sent',
+                        'email': email,
+                        'code_length': len(code),
+                        'timestamp': timezone.now().isoformat()
+                    }
                 })
             else:
                 error_msg = f"Email send failed. Result: {result}"
                 debug_logs.append(f"[ERROR] {error_msg}")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False,
                     'error': 'E-posta gönderilemedi. Lütfen tekrar deneyin.',
                     'details': error_msg,
-                    'debug_logs': debug_logs
+                    'debug_logs': debug_logs,
+                    'debug_info': {
+                        'action': 'email_send_failed',
+                        'reason': 'send_mail_returned_false',
+                        'email': email,
+                        'result': str(result)
+                    }
                 })
             
         except SMTPAuthenticationError as auth_error:
             error_msg = f"SMTP Authentication failed: {str(auth_error)}"
             debug_logs.append(f"[ERROR] {error_msg}")
             debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False,
                 'error': 'E-posta kimlik doğrulaması başarısız.',
                 'details': str(auth_error) if settings.DEBUG else None,
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'smtp_authentication_failed',
+                    'error_type': type(auth_error).__name__,
+                    'email': email,
+                    'timestamp': timezone.now().isoformat()
+                }
             })
             
         except SMTPConnectError as conn_error:
             error_msg = f"SMTP Connection failed: {str(conn_error)}"
             debug_logs.append(f"[ERROR] {error_msg}")
             debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False,
                 'error': 'E-posta sunucusuna bağlanılamadı.',
                 'details': str(conn_error) if settings.DEBUG else None,
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'smtp_connection_failed',
+                    'error_type': type(conn_error).__name__,
+                    'email': email,
+                    'timestamp': timezone.now().isoformat()
+                }
             })
             
         except SMTPRecipientsRefused as recip_error:
             error_msg = f"SMTP Recipients refused: {str(recip_error)}"
             debug_logs.append(f"[ERROR] {error_msg}")
             debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False,
                 'error': 'Geçersiz e-posta adresi.',
                 'details': str(recip_error) if settings.DEBUG else None,
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'email_recipient_refused',
+                    'error_type': type(recip_error).__name__,
+                    'email': email,
+                    'recipients': str(recip_error.recipients) if hasattr(recip_error, 'recipients') else 'unknown',
+                    'timestamp': timezone.now().isoformat()
+                }
             })
             
         except Exception as email_error:
@@ -1737,13 +1805,21 @@ Teşekkürler!
             request.session.pop('verification_timestamp', None)
             request.session.save()
             
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             return JsonResponse({
                 'success': False,
                 'error': 'E-posta gönderilemedi. Lütfen e-posta ayarlarınızı kontrol edin.',
                 'details': str(email_error) if settings.DEBUG else None,
                 'error_type': type(email_error).__name__,
                 'stack_trace': traceback.format_exc() if settings.DEBUG else None,
-                'debug_logs': debug_logs
+                'debug_logs': debug_logs,
+                'debug_info': {
+                    'action': 'email_send_error',
+                    'error_type': type(email_error).__name__,
+                    'email': email,
+                    'timestamp': timezone.now().isoformat(),
+                    'session_cleared': True
+                }
             })
             
     except Exception as general_error:
@@ -1755,13 +1831,21 @@ Teşekkürler!
         logger.error(error_msg)
         logger.error(traceback.format_exc())
         
+        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
         return JsonResponse({
             'success': False,
             'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
             'details': str(general_error) if settings.DEBUG else None,
             'error_type': type(general_error).__name__,
             'stack_trace': traceback.format_exc() if settings.DEBUG else None,
-            'debug_logs': debug_logs
+            'debug_logs': debug_logs,
+            'debug_info': {
+                'action': 'unexpected_error',
+                'error_type': type(general_error).__name__,
+                'timestamp': timezone.now().isoformat(),
+                'session_data_available': 'verification_code' in request.session,
+                'email_attempted': request.session.get('verification_email')
+            }
         })
         return JsonResponse({'success': False, 'error': str(e)})
 
