@@ -2,7 +2,9 @@ import json
 import random
 import string
 import time
+import traceback
 from django.conf import settings
+from smtplib import SMTPAuthenticationError, SMTPConnectError, SMTPRecipientsRefused
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
 from django.contrib.auth.tokens import default_token_generator
@@ -198,6 +200,27 @@ Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
 
 Teşekkürler!
             '''.strip()
+            
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [email]
+            
+            print(f"Attempting to send email to: {email}")
+            print(f"From: {from_email}")
+            print(f"Subject: {subject}")
+            print(f"SMTP Host: {settings.EMAIL_HOST}")
+            print(f"SMTP Port: {settings.EMAIL_PORT}")
+            print(f"SMTP User: {settings.EMAIL_HOST_USER}")
+            
+            # Test SMTP connection first
+            from django.core.mail import get_connection
+            connection = get_connection()
+            try:
+                connection.open()
+                print("SMTP connection successful")
+                connection.close()
+            except Exception as conn_error:
+                print(f"SMTP connection failed: {str(conn_error)}")
+                raise conn_error
             
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [email]
@@ -1421,30 +1444,94 @@ def send_verification_code(request):
         request.session['verification_email'] = email
         
         try:
-            # Send the verification email
-            print(f"Attempting to send email to {email}")
-            send_mail(
-                    'E-posta Doğrulama Kodu',
-                    f'''
-                    
-                Doğrulama kodunuz: {code}
+            # Prepare email content
+            subject = 'E-posta Doğrulama Kodu'
+            message = f'''
+Merhaba,
 
-                Bu kod 10 dakika boyunca geçerlidir.
+Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
 
-                İyi günler dileriz! 😊
-                ''',
-                    settings.EMAIL_HOST_USER,
-                    [email],
-                    fail_silently=False,
-                )
-            print("Email sent successfully")
+Doğrulama Kodu: {code}
+
+Bu kod 10 dakika geçerlidir.
+
+Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+
+Teşekkürler!
+            '''.strip()
             
-            return JsonResponse({'success': True, 'code': code})
-        except Exception as e:
-            print(f"Error sending email: {str(e)}")
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [email]
+            
+            # Debug information
+            print(f"Attempting to send email to: {email}")
+            print(f"From: {from_email}")
+            print(f"Subject: {subject}")
+            print(f"SMTP Host: {settings.EMAIL_HOST}")
+            print(f"SMTP Port: {settings.EMAIL_PORT}")
+            print(f"SMTP User: {settings.EMAIL_HOST_USER}")
+            
+            # Test SMTP connection first
+            from django.core.mail import get_connection
+            connection = get_connection()
+            try:
+                connection.open()
+                print("SMTP connection successful")
+                connection.close()
+            except Exception as conn_error:
+                print(f"SMTP connection failed: {str(conn_error)}")
+                raise conn_error
+            
+            # Send the email
+            result = send_mail(
+                subject=subject,
+                message=message,
+                from_email=from_email,
+                recipient_list=recipient_list,
+                fail_silently=False,
+            )
+            
+            print(f"Email sent successfully! Result: {result}")
+            return JsonResponse({'success': True})
+            
+        except SMTPAuthenticationError as auth_error:
+            print(f"SMTP Authentication failed: {str(auth_error)}")
             return JsonResponse({
-                'success': False, 
-                'error': 'E-posta gönderilemedi. Lütfen e-posta ayarlarınızı kontrol edin.'
+                'success': False,
+                'error': 'E-posta kimlik doğrulaması başarısız. Lütfen daha sonra tekrar deneyin.',
+                'details': str(auth_error) if settings.DEBUG else None
+            })
+            
+        except SMTPConnectError as conn_error:
+            print(f"SMTP Connection failed: {str(conn_error)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'E-posta sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.',
+                'details': str(conn_error) if settings.DEBUG else None
+            })
+            
+        except SMTPRecipientsRefused as recip_error:
+            print(f"SMTP Recipients refused: {str(recip_error)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Geçersiz e-posta adresi. Lütfen e-posta adresinizi kontrol edin.',
+                'details': str(recip_error) if settings.DEBUG else None
+            })
+            
+        except Exception as email_error:
+            print(f"Failed to send email: {str(email_error)}")
+            traceback.print_exc()
+            
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.save()
+            
+            return JsonResponse({
+                'success': False,
+                'error': 'E-posta gönderilemedi. Lütfen e-posta adresinizi kontrol edin ve tekrar deneyin.',
+                'details': str(email_error) if settings.DEBUG else None
             })
         
     except json.JSONDecodeError:
