@@ -52,6 +52,8 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 from urllib.parse import urljoin
 from django.core.exceptions import SuspiciousFileOperation
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
