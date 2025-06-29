@@ -107,8 +107,10 @@ from django.urls import reverse
 def send_verification_code(request):
     try:
         print("\n=== SEND VERIFICATION CODE ===")
+        print(f"Request method: {request.method}")
+        print(f"Request headers: {dict(request.headers)}")
+        print(f"Request body: {request.body}")
         print(f"Session ID: {request.session.session_key}")
-        print(f"Session data before: {request.session.items()}")
         
         # Ensure session is created if it doesn't exist
         if not request.session.session_key:

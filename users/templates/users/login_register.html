@@ -1175,25 +1175,47 @@
             const verificationCodeInput = document.getElementById('verification_code');
             const registerSubmit = document.getElementById('registerSubmit');
             let verificationCode = '';
-            let verificationEmail = ''; // Global variable to track the email used for verification
+            let verificationEmail = '';
+
+            console.log('Email input element:', emailInput); // Debug için
 
             if (emailInput) {
-                emailInput.addEventListener('blur', async function() {
-                    const email = this.value;
-                    if (!email) return;
+                console.log('Email input found, adding blur listener');
+                
+                emailInput.addEventListener('blur', async function(e) {
+                    const email = this.value.trim();
+                    console.log('Email blur event triggered with value:', email);
+                    
+                    if (!email) {
+                        console.log('Email is empty, skipping verification');
+                        return;
+                    }
+
+                    // Email format validation
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!emailRegex.test(email)) {
+                        console.log('Invalid email format');
+                        showMessage('Geçerli bir e-posta adresi girin', 'error', 'registerMessages');
+                        return;
+                    }
 
                     try {
                         console.log('Sending verification code request for email:', email);
-                        verificationEmail = email; // Store the email being verified
+                        verificationEmail = email;
+                        
+                        // CSRF token'ı al
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        console.log('CSRF token:', csrfToken);
+                        
                         const response = await fetch('{% url "send_verification_code" %}', {
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                'X-CSRFToken': csrfToken
                             },
-                            body: JSON.stringify({ email })
+                            body: JSON.stringify({ email: email })
                         });
 
                         console.log('Verification code response status:', response.status);
@@ -1209,15 +1231,12 @@
 
                         if (data.success) {
                             verificationCode = data.code;
-                            verificationCodeGroup.style.display = 'block';
-                            showMessage('Doğrulama kodu e-posta adresinize gönderildi', 'success', 'registerMessages');
-
-                            // Update the email used for verification in the form
-                            const emailField = document.getElementById('email');
-                            if (emailField) {
-                                emailField.dataset.verifiedEmail = verificationEmail;
+                            if (verificationCodeGroup) {
+                                verificationCodeGroup.style.display = 'block';
                             }
+                            showMessage('Doğrulama kodu e-posta adresinize gönderildi', 'success', 'registerMessages');
                         } else {
+                            verificationEmail = '';
                             verificationEmail = ''; // Reset on failure
                             showMessage(data.error || 'Doğrulama kodu gönderilemedi', 'error', 'registerMessages');
                         }
