@@ -62,6 +62,20 @@ from django.core.exceptions import SuspiciousFileOperation
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.mail import get_connection
+import json
+import re
+import random
+import string
+import time
+import logging
+import traceback
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+from uni_yillik.models import CustomUser  # models.py dosyanın yolu
+from utils.email_utils import send_verification_email
 
 logger = logging.getLogger(__name__)
 
