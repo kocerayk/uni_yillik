@@ -148,7 +148,7 @@ LOGOUT_REDIRECT_URL = 'login_register'
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 # Gmail API settings
-GMAIL_API_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'gmail_credentials.json')
+GMAIL_API_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'credentials.json')
 GMAIL_API_TOKEN_FILE = os.path.join(BASE_DIR, 'gmail_token.json')
 GMAIL_API_SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 DEFAULT_FROM_EMAIL = os.getenv('GMAIL_FROM_EMAIL', 'your-email@gmail.com')
