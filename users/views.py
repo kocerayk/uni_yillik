@@ -3,13 +3,19 @@ import random
 import string
 import time
 import traceback
+import base64
+import logging
+from email.mime.text import MIMEText
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 from django.conf import settings
-from smtplib import SMTPAuthenticationError, SMTPConnectError, SMTPRecipientsRefused
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail
+from django.core.mail import send_mail, get_connection
 from django.db import IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -1530,6 +1536,56 @@ def download_user_data(request):
     return response
 
 
+def send_gmail_email(to_email, subject, message_text):
+    """Gmail API kullanarak email gönder"""
+    logger = logging.getLogger('email_debug')
+    
+    try:
+        # Credentials yükle
+        creds = None
+        token_file = settings.GMAIL_API_TOKEN_FILE
+        credentials_file = settings.GMAIL_API_CREDENTIALS_FILE
+        
+        if os.path.exists(token_file):
+            creds = Credentials.from_authorized_user_file(token_file, settings.GMAIL_API_SCOPES)
+        
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    credentials_file, settings.GMAIL_API_SCOPES)
+                creds = flow.run_local_server(port=0)
+            
+            # Token'ı kaydet
+            with open(token_file, 'w') as token:
+                token.write(creds.to_json())
+        
+        # Gmail service oluştur
+        service = build('gmail', 'v1', credentials=creds)
+        
+        # Email mesajını oluştur
+        message = MIMEText(message_text, 'plain', 'utf-8')
+        message['to'] = to_email
+        message['from'] = settings.DEFAULT_FROM_EMAIL
+        message['subject'] = subject
+        
+        # Mesajı encode et
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+        
+        # Gmail API ile gönder
+        send_message = service.users().messages().send(
+            userId='me',
+            body={'raw': raw_message}
+        ).execute()
+        
+        logger.info(f"✓ Gmail API ile email gönderildi: {send_message['id']}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"✗ Gmail API email hatası: {str(e)}")
+        raise e
+
 def send_verification_code(request):
     """E-posta doğrulama kodu gönder"""
     debug_logs = []
@@ -1633,33 +1689,22 @@ def send_verification_code(request):
         debug_logs.append(f"[INFO] Generated verification code: {code}")
         
         # E-POSTA GÖNDERME BÖLÜMÜ
-        debug_logs.append("[INFO] === STARTING EMAIL SEND PROCESS ===")
+        debug_logs.append("[INFO] === STARTING GMAIL API EMAIL SEND PROCESS ===")
         
         try:
-            # Email settings kontrolü
-            debug_logs.append(f"[INFO] EMAIL_BACKEND: {getattr(settings, 'EMAIL_BACKEND', 'Not set')}")
-            debug_logs.append(f"[INFO] EMAIL_HOST: {getattr(settings, 'EMAIL_HOST', 'Not set')}")
-            debug_logs.append(f"[INFO] EMAIL_PORT: {getattr(settings, 'EMAIL_PORT', 'Not set')}")
-            debug_logs.append(f"[INFO] EMAIL_USE_TLS: {getattr(settings, 'EMAIL_USE_TLS', 'Not set')}")
-            debug_logs.append(f"[INFO] EMAIL_HOST_USER: {getattr(settings, 'EMAIL_HOST_USER', 'Not set')}")
+            # Gmail API ayarlarını kontrol et
+            debug_logs.append(f"[INFO] GMAIL_API_CREDENTIALS_FILE: {getattr(settings, 'GMAIL_API_CREDENTIALS_FILE', 'Not set')}")
+            debug_logs.append(f"[INFO] GMAIL_API_TOKEN_FILE: {getattr(settings, 'GMAIL_API_TOKEN_FILE', 'Not set')}")
             debug_logs.append(f"[INFO] DEFAULT_FROM_EMAIL: {getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set')}")
             
-            # SMTP bağlantı testi
-            debug_logs.append("[INFO] Testing SMTP connection...")
-            connection = get_connection()
-            
-            try:
-                connection.open()
-                debug_logs.append("[SUCCESS] SMTP connection successful")
-                connection.close()
-            except Exception as conn_error:
-                error_msg = f"SMTP connection failed: {str(conn_error)} (Type: {type(conn_error).__name__})"
+            # Gerekli dosyaların varlığını kontrol et
+            if not os.path.exists(settings.GMAIL_API_CREDENTIALS_FILE):
+                error_msg = f"Gmail API credentials file not found: {settings.GMAIL_API_CREDENTIALS_FILE}"
                 debug_logs.append(f"[ERROR] {error_msg}")
-                debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
                 return JsonResponse({
                     'success': False,
-                    'error': 'E-posta sunucusuna bağlanılamadı.',
-                    'details': str(conn_error) if settings.DEBUG else None,
+                    'error': 'E-posta gönderimi için gerekli yapılandırma dosyası bulunamadı.',
+                    'details': error_msg if settings.DEBUG else None,
                     'debug_logs': debug_logs
                 })
             
@@ -1679,27 +1724,15 @@ Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
 Teşekkürler!
             '''.strip()
             
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [email]
-            
-            debug_logs.append(f"[INFO] From: {from_email}")
-            debug_logs.append(f"[INFO] To: {email}")
+            debug_logs.append(f"[INFO] Sending email via Gmail API to: {email}")
+            debug_logs.append(f"[INFO] From: {settings.DEFAULT_FROM_EMAIL}")
             debug_logs.append(f"[INFO] Subject: {subject}")
             
-            # E-postayı gönder
-            debug_logs.append("[INFO] Sending email...")
+            # Gmail API ile e-posta gönder
+            success = send_gmail_email(email, subject, message)
+            debug_logs.append("[INFO] Gmail API email send attempt completed")
             
-            result = send_mail(
-                subject=subject,
-                message=message,
-                from_email=from_email,
-                recipient_list=recipient_list,
-                fail_silently=False,
-            )
-            
-            debug_logs.append(f"[INFO] Email send result: {result}")
-            
-            if result == 1:
+            if success:
                 # Session'a kaydet
                 request.session['verification_code'] = code
                 request.session['verification_email'] = email
@@ -1723,77 +1756,20 @@ Teşekkürler!
                     }
                 })
             else:
-                error_msg = f"Email send failed. Result: {result}"
+                error_msg = "Gmail API email gönderilemedi"
                 debug_logs.append(f"[ERROR] {error_msg}")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False,
                     'error': 'E-posta gönderilemedi. Lütfen tekrar deneyin.',
-                    'details': error_msg,
                     'debug_logs': debug_logs,
                     'debug_info': {
                         'action': 'email_send_failed',
-                        'reason': 'send_mail_returned_false',
-                        'email': email,
-                        'result': str(result)
+                        'reason': 'gmail_api_failed',
+                        'email': email
                     }
                 })
-            
-        except SMTPAuthenticationError as auth_error:
-            error_msg = f"SMTP Authentication failed: {str(auth_error)}"
-            debug_logs.append(f"[ERROR] {error_msg}")
-            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False,
-                'error': 'E-posta kimlik doğrulaması başarısız.',
-                'details': str(auth_error) if settings.DEBUG else None,
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'smtp_authentication_failed',
-                    'error_type': type(auth_error).__name__,
-                    'email': email,
-                    'timestamp': timezone.now().isoformat()
-                }
-            })
-            
-        except SMTPConnectError as conn_error:
-            error_msg = f"SMTP Connection failed: {str(conn_error)}"
-            debug_logs.append(f"[ERROR] {error_msg}")
-            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False,
-                'error': 'E-posta sunucusuna bağlanılamadı.',
-                'details': str(conn_error) if settings.DEBUG else None,
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'smtp_connection_failed',
-                    'error_type': type(conn_error).__name__,
-                    'email': email,
-                    'timestamp': timezone.now().isoformat()
-                }
-            })
-            
-        except SMTPRecipientsRefused as recip_error:
-            error_msg = f"SMTP Recipients refused: {str(recip_error)}"
-            debug_logs.append(f"[ERROR] {error_msg}")
-            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False,
-                'error': 'Geçersiz e-posta adresi.',
-                'details': str(recip_error) if settings.DEBUG else None,
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'email_recipient_refused',
-                    'error_type': type(recip_error).__name__,
-                    'email': email,
-                    'recipients': str(recip_error.recipients) if hasattr(recip_error, 'recipients') else 'unknown',
-                    'timestamp': timezone.now().isoformat()
-                }
-            })
-            
+                
         except Exception as email_error:
             error_msg = f"Unexpected email error: {str(email_error)} (Type: {type(email_error).__name__})"
             debug_logs.append(f"[ERROR] {error_msg}")
@@ -1806,9 +1782,17 @@ Teşekkürler!
             request.session.save()
             
             debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            
+            # Gmail API'den gelen hata mesajını kontrol et
+            error_message = 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+            if 'invalid_grant' in str(email_error):
+                error_message = 'E-posta gönderim yetkisi geçersiz. Lütfen sistem yöneticinize başvurun.'
+            elif 'quota' in str(email_error).lower():
+                error_message = 'Günlük e-posta kotası aşıldı. Lütfen yarın tekrar deneyin.'
+            
             return JsonResponse({
                 'success': False,
-                'error': 'E-posta gönderilemedi. Lütfen e-posta ayarlarınızı kontrol edin.',
+                'error': error_message,
                 'details': str(email_error) if settings.DEBUG else None,
                 'error_type': type(email_error).__name__,
                 'stack_trace': traceback.format_exc() if settings.DEBUG else None,

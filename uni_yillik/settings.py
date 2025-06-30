@@ -147,16 +147,14 @@ LOGOUT_REDIRECT_URL = 'login_register'
 # Mesaj ayarları
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-# Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
-EMAIL_TIMEOUT = 30
-EMAIL_USE_LOCALTIME = True
+# Gmail API settings
+GMAIL_API_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'gmail_credentials.json')
+GMAIL_API_TOKEN_FILE = os.path.join(BASE_DIR, 'gmail_token.json')
+GMAIL_API_SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+DEFAULT_FROM_EMAIL = os.getenv('GMAIL_FROM_EMAIL', 'your-email@gmail.com')
+
+# Email settings for fallback (if needed)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
 
 if DEBUG:
     print(f"EMAIL_HOST: {EMAIL_HOST}")
