@@ -147,28 +147,22 @@ LOGOUT_REDIRECT_URL = 'login_register'
 # Mesaj ayarları
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-# Gmail API settings
-GMAIL_API_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'credentials.json')
-GMAIL_API_TOKEN_FILE = os.path.join(BASE_DIR, 'gmail_token.json')
-GMAIL_API_SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-DEFAULT_FROM_EMAIL = os.getenv('GMAIL_FROM_EMAIL', 'your-email@gmail.com')
-
-# Email settings for fallback (if needed)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
-
 if DEBUG:
-    print(f"EMAIL_HOST: {EMAIL_HOST}")
-    print(f"EMAIL_PORT: {EMAIL_PORT}")
-    print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER}")
+    print(f"RESEND_API_KEY: {'Set' if os.getenv('RESEND_API_KEY') else 'Not set'}")
+    print(f"FROM_EMAIL: {FROM_EMAIL}")
     print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
     
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Google API Settings
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID')
+# Resend API Settings
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@yillik.site')
+
+# Email backend settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
+DEFAULT_FROM_EMAIL = FROM_EMAIL
 
 # For password reset email construction
 DEFAULT_DOMAIN = '127.0.0.1:8000'

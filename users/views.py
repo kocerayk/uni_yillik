@@ -22,6 +22,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from utils.email_utils import send_verification_email, send_password_reset_email
 
 from .models import School, GraduationYear
 from django.utils.encoding import force_bytes, force_str
@@ -1689,48 +1690,13 @@ def send_verification_code(request):
         debug_logs.append(f"[INFO] Generated verification code: {code}")
         
         # E-POSTA GÖNDERME BÖLÜMÜ
-        debug_logs.append("[INFO] === STARTING GMAIL API EMAIL SEND PROCESS ===")
+        debug_logs.append("[INFO] === STARTING RESEND API EMAIL SEND PROCESS ===")
         
         try:
-            # Gmail API ayarlarını kontrol et
-            debug_logs.append(f"[INFO] GMAIL_API_CREDENTIALS_FILE: {getattr(settings, 'GMAIL_API_CREDENTIALS_FILE', 'Not set')}")
-            debug_logs.append(f"[INFO] GMAIL_API_TOKEN_FILE: {getattr(settings, 'GMAIL_API_TOKEN_FILE', 'Not set')}")
-            debug_logs.append(f"[INFO] DEFAULT_FROM_EMAIL: {getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set')}")
+            # Resend API ile e-posta gönder
+            debug_logs.append(f"[INFO] Sending email via Resend API to: {email}")
             
-            # Gerekli dosyaların varlığını kontrol et
-            if not os.path.exists(settings.GMAIL_API_CREDENTIALS_FILE):
-                error_msg = f"Gmail API credentials file not found: {settings.GMAIL_API_CREDENTIALS_FILE}"
-                debug_logs.append(f"[ERROR] {error_msg}")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'E-posta gönderimi için gerekli yapılandırma dosyası bulunamadı.',
-                    'details': error_msg if settings.DEBUG else None,
-                    'debug_logs': debug_logs
-                })
-            
-            # E-posta içeriği
-            subject = 'Email Doğrulama Kodu'
-            message = f'''
-Merhaba,
-
-Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
-
-Doğrulama Kodu: {code}
-
-Bu kod 5 dakika geçerlidir.
-
-Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
-
-Teşekkürler!
-            '''.strip()
-            
-            debug_logs.append(f"[INFO] Sending email via Gmail API to: {email}")
-            debug_logs.append(f"[INFO] From: {settings.DEFAULT_FROM_EMAIL}")
-            debug_logs.append(f"[INFO] Subject: {subject}")
-            
-            # Gmail API ile e-posta gönder
-            success = send_gmail_email(email, subject, message)
-            debug_logs.append("[INFO] Gmail API email send attempt completed")
+            success, response = send_verification_email(email, code)
             
             if success:
                 # Session'a kaydet
@@ -1740,6 +1706,7 @@ Teşekkürler!
                 request.session[session_key] = timezone.now().timestamp()
                 request.session.save()
                 
+                debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
                 debug_logs.append("[SUCCESS] Session data saved successfully")
                 debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
                 
@@ -1756,7 +1723,7 @@ Teşekkürler!
                     }
                 })
             else:
-                error_msg = "Gmail API email gönderilemedi"
+                error_msg = f"Resend API email gönderilemedi: {response}"
                 debug_logs.append(f"[ERROR] {error_msg}")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
@@ -1765,8 +1732,9 @@ Teşekkürler!
                     'debug_logs': debug_logs,
                     'debug_info': {
                         'action': 'email_send_failed',
-                        'reason': 'gmail_api_failed',
-                        'email': email
+                        'reason': 'resend_api_failed',
+                        'email': email,
+                        'error_details': str(response)
                     }
                 })
                 
@@ -1783,16 +1751,9 @@ Teşekkürler!
             
             debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             
-            # Gmail API'den gelen hata mesajını kontrol et
-            error_message = 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.'
-            if 'invalid_grant' in str(email_error):
-                error_message = 'E-posta gönderim yetkisi geçersiz. Lütfen sistem yöneticinize başvurun.'
-            elif 'quota' in str(email_error).lower():
-                error_message = 'Günlük e-posta kotası aşıldı. Lütfen yarın tekrar deneyin.'
-            
             return JsonResponse({
                 'success': False,
-                'error': error_message,
+                'error': 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.',
                 'details': str(email_error) if settings.DEBUG else None,
                 'error_type': type(email_error).__name__,
                 'stack_trace': traceback.format_exc() if settings.DEBUG else None,
