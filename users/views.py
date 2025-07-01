@@ -1,5 +1,6 @@
 import json
 import random
+import re
 import string
 import time
 import logging
@@ -13,47 +14,275 @@ from django.db import IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-def send_verification_email_via_resend(email, code):
-    """Send verification email using Resend API"""
-    resend_api_key = settings.RESEND_API_KEY
+def send_verification_email_resend(email, code, logger):
+    """
+    Send verification email using Resend API
+    """
+    logger.info("=== STARTING RESEND EMAIL SEND PROCESS ===")
     
-    if not resend_api_key:
+    # Check if API key is configured
+    api_key = getattr(settings, 'RESEND_API_KEY', None)
+    from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')
+    
+    logger.info(f"RESEND_API_KEY: {'Set' if api_key else 'Not set'}")
+    logger.info(f"RESEND_FROM_EMAIL: {from_email}")
+    
+    if not api_key:
         logger.error("Resend API key is not configured")
-        raise Exception("Resend API key is not configured")
+        raise Exception("E-posta gönderimi için gerekli yapılandırma bulunamadı.")
     
+    # Resend API endpoint
     url = "https://api.resend.com/emails"
     
+    # Headers
     headers = {
-        "Authorization": f"Bearer {resend_api_key}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     
-    data = {
-        "from": settings.RESEND_FROM_EMAIL,
+    # Email content
+    email_data = {
+        "from": from_email,
         "to": [email],
         "subject": "Email Doğrulama Kodu",
         "html": f"""
-        <h2>Email Doğrulama</h2>
-        <p>Merhaba,</p>
-        <p>Email adresinizi doğrulamak için aşağıdaki kodu kullanın:</p>
-        <h3 style="color: #007bff; font-family: monospace; font-size: 24px; letter-spacing: 4px;">{code}</h3>
-        <p>Bu kod 5 dakika geçerlidir.</p>
-        <p>Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.</p>
-        <p>Teşekkürler!</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Email Doğrulama</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #333; text-align: center;">Email Doğrulama</h2>
+                <p>Merhaba,</p>
+                <p>Email adresinizi doğrulamak için aşağıdaki kodu kullanın:</p>
+                
+                <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                    <h1 style="margin: 0; font-family: monospace; letter-spacing: 3px;">{code}</h1>
+                </div>
+                
+                <p><strong>Bu kod 5 dakika geçerlidir.</strong></p>
+                <p>Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.</p>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
+                <p style="color: #6c757d; font-size: 14px;">
+                    Bu email otomatik olarak gönderilmiştir, lütfen yanıtlamayın.
+                </p>
+            </div>
+        </body>
+        </html>
+        """,
+        "text": f"""
+        Email Doğrulama
+        
+        Merhaba,
+        
+        Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
+        
+        Doğrulama Kodu: {code}
+        
+        Bu kod 5 dakika geçerlidir.
+        
+        Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+        
+        Teşekkürler!
         """
     }
     
+    logger.info(f"Sending email to: {email}")
+    logger.info(f"Email data prepared: {json.dumps(email_data, indent=2, ensure_ascii=False)}")
+    
     try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()  # This will raise an exception for 4XX/5XX responses
-        return True
+        # Send the request
+        response = requests.post(url, headers=headers, json=email_data, timeout=30)
+        
+        logger.info(f"Resend API Response Status: {response.status_code}")
+        logger.info(f"Resend API Response Headers: {dict(response.headers)}")
+        
+        if response.status_code == 200:
+            response_data = response.json()
+            logger.info(f"✓ Email sent successfully via Resend API")
+            logger.info(f"Email ID: {response_data.get('id', 'N/A')}")
+            return True
+        else:
+            # Log error details
+            logger.error(f"✗ Resend API Error: {response.status_code}")
+            logger.error(f"Response text: {response.text}")
+            
+            try:
+                error_data = response.json()
+                logger.error(f"Error details: {json.dumps(error_data, indent=2)}")
+            except:
+                logger.error("Could not parse error response as JSON")
+            
+            raise Exception(f"Resend API returned {response.status_code}: {response.text}")
+            
+    except requests.exceptions.Timeout:
+        logger.error("✗ Request timeout while sending email via Resend API")
+        raise Exception("E-posta gönderimi zaman aşımına uğradı. Lütfen tekrar deneyin.")
+        
+    except requests.exceptions.ConnectionError:
+        logger.error("✗ Connection error while sending email via Resend API")
+        raise Exception("E-posta servisine bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.")
+        
     except requests.exceptions.RequestException as e:
-        logger.error(f"Resend API error: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response body: {e.response.text}")
-        raise Exception(f"E-posta gönderilirken bir hata oluştu: {str(e)}")
+        logger.error(f"✗ Request error while sending email via Resend API: {str(e)}")
+        raise Exception("E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.")
+        
+    except Exception as e:
+        logger.error(f"✗ Unexpected error while sending email via Resend API: {str(e)}")
+        raise
+
+from django.urls import reverse
+from django.views.decorators.http import require_http_methods
+
+# Create your views here.
+User = get_user_model()
+
+@csrf_exempt
+def test_resend_config(request):
+    """Test endpoint to verify Resend configuration"""
+    config_status = {
+        'RESEND_API_KEY': 'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set',
+        'RESEND_FROM_EMAIL': getattr(settings, 'RESEND_FROM_EMAIL', 'Not set'),
+        'DEBUG': settings.DEBUG
+    }
+    
+    return JsonResponse(config_status)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def send_verification_code(request):
+    # Get logger instance
+    logger = logging.getLogger('email_debug')
+    
+    try:
+        logger.info("=== EMAIL VERIFICATION DEBUG START ===")
+        
+        # Parse request data
+        try:
+            data = json.loads(request.body)
+            logger.info(f"Request data: {data}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON data received: {str(e)}")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz veri formatı. Lütfen tekrar deneyin.'
+            })
+            
+        email = data.get('email', '').strip().lower()
+        logger.info(f"Requested email: {email}")
+        
+        if not email:
+            logger.warning("No email provided in request")
+            return JsonResponse({
+                'success': False, 
+                'error': 'E-posta adresi gerekli'
+            })
+                
+        # Validate email format
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            logger.warning(f"Invalid email format: {email}")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz e-posta formatı. Lütfen geçerli bir e-posta adresi girin.'
+            })
+        
+        logger.info(f"Email format is valid: {email}")
+            
+        # Check if email already exists (commented out as per original code)
+        # if CustomUser.objects.filter(email=email).exists():
+        #     logger.warning(f"Registration attempt with existing email: {email}")
+        #     return JsonResponse({
+        #         'success': False, 
+        #         'error': 'Bu e-posta adresi zaten kullanılıyor. Giriş yapmayı deneyin.'
+        #     })
+        
+        # Generate a 6-digit verification code
+        code = ''.join(random.choices(string.digits, k=6))
+        logger.info(f"Generated verification code: {code}")
+        
+        # Ensure we have a valid session
+        if not request.session.session_key:
+            request.session.create()
+            logger.info(f"Created new session with ID: {request.session.session_key}")
+        
+        # Store verification data in session
+        verification_timestamp = int(time.time())
+        
+        request.session['verification_code'] = str(code)
+        request.session['verification_email'] = str(email).lower()
+        request.session['verification_timestamp'] = int(verification_timestamp)
+        
+        # Clear any previous verification status
+        request.session.pop('email_verified', None)
+        request.session.pop('verified_email', None)
+        
+        # Ensure session is marked as modified and save
+        request.session.modified = True
+        request.session.save()
+        
+        logger.info("Session data saved successfully")
+        
+        # Send the verification email using Resend API
+        try:
+            send_verification_email_resend(email, code, logger)
+            
+            # Store success in session
+            request.session['email_sent'] = True
+            request.session.save()
+            
+            logger.info("✓ Email sent successfully!")
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Doğrulama kodu e-posta adresinize gönderildi.'
+            })
+            
+        except Exception as email_error:
+            logger.error(f"✗ Email sending failed: {str(email_error)}")
+            
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.save()
+            
+            return JsonResponse({
+                'success': False,
+                'error': str(email_error),
+                'details': None,
+                'debug_logs': [
+                    "[INFO] === EMAIL VERIFICATION DEBUG START ===",
+                    f"[INFO] Requested email: {email}",
+                    f"[INFO] Email format is valid: {email}",
+                    f"[INFO] Generated verification code: {code}",
+                    "[INFO] === STARTING RESEND EMAIL SEND PROCESS ===",
+                    f"[INFO] RESEND_API_KEY: {'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set'}",
+                    f"[INFO] RESEND_FROM_EMAIL: {getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')}",
+                    f"[ERROR] {str(email_error)}"
+                ]
+            }, status=500)
+        
+    except Exception as e:
+        logger.critical(f'✗ Critical error in send_verification_code: {str(e)}')
+        logger.error(f'Error type: {type(e).__name__}')
+        
+        import traceback
+        logger.error('Full traceback:')
+        logger.error(traceback.format_exc())
+        
+        return JsonResponse({
+            'success': False, 
+            'error': 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+            'details': str(e) if settings.DEBUG else None,
+            'status': 500
+        }, status=500)
+
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
@@ -234,7 +463,7 @@ def send_verification_code(request):
             logger.info(f"RESEND_API_KEY: {'Set' if settings.RESEND_API_KEY else 'Not set'}")
             logger.info(f"RESEND_FROM_EMAIL: {settings.RESEND_FROM_EMAIL}")
             
-            send_verification_email_via_resend(email, code)
+            send_verification_email_resend(email, code, logger)
             logger.info("✓ Email sent successfully via Resend API")
             
             # Store success in session

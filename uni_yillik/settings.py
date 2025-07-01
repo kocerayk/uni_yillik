@@ -183,6 +183,11 @@ RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
 DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
 
+# Debug print (remove in production)
+if DEBUG:
+    print(f"RESEND_API_KEY loaded: {'Yes' if RESEND_API_KEY else 'No'}")
+    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
+
 # Email settings (fallback)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
 
