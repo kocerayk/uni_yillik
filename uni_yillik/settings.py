@@ -15,9 +15,14 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = BASE_DIR / '.env'
-load_dotenv(dotenv_path=dotenv_path)
 
-print("DB_PASSWORD from env:", os.getenv('DB_PASSWORD'))
+print(f"[settings.py] Loading .env from: {dotenv_path}")
+load_dotenv(dotenv_path)
+
+if not os.getenv("RESEND_API_KEY"):
+    print("⚠️ RESEND_API_KEY is NOT set in settings.py")
+else:
+    print("✅ RESEND_API_KEY loaded in settings.py")
 
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')

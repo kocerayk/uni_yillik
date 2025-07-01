@@ -5,6 +5,7 @@ import string
 import time
 import logging
 import requests
+import traceback
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
@@ -16,6 +17,47 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.urls import reverse
+from django.views.decorators.http import require_http_methods
+from .models import School, GraduationYear
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.views.generic import TemplateView
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy, reverse
+from django.contrib import messages
+from django.contrib.auth.hashers import check_password
+from django.db.models.functions import Collate
+from django.db import IntegrityError
+import json
+# forms.py içindeki formları doğru şekilde import ettiğinizden emin olun.
+from .forms import CustomUserRegistrationForm, LoginForm, UserSearchForm
+from .models import Message, CustomUser, School, GraduationYear, Note
+from django.core.mail import send_mail
+from django.conf import settings
+import random
+import string
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.views.decorators.http import require_POST, require_http_methods
+import os
+import logging
+import json
+from django.core.files.storage import default_storage
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import requests
+from urllib.parse import urljoin
+from django.core.exceptions import SuspiciousFileOperation
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.core.mail import get_connection
+
 
 def send_verification_email_resend(email, code, logger):
     """
@@ -321,49 +363,7 @@ def send_verification_code(request):
             'details': str(e) if settings.DEBUG else None,
             'status': 500
         }, status=500)
-
-from django.urls import reverse
-from django.views.decorators.http import require_http_methods
-
-from .models import School, GraduationYear
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
-from django.views.generic import TemplateView
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse_lazy, reverse
-from django.contrib import messages
-from django.contrib.auth.hashers import check_password
-from django.db.models.functions import Collate
-from django.db import IntegrityError
-import json
-# forms.py içindeki formları doğru şekilde import ettiğinizden emin olun.
-from .forms import CustomUserRegistrationForm, LoginForm, UserSearchForm
-from .models import Message, CustomUser, School, GraduationYear, Note
-from django.core.mail import send_mail
-from django.conf import settings
-import random
-import string
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from django.views.decorators.http import require_POST, require_http_methods
-import os
-import logging
-import json
-from django.core.files.storage import default_storage
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import requests
-from urllib.parse import urljoin
-from django.core.exceptions import SuspiciousFileOperation
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-from django.core.mail import get_connection
-
+        
 logger = logging.getLogger(__name__)
 
 @login_required
