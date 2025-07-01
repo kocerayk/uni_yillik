@@ -101,41 +101,57 @@ def send_verification_email_resend(email, code, logger):
         response = requests.post(url, headers=headers, json=email_data, timeout=30)
         
         logger.info(f"Resend API Response Status: {response.status_code}")
-        logger.info(f"Resend API Response Headers: {dict(response.headers)}")
         
-        if response.status_code == 200:
-            response_data = response.json()
-            logger.info(f"✓ Email sent successfully via Resend API")
-            logger.info(f"Email ID: {response_data.get('id', 'N/A')}")
-            return True
-        else:
-            # Log error details
-            logger.error(f"✗ Resend API Error: {response.status_code}")
-            logger.error(f"Response text: {response.text}")
-            
+        # Check for successful status codes (200 OK or 202 Accepted)
+        if response.status_code in [200, 202]:
+            logger.info("✓ Email queued successfully via Resend API")
             try:
-                error_data = response.json()
-                logger.error(f"Error details: {json.dumps(error_data, indent=2)}")
-            except:
-                logger.error("Could not parse error response as JSON")
+                response_data = response.json()
+                logger.info(f"Email ID: {response_data.get('id', 'N/A')}")
+            except ValueError:
+                logger.info("Could not parse response JSON")
+            return True
+        
+        # Handle different error status codes
+        error_msg = f"Failed to send email. Status: {response.status_code}"
+        try:
+            error_data = response.json()
+            error_details = error_data.get('message', 'No error details provided')
+            error_msg = f"{error_msg}, Details: {error_details}"
+            logger.error(error_msg)
             
-            raise Exception(f"Resend API returned {response.status_code}: {response.text}")
+            # More specific error messages based on status code
+            if response.status_code == 401:
+                raise Exception("Geçersiz API anahtarı. Lütfen yöneticiye başvurun.")
+            elif response.status_code == 422:
+                raise Exception("Geçersiz e-posta formatı veya gönderici adresi.")
+            elif response.status_code == 429:
+                raise Exception("Çok fazla istek gönderildi. Lütfen bir süre sonra tekrar deneyin.")
+            else:
+                raise Exception(f"E-posta gönderilemedi. Hata kodu: {response.status_code}")
+                
+        except ValueError:
+            logger.error(f"{error_msg} - Could not parse error response as JSON")
+            raise Exception("E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.")
             
     except requests.exceptions.Timeout:
-        logger.error("✗ Request timeout while sending email via Resend API")
-        raise Exception("E-posta gönderimi zaman aşımına uğradı. Lütfen tekrar deneyin.")
+        logger.error("✗ Request to Resend API timed out")
+        raise Exception("E-posta servisine bağlanırken zaman aşımı oluştu. Lütfen tekrar deneyin.")
         
     except requests.exceptions.ConnectionError:
-        logger.error("✗ Connection error while sending email via Resend API")
+        logger.error("✗ Connection to Resend API failed")
         raise Exception("E-posta servisine bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.")
         
     except requests.exceptions.RequestException as e:
-        logger.error(f"✗ Request error while sending email via Resend API: {str(e)}")
-        raise Exception("E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.")
+        logger.error(f"✗ Request to Resend API failed: {str(e)}")
+        raise Exception("E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
         
     except Exception as e:
         logger.error(f"✗ Unexpected error while sending email via Resend API: {str(e)}")
-        raise
+        logger.exception("Full traceback:")
+        raise Exception("Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
+
+    return False  # This line is a fallback and should not be reached
 
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
@@ -145,11 +161,25 @@ User = get_user_model()
 
 @csrf_exempt
 def test_resend_config(request):
-    """Test endpoint to verify Resend configuration"""
+    """
+    Test endpoint to verify Resend configuration
+    Only accessible in DEBUG mode for security
+    """
+    if not settings.DEBUG:
+        return JsonResponse(
+            {"error": "This endpoint is only available in DEBUG mode"},
+            status=403
+        )
+    
+    # Only show first 4 characters of the API key for security
+    api_key = getattr(settings, 'RESEND_API_KEY', '')
+    masked_key = f"{api_key[:4]}..." if api_key and len(api_key) > 4 else 'Not set'
+    
     config_status = {
-        'RESEND_API_KEY': 'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set',
+        'RESEND_API_KEY': masked_key,
         'RESEND_FROM_EMAIL': getattr(settings, 'RESEND_FROM_EMAIL', 'Not set'),
-        'DEBUG': settings.DEBUG
+        'DEBUG': settings.DEBUG,
+        'environment': 'development' if settings.DEBUG else 'production'
     }
     
     return JsonResponse(config_status)

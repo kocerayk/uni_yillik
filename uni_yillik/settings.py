@@ -178,18 +178,20 @@ CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 
-# Resend API settings
+# Resend API settings - Load from environment variables
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
 DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
 
-# Debug print (remove in production)
+# Email backend - using console in development, no default in production
+# Note: We're using direct API calls to Resend, so we don't need Django's email backend
+# This is just for any Django auth emails if they're used
 if DEBUG:
-    print(f"RESEND_API_KEY loaded: {'Yes' if RESEND_API_KEY else 'No'}")
-    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
-
-# Email settings (fallback)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # In production, either don't set this or use a proper email backend
+    # since we're using direct Resend API calls for verification emails
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 if DEBUG:
     print(f"RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'}")
