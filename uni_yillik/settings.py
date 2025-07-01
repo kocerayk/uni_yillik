@@ -24,11 +24,12 @@ load_dotenv(dotenv_path=dotenv_path)
 
 print("DB_PASSWORD from env:", os.getenv('DB_PASSWORD'))
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 ALLOWED_HOSTS = ['209.38.229.98', 'yillik.site', 'www.yillik.site']
 
@@ -187,11 +188,6 @@ else:
     # In production, either don't set this or use a proper email backend
     # since we're using direct Resend API calls for verification emails
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-if DEBUG:
-    print(f"RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'}")
-    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
-    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
 
 # For password reset email construction
 DEFAULT_DOMAIN = 'yillik.site'  # Production domain
