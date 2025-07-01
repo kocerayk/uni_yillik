@@ -6,6 +6,7 @@ import time
 import logging
 import requests
 import traceback
+import resend
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
@@ -363,7 +364,7 @@ def send_verification_code(request):
             'details': str(e) if settings.DEBUG else None,
             'status': 500
         }, status=500)
-        
+
 logger = logging.getLogger(__name__)
 
 @login_required
