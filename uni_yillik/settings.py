@@ -147,22 +147,22 @@ LOGOUT_REDIRECT_URL = 'login_register'
 # Mesaj ayarları
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
+DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
+
 if DEBUG:
-    print(f"RESEND_API_KEY: {'Set' if os.getenv('RESEND_API_KEY') else 'Not set'}")
-    print(f"FROM_EMAIL: {FROM_EMAIL}")
+    print(f"RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'}")
+    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
     print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
     
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Resend API Settings
-RESEND_API_KEY = os.getenv('RESEND_API_KEY')
-FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@yillik.site')
-
-# Email backend settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
-DEFAULT_FROM_EMAIL = FROM_EMAIL
+# Google API Settings
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID')
 
 # For password reset email construction
 DEFAULT_DOMAIN = '127.0.0.1:8000'
@@ -177,6 +177,22 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
+
+# Resend API settings
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
+DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
+
+# Email settings (fallback)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend'
+
+if DEBUG:
+    print(f"RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'}")
+    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
+    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+
+# For password reset email construction
+DEFAULT_DOMAIN = 'yillik.site'  # Production domain
 
 # Make sure cookies are sent with same-site requests
 CSRF_TRUSTED_ORIGINS = [

@@ -22,7 +22,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-from utils.email_utils import send_verification_email, send_password_reset_email
 
 from .models import School, GraduationYear
 from django.utils.encoding import force_bytes, force_str
@@ -62,20 +61,6 @@ from django.core.exceptions import SuspiciousFileOperation
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.mail import get_connection
-import json
-import re
-import random
-import string
-import time
-import logging
-import traceback
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-
-from uni_yillik.models import CustomUser  # models.py dosyanın yolu
-from utils.email_utils import send_verification_email
 
 logger = logging.getLogger(__name__)
 
@@ -1704,53 +1689,115 @@ def send_verification_code(request):
         debug_logs.append(f"[INFO] Generated verification code: {code}")
         
         # E-POSTA GÖNDERME BÖLÜMÜ
-        debug_logs.append("[INFO] === STARTING RESEND API EMAIL SEND PROCESS ===")
+        debug_logs.append("[INFO] === STARTING RESEND EMAIL SEND PROCESS ===")
         
         try:
-            # Resend API ile e-posta gönder
-            debug_logs.append(f"[INFO] Sending email via Resend API to: {email}")
+            # Resend API ayarlarını kontrol et
+            debug_logs.append(f"[INFO] RESEND_API_KEY: {'Set' if hasattr(settings, 'RESEND_API_KEY') and settings.RESEND_API_KEY else 'Not set'}")
+            debug_logs.append(f"[INFO] RESEND_FROM_EMAIL: {getattr(settings, 'RESEND_FROM_EMAIL', 'Not set')}")
             
-            success, response = send_verification_email(email, code)
-            
-            if success:
-                # Session'a kaydet
-                request.session['verification_code'] = code
-                request.session['verification_email'] = email
-                request.session['verification_timestamp'] = timezone.now().timestamp()
-                request.session[session_key] = timezone.now().timestamp()
-                request.session.save()
-                
-                debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
-                debug_logs.append("[SUCCESS] Session data saved successfully")
-                debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
-                
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Doğrulama kodu gönderildi.',
-                    'debug_logs': debug_logs,
-                    'debug_info': {
-                        'action': 'verification_code_sent',
-                        'email': email,
-                        'code_length': len(code),
-                        'timestamp': timezone.now().isoformat()
-                    }
-                })
-            else:
-                error_msg = f"Resend API email gönderilemedi: {response}"
+            if not hasattr(settings, 'RESEND_API_KEY') or not settings.RESEND_API_KEY:
+                error_msg = "Resend API key is not configured"
                 debug_logs.append(f"[ERROR] {error_msg}")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False,
-                    'error': 'E-posta gönderilemedi. Lütfen tekrar deneyin.',
-                    'debug_logs': debug_logs,
-                    'debug_info': {
-                        'action': 'email_send_failed',
-                        'reason': 'resend_api_failed',
-                        'email': email,
-                        'error_details': str(response)
-                    }
+                    'error': 'E-posta gönderimi için gerekli yapılandırma bulunamadı.',
+                    'details': error_msg if settings.DEBUG else None,
+                    'debug_logs': debug_logs
                 })
+            
+            # E-posta içeriği
+            subject = 'Email Doğrulama Kodu - Yıllık Site'
+            
+            # HTML içerik
+            html_content = f'''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Email Doğrulama</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h2 style="color: #333; margin-bottom: 20px;">Email Doğrulama</h2>
+                    <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
+                        Merhaba,<br><br>
+                        Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
+                    </p>
+                    <div style="background-color: #007bff; color: white; font-size: 32px; font-weight: bold; padding: 20px; border-radius: 8px; letter-spacing: 3px; margin: 20px 0;">
+                        {code}
+                    </div>
+                    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                        Bu kod <strong>5 dakika</strong> geçerlidir.<br><br>
+                        Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                    <p style="color: #999; font-size: 12px;">
+                        Bu email Yıllık Site tarafından gönderilmiştir.<br>
+                        <a href="https://yillik.site" style="color: #007bff;">yillik.site</a>
+                    </p>
+                </div>
+            </body>
+            </html>
+            '''
+            
+            # Düz metin içerik
+            text_content = f'''
+Merhaba,
+
+Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
+
+Doğrulama Kodu: {code}
+
+Bu kod 5 dakika geçerlidir.
+
+Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+
+Teşekkürler!
+Yıllık Site
+https://yillik.site
+            '''.strip()
+            
+            debug_logs.append(f"[INFO] Sending email via Resend to: {email}")
+            debug_logs.append(f"[INFO] From: {settings.RESEND_FROM_EMAIL}")
+            debug_logs.append(f"[INFO] Subject: {subject}")
+            
+            # Resend API ile e-posta gönder
+            resend.api_key = settings.RESEND_API_KEY
+            
+            email_response = resend.Emails.send({
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [email],
+                "subject": subject,
+                "html": html_content,
+                "text": text_content,
+            })
+            
+            debug_logs.append("[INFO] Resend API email send attempt completed")
+            debug_logs.append(f"[INFO] Resend response: {email_response}")
+            
+            # Session'a kaydet
+            request.session['verification_code'] = code
+            request.session['verification_email'] = email
+            request.session['verification_timestamp'] = timezone.now().timestamp()
+            request.session[session_key] = timezone.now().timestamp()
+            request.session.save()
+            
+            debug_logs.append("[SUCCESS] Session data saved successfully")
+            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
+            
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': True,
+                'message': 'Doğrulama kodu gönderildi.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'verification_code_sent',
+                    'email': email,
+                    'code_length': len(code),
+                    'timestamp': timezone.now().isoformat()
+                } if settings.DEBUG else None
+            })
                 
         except Exception as email_error:
             error_msg = f"Unexpected email error: {str(email_error)} (Type: {type(email_error).__name__})"
@@ -1765,20 +1812,25 @@ def send_verification_code(request):
             
             debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
             
+            # Hata mesajını işle
+            error_message = 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+            if 'quota' in str(email_error).lower():
+                error_message = 'Günlük e-posta kotası aşıldı. Lütfen yarın tekrar deneyin.'
+            
             return JsonResponse({
                 'success': False,
-                'error': 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.',
+                'error': error_message,
                 'details': str(email_error) if settings.DEBUG else None,
                 'error_type': type(email_error).__name__,
                 'stack_trace': traceback.format_exc() if settings.DEBUG else None,
-                'debug_logs': debug_logs,
+                'debug_logs': debug_logs if settings.DEBUG else None,
                 'debug_info': {
                     'action': 'email_send_error',
                     'error_type': type(email_error).__name__,
                     'email': email,
                     'timestamp': timezone.now().isoformat(),
                     'session_cleared': True
-                }
+                } if settings.DEBUG else None
             })
             
     except Exception as general_error:
@@ -1797,16 +1849,15 @@ def send_verification_code(request):
             'details': str(general_error) if settings.DEBUG else None,
             'error_type': type(general_error).__name__,
             'stack_trace': traceback.format_exc() if settings.DEBUG else None,
-            'debug_logs': debug_logs,
+            'debug_logs': debug_logs if settings.DEBUG else None,
             'debug_info': {
                 'action': 'unexpected_error',
                 'error_type': type(general_error).__name__,
                 'timestamp': timezone.now().isoformat(),
                 'session_data_available': 'verification_code' in request.session,
                 'email_attempted': request.session.get('verification_email')
-            }
+            } if settings.DEBUG else None
         })
-        return JsonResponse({'success': False, 'error': str(e)})
 
 @require_http_methods(["GET"])
 def get_graduation_years(request):
