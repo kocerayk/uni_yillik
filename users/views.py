@@ -161,6 +161,15 @@ User = get_user_model()
 
 @csrf_exempt
 def test_resend_config(request):
+    config_status = {
+        'RESEND_API_KEY': 'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set',
+        'RESEND_FROM_EMAIL': getattr(settings, 'RESEND_FROM_EMAIL', 'Not set'),
+        'DEBUG': settings.DEBUG
+    }
+    return JsonResponse(config_status)
+
+@csrf_exempt
+def test_resend_config(request):
     """
     Test endpoint to verify Resend configuration
     Only accessible in DEBUG mode for security

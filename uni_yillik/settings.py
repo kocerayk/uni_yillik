@@ -178,11 +178,6 @@ CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 
-# Resend API settings - Load from environment variables
-RESEND_API_KEY = os.getenv('RESEND_API_KEY')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
-DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
-
 # Email backend - using console in development, no default in production
 # Note: We're using direct API calls to Resend, so we don't need Django's email backend
 # This is just for any Django auth emails if they're used
