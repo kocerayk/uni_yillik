@@ -15,21 +15,29 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = BASE_DIR / '.env'
+load_dotenv(dotenv_path=dotenv_path)
+
+print("DB_PASSWORD from env:", os.getenv('DB_PASSWORD'))
+
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
+DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
+
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
+
+if DEBUG:
+    print(f"RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'}")
+    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
+    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
 
 print(f"Loading .env file from: {dotenv_path}")
 if not dotenv_path.exists():
     raise FileNotFoundError(f".env file not found at {dotenv_path}")
 
-load_dotenv(dotenv_path=dotenv_path)
-
-print("DB_PASSWORD from env:", os.getenv('DB_PASSWORD'))
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 ALLOWED_HOSTS = ['209.38.229.98', 'yillik.site', 'www.yillik.site']
 
@@ -148,15 +156,6 @@ LOGOUT_REDIRECT_URL = 'login_register'
 # Mesaj ayarları
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-RESEND_API_KEY = os.getenv('RESEND_API_KEY')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
-DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
-
-if DEBUG:
-    print(f"RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'}")
-    print(f"RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL}")
-    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-    
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
