@@ -2,24 +2,58 @@ import json
 import random
 import string
 import time
-import traceback
-import base64
 import logging
-from email.mime.text import MIMEText
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail, get_connection
 from django.db import IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
+
+def send_verification_email_via_resend(email, code):
+    """Send verification email using Resend API"""
+    resend_api_key = settings.RESEND_API_KEY
+    
+    if not resend_api_key:
+        logger.error("Resend API key is not configured")
+        raise Exception("Resend API key is not configured")
+    
+    url = "https://api.resend.com/emails"
+    
+    headers = {
+        "Authorization": f"Bearer {resend_api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "from": settings.RESEND_FROM_EMAIL,
+        "to": [email],
+        "subject": "Email Doğrulama Kodu",
+        "html": f"""
+        <h2>Email Doğrulama</h2>
+        <p>Merhaba,</p>
+        <p>Email adresinizi doğrulamak için aşağıdaki kodu kullanın:</p>
+        <h3 style="color: #007bff; font-family: monospace; font-size: 24px; letter-spacing: 4px;">{code}</h3>
+        <p>Bu kod 5 dakika geçerlidir.</p>
+        <p>Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.</p>
+        <p>Teşekkürler!</p>
+        """
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()  # This will raise an exception for 4XX/5XX responses
+        return True
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Resend API error: {str(e)}")
+        if hasattr(e, 'response') and e.response is not None:
+            logger.error(f"Response status: {e.response.status_code}")
+            logger.error(f"Response body: {e.response.text}")
+        raise Exception(f"E-posta gönderilirken bir hata oluştu: {str(e)}")
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
@@ -196,107 +230,38 @@ def send_verification_code(request):
         
         # SEND THE VERIFICATION EMAIL
         try:
-            subject = 'Email Doğrulama Kodu'
-            message = f'''
-Merhaba,
-
-Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
-
-Doğrulama Kodu: {code}
-
-Bu kod 5 dakika geçerlidir.
-
-Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
-
-Teşekkürler!
-            '''.strip()
+            logger.info("=== SENDING VERIFICATION EMAIL VIA RESEND API ===")
+            logger.info(f"RESEND_API_KEY: {'Set' if settings.RESEND_API_KEY else 'Not set'}")
+            logger.info(f"RESEND_FROM_EMAIL: {settings.RESEND_FROM_EMAIL}")
             
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [email]
-                
-            logger.info("=== EMAIL SETTINGS CHECK ===")
-            logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
-            logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
-            logger.info(f"EMAIL_USE_TLS: {getattr(settings, 'EMAIL_USE_TLS', 'Not set')}")
-            logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-            logger.info(f"DEFAULT_FROM_EMAIL: {from_email}")
-            logger.info(f"Recipient: {email}")
-                
-            # Test SMTP connection first
-            logger.info("=== TESTING SMTP CONNECTION ===")
-            connection = get_connection()
-            try:
-                connection.open()
-                logger.info("✓ SMTP connection successful")
-                connection.close()
-            except Exception as conn_error:
-                logger.error(f"✗ SMTP connection failed: {str(conn_error)}")
-                logger.error(f"Connection error type: {type(conn_error).__name__}")
-                raise conn_error
-                
-            # Send the email
-            logger.info("=== SENDING EMAIL ===")
-            try:
-                result = send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=from_email,
-                    recipient_list=recipient_list,
-                    fail_silently=False,
-                )
-                
-                if result == 0:
-                    logger.error("✗ Email sending failed: No recipients or other SMTP error")
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'E-posta gönderilemedi. Lütfen e-posta adresinizi kontrol edin ve tekrar deneyin.',
-                        'status': 500
-                    }, status=500)
-                    
-                logger.info(f"✓ Email sent successfully! Result: {result}")
-                
-            except Exception as email_error:
-                logger.error(f"✗ Email sending error: {str(email_error)}")
-                logger.error(f"Error type: {type(email_error).__name__}")
-                logger.error("Full traceback:")
-                logger.error(traceback.format_exc())
-                
-                # Clear session data since email failed
-                request.session.pop('verification_code', None)
-                request.session.pop('verification_email', None)
-                request.session.pop('verification_timestamp', None)
-                request.session.save()
-                
-                return JsonResponse({
-                    'success': False,
-                    'error': 'E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
-                    'details': str(email_error) if settings.DEBUG else None,
-                    'status': 500
-                }, status=500)
-                
+            send_verification_email_via_resend(email, code)
+            logger.info("✓ Email sent successfully via Resend API")
+            
             # Store success in session
             request.session['email_sent'] = True
             request.session.save()
             
-        except SMTPAuthenticationError as auth_error:
-            logger.error(f"✗ SMTP Authentication failed: {str(auth_error)}")
-            logger.error(f"Auth error type: {type(auth_error).__name__}")
-            
-            # Clear session data since email failed
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
             return JsonResponse({
-                'success': False,
-                'error': 'E-posta kimlik doğrulaması başarısız. Lütfen daha sonra tekrar deneyin.',
-                'details': str(auth_error) if settings.DEBUG else None
+                'success': True,
+                'message': 'Doğrulama kodu e-posta adresinize gönderildi.'
             })
             
-        except SMTPConnectError as conn_error:
-            logger.error(f"✗ SMTP Connection failed: {str(conn_error)}")
-            logger.error(f"Connection error type: {type(conn_error).__name__}")
+        except Exception as e:
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.save()
+            
+            logger.error(f"✗ Failed to send email via Resend API: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+                'details': str(e) if settings.DEBUG else None
+            }, status=500)
+            
+        except requests.exceptions.ConnectionError as conn_error:
+            logger.error(f"✗ Connection to Resend API failed: {str(conn_error)}")
             
             # Clear session data since email failed
             request.session.pop('verification_code', None)
@@ -306,13 +271,12 @@ Teşekkürler!
             
             return JsonResponse({
                 'success': False,
-                'error': 'E-posta sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.',
+                'error': 'E-posta servisine bağlanılamadı. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
                 'details': str(conn_error) if settings.DEBUG else None
-            })
+            }, status=500)
             
-        except SMTPRecipientsRefused as recip_error:
-            logger.error(f"✗ SMTP Recipients refused: {str(recip_error)}")
-            logger.error(f"Recipients error type: {type(recip_error).__name__}")
+        except requests.exceptions.RequestException as req_error:
+            logger.error(f"✗ Request to Resend API failed: {str(req_error)}")
             
             # Clear session data since email failed
             request.session.pop('verification_code', None)
@@ -322,8 +286,8 @@ Teşekkürler!
             
             return JsonResponse({
                 'success': False,
-                'error': 'Geçersiz e-posta adresi. Lütfen e-posta adresinizi kontrol edin.',
-                'details': str(recip_error) if settings.DEBUG else None
+                'error': 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+                'details': str(req_error) if settings.DEBUG else None
             })
             
         except Exception as email_error:
