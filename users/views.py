@@ -297,34 +297,18 @@ def send_verification_code(request):
                 } if settings.DEBUG else None
             })
         
-        # Clear any existing session data for this email
+        # Rate limiting kontrolü
         session_key = f"email_verification_{email}"
-        if session_key in request.session:
-            del request.session[session_key]
-            debug_logs.append(f"[DEBUG] Cleared existing session key: {session_key}")
-
-        # Initialize rate limiting variables
+        last_sent = request.session.get(session_key)
         now_ts = timezone.now().timestamp()
-        debug_logs.append(f"[DEBUG] Current timestamp: {now_ts}")
-
-        # Check rate limiting
-        if session_key in request.session:
-            last_sent = request.session[session_key]
-            # Clear expired timestamps (older than 1 hour)
-            if now_ts - last_sent > 3600:  # 1 hour expiration
-                del request.session[session_key]
-                last_sent = None
-                debug_logs.append("[DEBUG] Expired timestamp cleared")
-        else:
-            last_sent = None
-
+        debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
+        debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
+        
         if last_sent:
             time_diff = now_ts - last_sent
-            debug_logs.append(f"[DEBUG] Time since last request: {time_diff:.2f} seconds")
-            
-            # 2-second debounce check
-            if time_diff < 2:
-                debug_logs.append("[WARNING] Debounce protection triggered")
+            debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
+            if time_diff < 2:  # 2 saniye debounce (anti-double-click)
+                debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False,
@@ -336,11 +320,9 @@ def send_verification_code(request):
                         'email': email
                     } if settings.DEBUG else None
                 })
-            
-            # 1-minute rate limit check
-            if time_diff < 60:
+            if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Rate limit hit. Wait {remaining} more seconds")
+                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False, 
@@ -366,12 +348,7 @@ def send_verification_code(request):
         request.session['verification_code'] = str(code)
         request.session['verification_email'] = str(email).lower()
         request.session['verification_timestamp'] = int(verification_timestamp)
-        
-        # Update rate limiting timestamp with force save
-        request.session[session_key] = now_ts
-        request.session.modified = True
-        request.session.save()
-        debug_logs.append("[DEBUG] Session data saved with new rate limit timestamp")
+        request.session[session_key] = timezone.now().timestamp()
         
         # Clear any previous verification status
         request.session.pop('email_verified', None)
