@@ -34,7 +34,6 @@ from django.contrib.auth.hashers import check_password
 from django.db.models.functions import Collate
 from django.db import IntegrityError
 import json
-# forms.py içindeki formları doğru şekilde import ettiğinizden emin olun.
 from .forms import CustomUserRegistrationForm, LoginForm, UserSearchForm
 from .models import Message, CustomUser, School, GraduationYear, Note
 from django.core.mail import send_mail
@@ -58,7 +57,8 @@ from django.core.exceptions import SuspiciousFileOperation
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.mail import get_connection
-
+from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 
 def send_verification_email_resend(email, code, logger):
     """
@@ -195,9 +195,6 @@ def send_verification_email_resend(email, code, logger):
         raise Exception("Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
 
     return False  # This line is a fallback and should not be reached
-
-from django.urls import reverse
-from django.views.decorators.http import require_http_methods
 
 # Create your views here.
 User = get_user_model()
