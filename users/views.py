@@ -297,45 +297,60 @@ def send_verification_code(request):
                 } if settings.DEBUG else None
             })
         
-        # Rate limiting ve çift gönderim kontrolü
+        # Oturum kilidi ve hız sınırı kontrolleri
+        current_time = timezone.now().timestamp()
         session_key = f"email_verification_{email}"
         lock_key = f"{session_key}_lock"
         
-        # Eğer bir gönderim işlemi zaten devam ediyorsa engelle
+        # Çakışan istek kontrolü
         if request.session.get(lock_key):
             debug_logs.append("[WARNING] Email gönderim işlemi zaten devam ediyor")
             return JsonResponse({
                 'success': False,
                 'error': 'İşlem devam ediyor. Lütfen bekleyin...',
+                'code': 'operation_in_progress',
                 'debug_logs': debug_logs if settings.DEBUG else None
-            })
+            }, status=429)
             
-        # Rate limit kontrolü
+        # Hız sınırı kontrolü (60 saniye)
         last_sent = request.session.get(session_key)
         if last_sent:
-            time_diff = timezone.now().timestamp() - last_sent
-            if time_diff < 60:  # 1 dakika bekleme
+            time_diff = current_time - last_sent
+            if time_diff < 60:  # 60 saniye bekleme süresi
                 remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                debug_logs.append(f"[WARNING] Hız sınırı aşıldı. Kalan süre: {remaining} saniye")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
+                    'error': f'Çok sık istek gönderiyorsunuz. Lütfen {remaining} saniye bekleyin.',
+                    'code': 'rate_limit_exceeded',
+                    'retry_after': remaining,
                     'debug_logs': debug_logs if settings.DEBUG else None,
                     'debug_info': {
                         'action': 'rate_limit_exceeded',
                         'seconds_since_last_request': int(time_diff),
                         'seconds_remaining': remaining,
-                        'email': email
+                        'email': email,
+                        'timestamp': current_time
                     } if settings.DEBUG else None
-                })
+                }, status=429)
         
-        # Kilit mekanizmasını aktif et
-        request.session[lock_key] = True
-        request.session[session_key] = timezone.now().timestamp()
-        request.session.save()
-        logger.info(f"Email gönderim kilidi aktif edildi: {email}")
-        debug_logs.append("[INFO] Email gönderim kilidi aktif edildi.")
+        # Kilit mekanizmasını aktif et ve zaman damgasını kaydet
+        try:
+            request.session[lock_key] = True
+            request.session[session_key] = current_time
+            request.session.modified = True
+            request.session.save()
+            logger.info(f"Email gönderim kilidi aktif edildi: {email}")
+            debug_logs.append(f"[INFO] Email gönderim kilidi aktif edildi. Zaman: {current_time}")
+        except Exception as e:
+            logger.error(f"Session kaydedilirken hata oluştu: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.',
+                'code': 'session_error',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            }, status=500)
 
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
