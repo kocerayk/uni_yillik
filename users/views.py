@@ -307,19 +307,6 @@ def send_verification_code(request):
         if last_sent:
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            if time_diff < 0.1:  
-                debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
-                    'debug_logs': debug_logs if settings.DEBUG else None,
-                    'debug_info': {
-                        'action': 'debounce_hit',
-                        'seconds_since_last_request': time_diff,
-                        'email': email
-                    } if settings.DEBUG else None
-                })
             if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
