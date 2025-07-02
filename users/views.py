@@ -297,27 +297,41 @@ def send_verification_code(request):
                 } if settings.DEBUG else None
             })
         
-        # Rate limiting kontrolü
-        session_key = f"email_verification_{email}"
-        last_sent = request.session.get(session_key)
+        # Rate limiting kontrolü - moved to the beginning of the function
+        rate_limit_key = f"email_verification_rate_limit_{email}"
+        lock_key = f"email_verification_lock_{email}"
+        current_time = timezone.now().timestamp()
         
-        if last_sent:
-            time_diff = timezone.now().timestamp() - last_sent
-            if time_diff < 60:  # 1 dakika bekleme
-                remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
-                    'debug_logs': debug_logs if settings.DEBUG else None,
-                    'debug_info': {
-                        'action': 'rate_limit_exceeded',
-                        'seconds_since_last_request': int(time_diff),
-                        'seconds_remaining': remaining,
-                        'email': email
-                    } if settings.DEBUG else None
-                })
+        # Check if rate limited
+        last_sent = request.session.get(rate_limit_key)
+        if last_sent and (current_time - last_sent) < 60:  # 1 minute cooldown
+            remaining = 60 - int(current_time - last_sent)
+            debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': f'Çok sık istek gönderiyorsunuz. Lütfen {remaining} saniye bekleyin.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'rate_limit_exceeded',
+                    'seconds_since_last_request': int(current_time - last_sent),
+                    'seconds_remaining': remaining,
+                    'email': email
+                } if settings.DEBUG else None
+            })
+            
+        # Set a lock to prevent concurrent requests for the same email
+        if request.session.get(lock_key):
+            debug_logs.append("[WARNING] Request already in progress for this email")
+            return JsonResponse({
+                'success': False,
+                'error': 'Bu e-posta için zaten bir istek işleniyor. Lütfen biraz bekleyin.',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            })
+            
+        # Set the lock
+        request.session[lock_key] = True
+        request.session.modified = True
         
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
@@ -331,7 +345,10 @@ def send_verification_code(request):
         request.session['verification_code'] = str(code)
         request.session['verification_email'] = str(email).lower()
         request.session['verification_timestamp'] = int(verification_timestamp)
-        request.session[session_key] = timezone.now().timestamp()
+        
+        # Set rate limit after successful code generation
+        rate_limit_key = f"email_verification_rate_limit_{email}"
+        request.session[rate_limit_key] = timezone.now().timestamp()
         
         # Clear any previous verification status
         request.session.pop('email_verified', None)
@@ -364,8 +381,11 @@ def send_verification_code(request):
             logger.info("✓ Email sent successfully via Resend API")
             debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
             
-            # Store success in session
+            # Store success in session and clear the lock
             request.session['email_sent'] = True
+            lock_key = f"email_verification_lock_{email}"
+            if lock_key in request.session:
+                del request.session[lock_key]
             request.session.save()
             
             debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
@@ -393,11 +413,12 @@ def send_verification_code(request):
             debug_logs.append(f"[ERROR] {error_msg}")
             debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             
-            # Clear session data since email failed
+# Clear session data and lock since email failed
             request.session.pop('verification_code', None)
             request.session.pop('verification_email', None)
             request.session.pop('verification_timestamp', None)
-            request.session.pop(session_key, None)
+            request.session.pop(f'email_verification_rate_limit_{email}', None)
+            request.session.pop(f'email_verification_lock_{email}', None)
             request.session.save()
             
             debug_logs.append("[INFO] Session data cleared due to email failure")
