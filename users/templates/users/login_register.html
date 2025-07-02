@@ -1559,18 +1559,49 @@
                 }
             }, 5000);
         }
-    // Email verification functionality
+    // Email verification functionality with improved user feedback
     document.addEventListener('DOMContentLoaded', function() {
         const emailInput = document.getElementById('email');
         
         if (emailInput) {
+            let lastProcessedEmail = '';
+            let lastProcessedTime = 0;
+            const DEBOUNCE_DELAY = 1000; // 1 second
+            
             emailInput.addEventListener('blur', function() {
                 const email = this.value.trim();
                 console.log('🔍 EMAIL DEBUG: Email blur event triggered with value:', email);
                 
                 if (email && email.includes('@')) {
-                    sendVerificationCode(email);
+                    const currentTime = Date.now();
+                    
+                    // Skip if this is the same email and we've processed it recently
+                    if (email === lastProcessedEmail && (currentTime - lastProcessedTime) < (DEBOUNCE_DELAY * 2)) {
+                        console.log('⏭️ EMAIL DEBUG: Skipping duplicate email verification');
+                        return;
+                    }
+                    
+                    lastProcessedEmail = email;
+                    lastProcessedTime = currentTime;
+                    
+                    // Add a small delay to handle rapid blur events
+                    setTimeout(() => {
+                        if (lastProcessedEmail === email) {
+                            sendVerificationCode(email);
+                        }
+                    }, 300);
                 }
+            });
+            
+            // Also handle paste events
+            emailInput.addEventListener('paste', function(e) {
+                // Let the paste complete
+                setTimeout(() => {
+                    const email = this.value.trim();
+                    if (email && email.includes('@')) {
+                        sendVerificationCode(email);
+                    }
+                }, 100);
             });
         }
     });
@@ -1742,11 +1773,26 @@
                 if (verificationCodeGroup) {
                     verificationCodeGroup.style.display = 'flex';
                     
-                    // Focus on the verification code input
-                    const verificationInput = verificationCodeGroup.querySelector('input');
-                    if (verificationInput) {
-                        verificationInput.focus();
-                    }
+                    // Focus on the verification code input with a small delay
+                    // to ensure it's visible and ready to receive input
+                    setTimeout(() => {
+                        const verificationInput = verificationCodeGroup.querySelector('input[type="text"]');
+                        if (verificationInput) {
+                            verificationInput.focus();
+                            verificationInput.select();
+                        }
+                    }, 100);
+                    
+                    // Auto-submit when 6 digits are entered
+                    verificationCodeGroup.addEventListener('input', function(e) {
+                        const input = e.target;
+                        if (input.matches('input[type="text"]') && input.value.length === 6) {
+                            const form = input.closest('form');
+                            if (form) {
+                                form.dispatchEvent(new Event('submit'));
+                            }
+                        }
+                    });
                 }
                 
                 // Prevent immediate resend

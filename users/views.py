@@ -302,17 +302,15 @@ def send_verification_code(request):
         session_key = f"email_verification_{email}"
         lock_key = f"{session_key}_lock"
         
-        # Çakışan istek kontrolü
-        if request.session.get(lock_key):
-            debug_logs.append("[WARNING] Email gönderim işlemi zaten devam ediyor")
-            return JsonResponse({
-                'success': False,
-                'error': 'İşlem devam ediyor. Lütfen bekleyin...',
-                'code': 'operation_in_progress',
-                'debug_logs': debug_logs if settings.DEBUG else None
-            }, status=429)
-            
-        # Hız sınırı kontrolü (60 saniye)
+        # Önbellek temizleme - 1 saatten eski kilitleri temizle
+        cache_timeout = 3600  # 1 saat
+        for key in list(request.session.keys()):
+            if key.startswith('email_verification_') and key.endswith('_lock'):
+                lock_time = request.session.get(key)
+                if lock_time and (current_time - lock_time) > cache_timeout:
+                    del request.session[key]
+        
+        # Hız sınırı kontrolü (60 saniye) - bu kısmı kilitten önce yapıyoruz
         last_sent = request.session.get(session_key)
         if last_sent:
             time_diff = current_time - last_sent
@@ -335,15 +333,47 @@ def send_verification_code(request):
                     } if settings.DEBUG else None
                 }, status=429)
         
+        # Çakışan istek kontrolü
+        if request.session.get(lock_key):
+            lock_time = request.session[lock_key]
+            lock_age = current_time - lock_time
+            
+            # 30 saniyeden eski kilitleri kaldır
+            if lock_age > 30:
+                debug_logs.append(f"[INFO] Eski kilit temizlendi. Yaş: {int(lock_age)} saniye")
+                del request.session[lock_key]
+                request.session.save()
+            else:
+                debug_logs.append("[WARNING] Email gönderim işlemi zaten devam ediyor")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'İşlem zaten devam ediyor. Lütfen bekleyin...',
+                    'code': 'operation_in_progress',
+                    'retry_after': max(1, 30 - int(lock_age)),
+                    'debug_logs': debug_logs if settings.DEBUG else None
+                }, status=429)
+        
         # Kilit mekanizmasını aktif et ve zaman damgasını kaydet
         try:
-            request.session[lock_key] = True
+            # Önce kilit oluştur
+            request.session[lock_key] = current_time
+            request.session.modified = True
+            request.session.save()
+            
+            # Sonra diğer verileri kaydet
             request.session[session_key] = current_time
             request.session.modified = True
             request.session.save()
+            
             logger.info(f"Email gönderim kilidi aktif edildi: {email}")
             debug_logs.append(f"[INFO] Email gönderim kilidi aktif edildi. Zaman: {current_time}")
+            
         except Exception as e:
+            # Hata durumunda kilidi temizle
+            if lock_key in request.session:
+                del request.session[lock_key]
+                request.session.save()
+                
             logger.error(f"Session kaydedilirken hata oluştu: {str(e)}")
             return JsonResponse({
                 'success': False,
@@ -409,10 +439,16 @@ def send_verification_code(request):
                 } if settings.DEBUG else None
             }
             
-            # Başarılı işlem sonrası oturumu temizle
-            request.session['email_sent'] = True
-            request.session.pop(lock_key, None)  # Kilidi kaldır
-            request.session.save()
+            # Başarılı işlem sonrası oturumu güncelle
+            try:
+                request.session['email_sent'] = True
+                if lock_key in request.session:
+                    del request.session[lock_key]
+                request.session.modified = True
+                request.session.save()
+            except Exception as e:
+                logger.error(f"Oturum güncellenirken hata: {str(e)}")
+                # Hata olsa bile işleme devam et
             
             debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
             debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
