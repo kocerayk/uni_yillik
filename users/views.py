@@ -304,18 +304,10 @@ def send_verification_code(request):
         debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
         debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
         
-        # Inside send_verification_code, before checking last_sent
         if last_sent:
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            
-            if time_diff > 70:
-                # Clear the session key if it's too old
-                debug_logs.append(f"[DEBUG] Old session key found (age: {time_diff}s). Clearing it.")
-                request.session.pop(session_key, None)
-                request.session.save()
-            elif time_diff < 2:
-                # Only apply debounce for very recent requests
+            if time_diff < 2:  # 2 saniye debounce (anti-double-click)
                 debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
@@ -328,8 +320,7 @@ def send_verification_code(request):
                         'email': email
                     } if settings.DEBUG else None
                 })
-            elif time_diff < 60:
-                # Rate limit for 60 seconds
+            if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
@@ -344,9 +335,7 @@ def send_verification_code(request):
                         'email': email
                     } if settings.DEBUG else None
                 })
-        else:
-            debug_logs.append("[DEBUG] No last_sent value in session for this email.")
-    
+        
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
         logger.info(f"Generated verification code for {email}")
