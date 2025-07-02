@@ -1559,122 +1559,41 @@
                 }
             }, 5000);
         }
-    // Email verification functionality with improved user feedback
+    // Email verification functionality
     document.addEventListener('DOMContentLoaded', function() {
         const emailInput = document.getElementById('email');
         
         if (emailInput) {
-            let lastProcessedEmail = '';
-            let lastProcessedTime = 0;
-            const DEBOUNCE_DELAY = 1000; // 1 second
-            
             emailInput.addEventListener('blur', function() {
                 const email = this.value.trim();
                 console.log('🔍 EMAIL DEBUG: Email blur event triggered with value:', email);
                 
                 if (email && email.includes('@')) {
-                    const currentTime = Date.now();
-                    
-                    // Skip if this is the same email and we've processed it recently
-                    if (email === lastProcessedEmail && (currentTime - lastProcessedTime) < (DEBOUNCE_DELAY * 2)) {
-                        console.log('⏭️ EMAIL DEBUG: Skipping duplicate email verification');
-                        return;
-                    }
-                    
-                    lastProcessedEmail = email;
-                    lastProcessedTime = currentTime;
-                    
-                    // Add a small delay to handle rapid blur events
-                    setTimeout(() => {
-                        if (lastProcessedEmail === email) {
-                            sendVerificationCode(email);
-                        }
-                    }, 300);
+                    sendVerificationCode(email);
                 }
-            });
-            
-            // Also handle paste events
-            emailInput.addEventListener('paste', function(e) {
-                // Let the paste complete
-                setTimeout(() => {
-                    const email = this.value.trim();
-                    if (email && email.includes('@')) {
-                        sendVerificationCode(email);
-                    }
-                }, 100);
             });
         }
     });
 
-    // Global variable to track if a request is in progress
-    let isSendingVerification = false;
-    let lastEmailSent = null;
-    let retryTimer = null;
-
     function sendVerificationCode(email) {
-        // Prevent multiple simultaneous requests
-        if (isSendingVerification) {
-            console.log('⏳ EMAIL DEBUG: Request already in progress, ignoring duplicate call');
-            return;
-        }
-
-        // Clear any existing retry timer
-        if (retryTimer) {
-            clearTimeout(retryTimer);
-            retryTimer = null;
-        }
-
-        // If this is the same email as last time and we recently sent a request, ignore
-        if (lastEmailSent === email && (Date.now() - window.lastEmailSentTime) < 5000) {
-            console.log('⏳ EMAIL DEBUG: Ignoring rapid duplicate request for same email');
-            return;
-        }
-
         console.log('🚀 EMAIL DEBUG: Starting sendVerificationCode function');
         console.log('📧 EMAIL DEBUG: Email parameter:', email);
         
-        // Update tracking variables
-        isSendingVerification = true;
-        lastEmailSent = email;
-        window.lastEmailSentTime = Date.now();
-        
         // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-        if (!csrfToken) {
-            console.error('❌ EMAIL DEBUG: CSRF token not found');
-            showMessage('Güvenlik hatası. Lütfen sayfayı yenileyin.', 'error');
-            isSendingVerification = false;
-            return;
-        }
-        
-        console.log('🔐 EMAIL DEBUG: CSRF token found');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        console.log('🔐 EMAIL DEBUG: CSRF token:', csrfToken);
         
         // Show loading state
         console.log('⏳ EMAIL DEBUG: Setting loading state...');
-        const sendButton = document.querySelector('button[type="button"][onclick*="sendVerificationCode"]');
-        const originalButtonText = sendButton ? sendButton.innerHTML : '';
         
-        if (sendButton) {
-            sendButton.disabled = true;
-            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
-        }
-        
-        // Generate a unique request ID for this verification attempt
-        const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        // Prepare request data with unique request ID
-        const requestData = { 
-            email: email,
-            request_id: requestId
+        // Prepare request data
+        const requestData = {
+            email: email
         };
-        
         console.log('📦 EMAIL DEBUG: Request data:', requestData);
-        console.log('🆔 EMAIL DEBUG: Using request ID:', requestId);
         
-        // Send fetch request with timeout
+        // Send fetch request
         console.log('🌐 EMAIL DEBUG: Sending fetch request...');
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
         
         fetch('/send-verification-code/', {
             method: 'POST',
@@ -1684,8 +1603,7 @@
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin',
-            body: JSON.stringify(requestData),
-            signal: controller.signal
+            body: JSON.stringify(requestData)
         })
         .then(response => {
             console.log('📡 EMAIL DEBUG: Received response');
@@ -1700,16 +1618,6 @@
         })
         .then(data => {
             console.log('📋 EMAIL DEBUG: Parsed response data:', data);
-            
-            // Reset sending state
-            isSendingVerification = false;
-            
-            // Reset button state
-            const sendButton = document.querySelector('button[type="button"][onclick*="sendVerificationCode"]');
-            if (sendButton) {
-                sendButton.disabled = false;
-                sendButton.innerHTML = 'Tekrar Gönder';
-            }
             
             // Enhanced error logging - log ALL response properties
             console.group('🔍 EMAIL DEBUG: Complete response analysis');
@@ -1733,49 +1641,22 @@
                     }
                 });
                 console.groupEnd();
-            } else if (settings.DEBUG) {
+            } else {
                 console.warn('⚠️ EMAIL DEBUG: No debug_logs found in response or debug_logs is not an array');
             }
             
-            // Handle duplicate requests
-            if (data.code === 'duplicate_request') {
-                console.log('🔄 EMAIL DEBUG: Duplicate request detected, ignoring');
-                return;
+            // Check for additional error information fields
+            if (data.error_code) {
+                console.error('❌ EMAIL DEBUG: Error code:', data.error_code);
             }
-            
-            // Handle rate limiting
-            if (data.code === 'rate_limit_exceeded' || (data.error && data.error.includes('bekleyin'))) {
-                const retryAfter = data.retry_after || 60;
-                console.warn(`⏳ EMAIL DEBUG: Rate limited. Retry after ${retryAfter} seconds`);
-                
-                // Update button to show retry countdown
-                if (sendButton) {
-                    let remaining = retryAfter;
-                    sendButton.disabled = true;
-                    
-                    const updateButtonText = () => {
-                        if (remaining > 0) {
-                            sendButton.textContent = `Tekrar göndermek için bekleyin (${remaining}s)`;
-                            remaining--;
-                            retryTimer = setTimeout(updateButtonText, 1000);
-                        } else {
-                            sendButton.disabled = false;
-                            sendButton.textContent = 'Tekrar Gönder';
-                        }
-                    };
-                    
-                    updateButtonText();
-                }
-                
-                showMessage(data.error || 'Lütfen bir süre bekledikten sonra tekrar deneyin.', 'warning');
-                return;
+            if (data.error_type) {
+                console.error('❌ EMAIL DEBUG: Error type:', data.error_type);
             }
-            
-            // Handle operation in progress
-            if (data.code === 'operation_in_progress') {
-                console.warn('⏳ EMAIL DEBUG: Operation already in progress');
-                showMessage('İşlem zaten devam ediyor. Lütfen bekleyin...', 'info');
-                return;
+            if (data.stack_trace) {
+                console.error('❌ EMAIL DEBUG: Stack trace:', data.stack_trace);
+            }
+            if (data.validation_errors) {
+                console.error('❌ EMAIL DEBUG: Validation errors:', data.validation_errors);
             }
             
             if (data.success) {
@@ -1786,48 +1667,16 @@
                 const verificationCodeGroup = document.querySelector('.verification-code-group');
                 if (verificationCodeGroup) {
                     verificationCodeGroup.style.display = 'flex';
-                    
-                    // Focus on the verification code input with a small delay
-                    // to ensure it's visible and ready to receive input
-                    setTimeout(() => {
-                        const verificationInput = verificationCodeGroup.querySelector('input[type="text"]');
-                        if (verificationInput) {
-                            verificationInput.focus();
-                            verificationInput.select();
-                        }
-                    }, 100);
-                    
-                    // Auto-submit when 6 digits are entered
-                    verificationCodeGroup.addEventListener('input', function(e) {
-                        const input = e.target;
-                        if (input.matches('input[type="text"]') && input.value.length === 6) {
-                            const form = input.closest('form');
-                            if (form) {
-                                form.dispatchEvent(new Event('submit'));
-                            }
-                        }
-                    });
-                }
-                
-                // Prevent immediate resend
-                if (sendButton) {
-                    sendButton.disabled = true;
-                    setTimeout(() => {
-                        if (sendButton) sendButton.disabled = false;
-                    }, 10000); // Enable after 10 seconds
                 }
             } else {
                 console.error('❌ EMAIL DEBUG: Failed to send verification code');
+                console.error('❌ EMAIL DEBUG: Error message:', data.error);
                 
                 if (data.details) {
                     console.error('❌ EMAIL DEBUG: Error details:', data.details);
-                } else if (settings.DEBUG) {
+                } else {
                     console.warn('⚠️ EMAIL DEBUG: No details provided in error response');
                 }
-                
-                // Show appropriate error message to user
-                const errorMessage = data.error || 'Doğrulama kodu gönderilirken bir hata oluştu. Lütfen tekrar deneyin.';
-                showMessage(errorMessage, 'error');
                 
                 // Log the raw error for debugging
                 console.error('❌ EMAIL DEBUG: Raw server response for debugging:', data);
@@ -1836,29 +1685,12 @@
             }
         })
         .catch(error => {
-            isSendingVerification = false;
+            console.error('💥 EMAIL DEBUG: Fetch error occurred');
+            console.error('💥 EMAIL DEBUG: Error type:', error.name);
+            console.error('💥 EMAIL DEBUG: Error message:', error.message);
+            console.error('💥 EMAIL DEBUG: Full error:', error);
             
-            // Reset button state
-            const sendButton = document.querySelector('button[type="button"][onclick*="sendVerificationCode"]');
-            if (sendButton) {
-                sendButton.disabled = false;
-                sendButton.innerHTML = 'Tekrar Dene';
-            }
-            
-            if (error.name === 'AbortError') {
-                console.error('⏱️ EMAIL DEBUG: Request timed out');
-                showMessage('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.', 'error');
-            } else {
-                console.error('💥 EMAIL DEBUG: Fetch error occurred');
-                console.error('💥 EMAIL DEBUG: Error type:', error.name);
-                console.error('💥 EMAIL DEBUG: Error message:', error.message);
-                console.error('💥 EMAIL DEBUG: Full error:', error);
-                
-                showMessage('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.', 'error');
-            }
-        })
-        .finally(() => {
-            clearTimeout(timeoutId);
+            showMessage('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.', 'error');
         });
     }
     </script>

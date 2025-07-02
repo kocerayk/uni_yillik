@@ -257,10 +257,8 @@ def send_verification_code(request):
             })
             
         email = data.get('email', '').strip().lower()
-        request_id = data.get('request_id', str(uuid.uuid4()))
-        
+        logger.info(f"Processing email: {email}")
         debug_logs.append(f"[INFO] Requested email: {email}")
-        debug_logs.append(f"[INFO] Request ID: {request_id}")
         
         if not email:
             logger.warning("No email provided in request")
@@ -299,107 +297,45 @@ def send_verification_code(request):
                 } if settings.DEBUG else None
             })
         
-        # Oturum kilidi ve hız sınırı kontrolleri
-        current_time = timezone.now().timestamp()
+        # Rate limiting kontrolü
         session_key = f"email_verification_{email}"
-        lock_key = f"{session_key}_lock"
-        
-        # Önbellek temizleme - 1 saatten eski kilitleri temizle
-        cache_timeout = 3600  # 1 saat
-        request_id_key = f"req_{request_id}"
-        
-        # Check if this exact request was already processed
-        if request_id_key in request.session:
-            debug_logs.append(f"[WARNING] Duplicate request detected: {request_id}")
-            return JsonResponse({
-                'success': False,
-                'error': 'Bu istek zaten işlendi.',
-                'code': 'duplicate_request',
-                'debug_logs': debug_logs if settings.DEBUG else None
-            }, status=400)
-            
-        # Clean up old locks
-        for key in list(request.session.keys()):
-            if key.startswith('email_verification_') and key.endswith('_lock'):
-                lock_time = request.session.get(key)
-                if lock_time and (current_time - lock_time) > cache_timeout:
-                    del request.session[key]
-        
-        # Hız sınırı kontrolü (60 saniye) - bu kısmı kilitten önce yapıyoruz
         last_sent = request.session.get(session_key)
+        now_ts = timezone.now().timestamp()
+        debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
+        debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
+        
         if last_sent:
-            time_diff = current_time - last_sent
-            if time_diff < 60:  # 60 saniye bekleme süresi
+            time_diff = now_ts - last_sent
+            debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
+            if time_diff < 2:  # 2 saniye debounce (anti-double-click)
+                debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
+                    'debug_logs': debug_logs if settings.DEBUG else None,
+                    'debug_info': {
+                        'action': 'debounce_hit',
+                        'seconds_since_last_request': time_diff,
+                        'email': email
+                    } if settings.DEBUG else None
+                })
+            if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Hız sınırı aşıldı. Kalan süre: {remaining} saniye")
+                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. Lütfen {remaining} saniye bekleyin.',
-                    'code': 'rate_limit_exceeded',
-                    'retry_after': remaining,
+                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
                     'debug_logs': debug_logs if settings.DEBUG else None,
                     'debug_info': {
                         'action': 'rate_limit_exceeded',
                         'seconds_since_last_request': int(time_diff),
                         'seconds_remaining': remaining,
-                        'email': email,
-                        'timestamp': current_time
+                        'email': email
                     } if settings.DEBUG else None
-                }, status=429)
+                })
         
-        # Çakışan istek kontrolü
-        if request.session.get(lock_key):
-            lock_time = request.session[lock_key]
-            lock_age = current_time - lock_time
-            
-            # 30 saniyeden eski kilitleri kaldır
-            if lock_age > 30:
-                debug_logs.append(f"[INFO] Eski kilit temizlendi. Yaş: {int(lock_age)} saniye")
-                del request.session[lock_key]
-                request.session.save()
-            else:
-                debug_logs.append("[WARNING] Email gönderim işlemi zaten devam ediyor")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'İşlem zaten devam ediyor. Lütfen bekleyin...',
-                    'code': 'operation_in_progress',
-                    'retry_after': max(1, 30 - int(lock_age)),
-                    'debug_logs': debug_logs if settings.DEBUG else None
-                }, status=429)
-        
-        # Kilit mekanizmasını aktif et ve zaman damgasını kaydet
-        try:
-            # Mark this request as processed
-            request.session[request_id_key] = current_time
-            
-            # Önce kilit oluştur
-            request.session[lock_key] = current_time
-            request.session.modified = True
-            request.session.save()
-            
-            # Sonra diğer verileri kaydet
-            request.session[session_key] = current_time
-            request.session.modified = True
-            request.session.save()
-            
-            logger.info(f"Email gönderim kilidi aktif edildi: {email}")
-            debug_logs.append(f"[INFO] Email gönderim kilidi aktif edildi. Zaman: {current_time}")
-            
-        except Exception as e:
-            # Hata durumunda kilidi temizle
-            if lock_key in request.session:
-                del request.session[lock_key]
-                request.session.save()
-                
-            logger.error(f"Session kaydedilirken hata oluştu: {str(e)}")
-            return JsonResponse({
-                'success': False,
-                'error': 'İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.',
-                'code': 'session_error',
-                'debug_logs': debug_logs if settings.DEBUG else None
-            }, status=500)
-
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
         logger.info(f"Generated verification code for {email}")
@@ -412,6 +348,7 @@ def send_verification_code(request):
         request.session['verification_code'] = str(code)
         request.session['verification_email'] = str(email).lower()
         request.session['verification_timestamp'] = int(verification_timestamp)
+        request.session[session_key] = timezone.now().timestamp()
         
         # Clear any previous verification status
         request.session.pop('email_verified', None)
@@ -444,8 +381,14 @@ def send_verification_code(request):
             logger.info("✓ Email sent successfully via Resend API")
             debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
             
-            # Başarılı yanıtı hazırla ve oturumu güncelle
-            response_data = {
+            # Store success in session
+            request.session['email_sent'] = True
+            request.session.save()
+            
+            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            
+            return JsonResponse({
                 'success': True,
                 'message': 'Doğrulama kodu e-posta adresinize gönderildi.',
                 'debug_logs': debug_logs if settings.DEBUG else None,
@@ -455,23 +398,7 @@ def send_verification_code(request):
                     'code_length': len(code),
                     'timestamp': timezone.now().isoformat()
                 } if settings.DEBUG else None
-            }
-            
-            # Başarılı işlem sonrası oturumu güncelle
-            try:
-                request.session['email_sent'] = True
-                if lock_key in request.session:
-                    del request.session[lock_key]
-                request.session.modified = True
-                request.session.save()
-            except Exception as e:
-                logger.error(f"Oturum güncellenirken hata: {str(e)}")
-                # Hata olsa bile işleme devam et
-            
-            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            
-            return JsonResponse(response_data)
+            })
             
         except Exception as email_error:
             logger.error(f"✗ Failed to send email via Resend API: {str(email_error)}")
@@ -483,12 +410,11 @@ def send_verification_code(request):
             debug_logs.append(f"[ERROR] {error_msg}")
             debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             
-            # Hata durumunda oturum verilerini temizle ve kilidi kaldır
+            # Clear session data since email failed
             request.session.pop('verification_code', None)
             request.session.pop('verification_email', None)
             request.session.pop('verification_timestamp', None)
             request.session.pop(session_key, None)
-            request.session.pop(lock_key, None)  # Kilidi kaldır
             request.session.save()
             
             debug_logs.append("[INFO] Session data cleared due to email failure")
