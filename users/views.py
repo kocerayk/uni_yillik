@@ -297,10 +297,21 @@ def send_verification_code(request):
                 } if settings.DEBUG else None
             })
         
-        # Rate limiting kontrolü
+        # Rate limiting ve çift gönderim kontrolü
         session_key = f"email_verification_{email}"
-        last_sent = request.session.get(session_key)
+        lock_key = f"{session_key}_lock"
         
+        # Eğer bir gönderim işlemi zaten devam ediyorsa engelle
+        if request.session.get(lock_key):
+            debug_logs.append("[WARNING] Email gönderim işlemi zaten devam ediyor")
+            return JsonResponse({
+                'success': False,
+                'error': 'İşlem devam ediyor. Lütfen bekleyin...',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            })
+            
+        # Rate limit kontrolü
+        last_sent = request.session.get(session_key)
         if last_sent:
             time_diff = timezone.now().timestamp() - last_sent
             if time_diff < 60:  # 1 dakika bekleme
@@ -319,12 +330,12 @@ def send_verification_code(request):
                     } if settings.DEBUG else None
                 })
         
-        # Lock the session to prevent race conditions by setting the timestamp BEFORE sending.
-        # If email sending fails, this key will be removed to allow the user to try again.
+        # Kilit mekanizmasını aktif et
+        request.session[lock_key] = True
         request.session[session_key] = timezone.now().timestamp()
         request.session.save()
-        logger.info(f"Rate limit timestamp set for {email} to prevent race conditions.")
-        debug_logs.append("[INFO] Rate limit lock acquired.")
+        logger.info(f"Email gönderim kilidi aktif edildi: {email}")
+        debug_logs.append("[INFO] Email gönderim kilidi aktif edildi.")
 
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
@@ -370,14 +381,8 @@ def send_verification_code(request):
             logger.info("✓ Email sent successfully via Resend API")
             debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
             
-            # Store success in session
-            request.session['email_sent'] = True
-            request.session.save()
-            
-            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            
-            return JsonResponse({
+            # Başarılı yanıtı hazırla ve oturumu güncelle
+            response_data = {
                 'success': True,
                 'message': 'Doğrulama kodu e-posta adresinize gönderildi.',
                 'debug_logs': debug_logs if settings.DEBUG else None,
@@ -387,7 +392,17 @@ def send_verification_code(request):
                     'code_length': len(code),
                     'timestamp': timezone.now().isoformat()
                 } if settings.DEBUG else None
-            })
+            }
+            
+            # Başarılı işlem sonrası oturumu temizle
+            request.session['email_sent'] = True
+            request.session.pop(lock_key, None)  # Kilidi kaldır
+            request.session.save()
+            
+            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            
+            return JsonResponse(response_data)
             
         except Exception as email_error:
             logger.error(f"✗ Failed to send email via Resend API: {str(email_error)}")
@@ -399,11 +414,12 @@ def send_verification_code(request):
             debug_logs.append(f"[ERROR] {error_msg}")
             debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
             
-            # Clear session data since email failed
+            # Hata durumunda oturum verilerini temizle ve kilidi kaldır
             request.session.pop('verification_code', None)
             request.session.pop('verification_email', None)
             request.session.pop('verification_timestamp', None)
-            request.session.pop(session_key, None) # Remove the rate-limit lock
+            request.session.pop(session_key, None)
+            request.session.pop(lock_key, None)  # Kilidi kaldır
             request.session.save()
             
             debug_logs.append("[INFO] Session data cleared due to email failure")
