@@ -307,7 +307,7 @@ def send_verification_code(request):
         if last_sent:
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            if time_diff < 0.2:  
+            if time_diff < 0.1:  
                 debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
