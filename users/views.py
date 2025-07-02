@@ -307,7 +307,7 @@ def send_verification_code(request):
         if last_sent:
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            if time_diff < 2:  # 2 saniye debounce (anti-double-click)
+            if time_diff < 2:
                 debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
@@ -320,7 +320,7 @@ def send_verification_code(request):
                         'email': email
                     } if settings.DEBUG else None
                 })
-            if time_diff < 60:  # 1 dakika bekleme
+            elif time_diff < 60:
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
                 debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
@@ -335,6 +335,9 @@ def send_verification_code(request):
                         'email': email
                     } if settings.DEBUG else None
                 })
+            # If more than 60 seconds passed, allow sending as normal
+        else:
+            debug_logs.append("[DEBUG] No last_sent value in session for this email.")
         
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
