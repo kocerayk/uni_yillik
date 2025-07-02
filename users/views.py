@@ -59,6 +59,24 @@ from django.core.exceptions import ValidationError
 from django.core.mail import get_connection
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from django.urls import reverse
+import json
+import random
+import string
+import time
+import traceback
+import logging
+import re
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.conf import settings
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
 
 def send_verification_email_resend(email, code, logger):
     """
@@ -86,11 +104,11 @@ def send_verification_email_resend(email, code, logger):
         "Content-Type": "application/json"
     }
     
-    # Email content
+    # Email content using the requested template
     email_data = {
         "from": from_email,
         "to": [email],
-        "subject": "Email Doğrulama Kodu",
+        "subject": "Email Doğrulama",
         "html": f"""
         <!DOCTYPE html>
         <html>
@@ -100,40 +118,40 @@ def send_verification_email_resend(email, code, logger):
         </head>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
-                <h2 style="color: #333; text-align: center;">Email Doğrulama</h2>
-                <p>Merhaba,</p>
-                <p>Email adresinizi doğrulamak için aşağıdaki kodu kullanın:</p>
+                <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Email Doğrulama</h2>
+                <p style="color: #666; margin-bottom: 20px;">Merhaba,</p>
+                <p style="color: #666; margin-bottom: 30px;">Email adresinizi doğrulamak için aşağıdaki kodu kullanın:</p>
                 
                 <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
-                    <h1 style="margin: 0; font-family: monospace; letter-spacing: 3px;">{code}</h1>
+                    <h1 style="margin: 0; font-family: monospace; letter-spacing: 3px; font-size: 32px;">{code}</h1>
                 </div>
                 
-                <p><strong>Bu kod 5 dakika geçerlidir.</strong></p>
-                <p>Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.</p>
+                <p style="color: #666; margin: 20px 0;"><strong>Bu kod 5 dakika geçerlidir.</strong></p>
+                <p style="color: #666; margin: 20px 0;">Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.</p>
                 
                 <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
-                <p style="color: #6c757d; font-size: 14px;">
-                    Bu email otomatik olarak gönderilmiştir, lütfen yanıtlamayın.
+                <p style="color: #6c757d; font-size: 14px; text-align: center;">
+                    Bu email Yıllık Site tarafından gönderilmiştir.<br>
+                    <a href="https://yillik.site" style="color: #007bff; text-decoration: none;">yillik.site</a>
                 </p>
             </div>
         </body>
         </html>
         """,
-        "text": f"""
-        Email Doğrulama
-        
-        Merhaba,
-        
-        Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
-        
-        Doğrulama Kodu: {code}
-        
-        Bu kod 5 dakika geçerlidir.
-        
-        Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
-        
-        Teşekkürler!
-        """
+        "text": f"""Email Doğrulama
+
+Merhaba,
+
+Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
+
+{code}
+
+Bu kod 5 dakika geçerlidir.
+
+Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+
+Bu email Yıllık Site tarafından gönderilmiştir.
+yillik.site"""
     }
     
     logger.info(f"Sending email to: {email}")
@@ -194,7 +212,246 @@ def send_verification_email_resend(email, code, logger):
         logger.exception("Full traceback:")
         raise Exception("Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
 
-    return False  # This line is a fallback and should not be reached
+    return False
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def send_verification_code(request):
+    """E-posta doğrulama kodu gönder - Birleşik fonksiyon"""
+    # Get logger instance
+    logger = logging.getLogger('email_debug')
+    debug_logs = []
+    
+    try:
+        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG START ===")
+        logger.info("=== EMAIL VERIFICATION START ===")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Session ID: {request.session.session_key}")
+        
+        # Ensure session is created if it doesn't exist
+        if not request.session.session_key:
+            request.session.create()
+            logger.info(f"Created new session with ID: {request.session.session_key}")
+            debug_logs.append(f"[INFO] Created new session with ID: {request.session.session_key}")
+        
+        # Parse JSON data from request body
+        try:
+            data = json.loads(request.body)
+            logger.info(f"Request data: {data}")
+            debug_logs.append(f"[INFO] Request data parsed successfully")
+        except json.JSONDecodeError as e:
+            error_msg = f"Invalid JSON data received: {str(e)}"
+            logger.error(error_msg)
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz veri formatı. Lütfen tekrar deneyin.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'request_validation_failed',
+                    'reason': 'invalid_json_format',
+                    'error': str(e)
+                } if settings.DEBUG else None
+            })
+            
+        email = data.get('email', '').strip().lower()
+        logger.info(f"Processing email: {email}")
+        debug_logs.append(f"[INFO] Requested email: {email}")
+        
+        if not email:
+            logger.warning("No email provided in request")
+            debug_logs.append("[ERROR] Email is empty")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': 'E-posta adresi gerekli.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'validation_failed',
+                    'reason': 'email_required',
+                    'email_provided': False
+                } if settings.DEBUG else None
+            })
+            
+        # Validate email format
+        try:
+            validate_email(email)
+            logger.info(f"Email format is valid: {email}")
+            debug_logs.append(f"[INFO] Email format is valid: {email}")
+        except ValidationError as e:
+            logger.warning(f"Invalid email format: {email}")
+            debug_logs.append(f"[ERROR] Invalid email format: {str(e)}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz e-posta formatı. Lütfen geçerli bir e-posta adresi girin.',
+                'details': str(e) if settings.DEBUG else None,
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'validation_failed',
+                    'reason': 'invalid_email_format',
+                    'email_provided': email,
+                    'validation_error': str(e)
+                } if settings.DEBUG else None
+            })
+        
+        # Rate limiting kontrolü
+        session_key = f"email_verification_{email}"
+        last_sent = request.session.get(session_key)
+        
+        if last_sent:
+            time_diff = timezone.now().timestamp() - last_sent
+            if time_diff < 60:  # 1 dakika bekleme
+                remaining = 60 - int(time_diff)
+                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
+                    'debug_logs': debug_logs if settings.DEBUG else None,
+                    'debug_info': {
+                        'action': 'rate_limit_exceeded',
+                        'seconds_since_last_request': int(time_diff),
+                        'seconds_remaining': remaining,
+                        'email': email
+                    } if settings.DEBUG else None
+                })
+        
+        # Generate a 6-digit verification code
+        code = ''.join(random.choices(string.digits, k=6))
+        logger.info(f"Generated verification code for {email}")
+        debug_logs.append(f"[INFO] Generated verification code: {code}")
+        
+        # Generate timestamp and ensure it's an integer
+        verification_timestamp = int(time.time())
+        
+        # Store verification data in session
+        request.session['verification_code'] = str(code)
+        request.session['verification_email'] = str(email).lower()
+        request.session['verification_timestamp'] = int(verification_timestamp)
+        request.session[session_key] = timezone.now().timestamp()
+        
+        # Clear any previous verification status
+        request.session.pop('email_verified', None)
+        request.session.pop('verified_email', None)
+        
+        # Ensure session is marked as modified and save
+        request.session.modified = True
+        request.session.save()
+        
+        logger.info("Session data saved successfully")
+        debug_logs.append("[INFO] Session data saved successfully")
+        
+        # SEND THE VERIFICATION EMAIL
+        try:
+            logger.info("=== SENDING VERIFICATION EMAIL VIA RESEND API ===")
+            debug_logs.append("[INFO] === STARTING RESEND EMAIL SEND PROCESS ===")
+            
+            # Check configuration
+            api_key_status = 'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set'
+            from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')
+            
+            logger.info(f"RESEND_API_KEY: {api_key_status}")
+            logger.info(f"RESEND_FROM_EMAIL: {from_email}")
+            debug_logs.append(f"[INFO] RESEND_API_KEY: {api_key_status}")
+            debug_logs.append(f"[INFO] RESEND_FROM_EMAIL: {from_email}")
+            
+            # Send email
+            send_verification_email_resend(email, code, logger)
+            
+            logger.info("✓ Email sent successfully via Resend API")
+            debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
+            
+            # Store success in session
+            request.session['email_sent'] = True
+            request.session.save()
+            
+            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Doğrulama kodu e-posta adresinize gönderildi.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'verification_code_sent',
+                    'email': email,
+                    'code_length': len(code),
+                    'timestamp': timezone.now().isoformat()
+                } if settings.DEBUG else None
+            })
+            
+        except Exception as email_error:
+            logger.error(f"✗ Failed to send email via Resend API: {str(email_error)}")
+            logger.error(f"Error type: {type(email_error).__name__}")
+            logger.error("Full traceback:")
+            logger.error(traceback.format_exc())
+            
+            error_msg = f"Email sending failed: {str(email_error)} (Type: {type(email_error).__name__})"
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+            
+            # Clear session data since email failed
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_timestamp', None)
+            request.session.pop(session_key, None)
+            request.session.save()
+            
+            debug_logs.append("[INFO] Session data cleared due to email failure")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            
+            # Handle specific error types
+            error_message = 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+            if 'quota' in str(email_error).lower():
+                error_message = 'Günlük e-posta kotası aşıldı. Lütfen yarın tekrar deneyin.'
+            elif 'connection' in str(email_error).lower():
+                error_message = 'E-posta servisine bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.'
+            elif 'timeout' in str(email_error).lower():
+                error_message = 'E-posta servisine bağlanırken zaman aşımı oluştu. Lütfen tekrar deneyin.'
+            
+            return JsonResponse({
+                'success': False,
+                'error': error_message,
+                'details': str(email_error) if settings.DEBUG else None,
+                'error_type': type(email_error).__name__ if settings.DEBUG else None,
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'email_send_error',
+                    'error_type': type(email_error).__name__,
+                    'email': email,
+                    'timestamp': timezone.now().isoformat(),
+                    'session_cleared': True
+                } if settings.DEBUG else None
+            }, status=500)
+        
+    except Exception as general_error:
+        logger.critical(f'✗ Critical error in send_verification_code: {str(general_error)}')
+        logger.error(f'Error type: {type(general_error).__name__}')
+        logger.error('Full traceback:')
+        logger.error(traceback.format_exc())
+        
+        error_msg = f"General error in send_verification_code: {str(general_error)} (Type: {type(general_error).__name__})"
+        debug_logs.append(f"[ERROR] {error_msg}")
+        debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+        
+        return JsonResponse({
+            'success': False, 
+            'error': 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+            'details': str(general_error) if settings.DEBUG else None,
+            'error_type': type(general_error).__name__ if settings.DEBUG else None,
+            'debug_logs': debug_logs if settings.DEBUG else None,
+            'debug_info': {
+                'action': 'unexpected_error',
+                'error_type': type(general_error).__name__,
+                'timestamp': timezone.now().isoformat(),
+                'session_data_available': 'verification_code' in request.session,
+                'email_attempted': request.session.get('verification_email')
+            } if settings.DEBUG else None
+        }, status=500)
 
 # Create your views here.
 User = get_user_model()
@@ -232,135 +489,6 @@ def test_resend_config(request):
     }
     
     return JsonResponse(config_status)
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def send_verification_code(request):
-    # Get logger instance
-    logger = logging.getLogger('email_debug')
-    
-    try:
-        logger.info("=== EMAIL VERIFICATION DEBUG START ===")
-        
-        # Parse request data
-        try:
-            data = json.loads(request.body)
-            logger.info(f"Request data: {data}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON data received: {str(e)}")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz veri formatı. Lütfen tekrar deneyin.'
-            })
-            
-        email = data.get('email', '').strip().lower()
-        logger.info(f"Requested email: {email}")
-        
-        if not email:
-            logger.warning("No email provided in request")
-            return JsonResponse({
-                'success': False, 
-                'error': 'E-posta adresi gerekli'
-            })
-                
-        # Validate email format
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            logger.warning(f"Invalid email format: {email}")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz e-posta formatı. Lütfen geçerli bir e-posta adresi girin.'
-            })
-        
-        logger.info(f"Email format is valid: {email}")
-            
-        # Check if email already exists (commented out as per original code)
-        # if CustomUser.objects.filter(email=email).exists():
-        #     logger.warning(f"Registration attempt with existing email: {email}")
-        #     return JsonResponse({
-        #         'success': False, 
-        #         'error': 'Bu e-posta adresi zaten kullanılıyor. Giriş yapmayı deneyin.'
-        #     })
-        
-        # Generate a 6-digit verification code
-        code = ''.join(random.choices(string.digits, k=6))
-        logger.info(f"Generated verification code: {code}")
-        
-        # Ensure we have a valid session
-        if not request.session.session_key:
-            request.session.create()
-            logger.info(f"Created new session with ID: {request.session.session_key}")
-        
-        # Store verification data in session
-        verification_timestamp = int(time.time())
-        
-        request.session['verification_code'] = str(code)
-        request.session['verification_email'] = str(email).lower()
-        request.session['verification_timestamp'] = int(verification_timestamp)
-        
-        # Clear any previous verification status
-        request.session.pop('email_verified', None)
-        request.session.pop('verified_email', None)
-        
-        # Ensure session is marked as modified and save
-        request.session.modified = True
-        request.session.save()
-        
-        logger.info("Session data saved successfully")
-        
-        # Send the verification email using Resend API
-        try:
-            send_verification_email_resend(email, code, logger)
-            
-            # Store success in session
-            request.session['email_sent'] = True
-            request.session.save()
-            
-            logger.info("✓ Email sent successfully!")
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Doğrulama kodu e-posta adresinize gönderildi.'
-            })
-            
-        except Exception as email_error:
-            logger.error(f"✗ Email sending failed: {str(email_error)}")
-            
-            # Clear session data since email failed
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
-            return JsonResponse({
-                'success': False,
-                'error': str(email_error),
-                'details': None,
-                'debug_logs': [
-                    "[INFO] === EMAIL VERIFICATION DEBUG START ===",
-                    f"[INFO] Requested email: {email}",
-                    f"[INFO] Email format is valid: {email}",
-                    f"[INFO] Generated verification code: {code}",
-                    "[INFO] === STARTING RESEND EMAIL SEND PROCESS ===",
-                    f"[INFO] RESEND_API_KEY: {'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set'}",
-                    f"[INFO] RESEND_FROM_EMAIL: {getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')}",
-                    f"[ERROR] {str(email_error)}"
-                ]
-            }, status=500)
-        
-    except Exception as e:
-        logger.critical(f'✗ Critical error in send_verification_code: {str(e)}')
-        logger.error(f'Error type: {type(e).__name__}')
-        
-        import traceback
-        logger.error('Full traceback:')
-        logger.error(traceback.format_exc())
-        
-        return JsonResponse({
-            'success': False, 
-            'error': 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
-            'details': str(e) if settings.DEBUG else None,
-            'status': 500
-        }, status=500)
 
 logger = logging.getLogger(__name__)
 
@@ -405,235 +533,6 @@ def turkish_sort_key(name):
     for tr_char, ascii_char in TURKISH_CHAR_MAP.items():
         name = name.replace(tr_char, ascii_char)
     return name.lower()
-
-# ----------------------------------------------------------------------
-# Giriş ve Kayıt İşlemini Aynı Sayfada Yürüten View
-# ----------------------------------------------------------------------
-from django.http import JsonResponse
-from django.urls import reverse
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def send_verification_code(request):
-    # Get logger instance
-    logger = logging.getLogger('email_debug')
-    
-    try:
-        logger.info("=== EMAIL VERIFICATION START ===")
-        logger.info(f"Request method: {request.method}")
-        logger.info(f"Request headers: {dict(request.headers)}")
-        logger.info(f"Session ID: {request.session.session_key}")
-        
-        # Ensure session is created if it doesn't exist
-        if not request.session.session_key:
-            request.session.create()
-            logger.info(f"Created new session with ID: {request.session.session_key}")
-        
-        # Parse JSON data from request body
-        try:
-            data = json.loads(request.body)
-            logger.info(f"Request data: {data}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON data received: {str(e)}")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz veri formatı. Lütfen tekrar deneyin.'
-            })
-            
-        email = data.get('email', '').strip().lower()
-        logger.info(f"Processing email: {email}")
-        
-        if not email:
-            logger.warning("No email provided in request")
-            return JsonResponse({
-                'success': False, 
-                'error': 'E-posta adresi gerekli'
-            })
-            
-        # Validate email format
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            logger.warning(f"Invalid email format: {email}")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz e-posta formatı. Lütfen geçerli bir e-posta adresi girin.'
-            })
-            
-        # Check if email already exists
-        if CustomUser.objects.filter(email=email).exists():
-            logger.warning(f"Registration attempt with existing email: {email}")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Bu e-posta adresi zaten kullanılıyor. Giriş yapmayı deneyin.'
-            })
-        
-        # Generate a 6-digit verification code
-        code = ''.join(random.choices(string.digits, k=6))
-        logger.info(f"Generated verification code for {email}")
-        
-        # Ensure we have a valid session
-        if not request.session.session_key:
-            request.session.create()
-            logger.info(f"Created new session with ID: {request.session.session_key}")
-        
-        # Generate timestamp and ensure it's an integer
-        verification_timestamp = int(time.time())
-        
-        # Store verification data in session
-        request.session['verification_code'] = str(code)
-        request.session['verification_email'] = str(email).lower()
-        request.session['verification_timestamp'] = int(verification_timestamp)
-        
-        # Clear any previous verification status
-        request.session.pop('email_verified', None)
-        request.session.pop('verified_email', None)
-        
-        # Ensure session is marked as modified and save
-        request.session.modified = True
-        request.session.save()
-        
-        logger.info("Session data saved successfully")
-        
-        # SEND THE VERIFICATION EMAIL
-        try:
-            logger.info("=== SENDING VERIFICATION EMAIL VIA RESEND API ===")
-            logger.info(f"RESEND_API_KEY: {'Set' if settings.RESEND_API_KEY else 'Not set'}")
-            logger.info(f"RESEND_FROM_EMAIL: {settings.RESEND_FROM_EMAIL}")
-            
-            send_verification_email_resend(email, code, logger)
-            logger.info("✓ Email sent successfully via Resend API")
-            
-            # Store success in session
-            request.session['email_sent'] = True
-            request.session.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Doğrulama kodu e-posta adresinize gönderildi.'
-            })
-            
-        except Exception as e:
-            # Clear session data since email failed
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
-            logger.error(f"✗ Failed to send email via Resend API: {str(e)}")
-            return JsonResponse({
-                'success': False,
-                'message': 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
-                'details': str(e) if settings.DEBUG else None
-            }, status=500)
-            
-        except requests.exceptions.ConnectionError as conn_error:
-            logger.error(f"✗ Connection to Resend API failed: {str(conn_error)}")
-            
-            # Clear session data since email failed
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
-            return JsonResponse({
-                'success': False,
-                'error': 'E-posta servisine bağlanılamadı. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
-                'details': str(conn_error) if settings.DEBUG else None
-            }, status=500)
-            
-        except requests.exceptions.RequestException as req_error:
-            logger.error(f"✗ Request to Resend API failed: {str(req_error)}")
-            
-            # Clear session data since email failed
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
-            return JsonResponse({
-                'success': False,
-                'error': 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
-                'details': str(req_error) if settings.DEBUG else None
-            })
-            
-        except Exception as email_error:
-            logger.error(f"✗ Unexpected email error: {str(email_error)}")
-            logger.error(f"Error type: {type(email_error).__name__}")
-            logger.error("Full traceback:")
-            logger.error(traceback.format_exc())
-            
-            # Clear session data since email failed
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
-            return JsonResponse({
-                'success': False,
-                'error': 'E-posta gönderilemedi. Lütfen e-posta adresinizi kontrol edin ve tekrar deneyin.',
-                'details': str(email_error) if settings.DEBUG else None
-            })
-        
-        # Create response with cookies as fallback
-        max_age = 300  # 5 minutes in seconds
-        response_data = {
-            'success': True, 
-            'message': 'Doğrulama kodu e-posta adresinize gönderildi.',
-            'status': 200
-        }
-        
-        response = JsonResponse(response_data, status=200)
-        
-        # Log successful response
-        logger.info(f'✓ Success response: {json.dumps(response_data)}')
-        
-        # Set secure cookies as fallback
-        cookie_options = {
-            'max_age': max_age,
-            'httponly': True,
-            'samesite': 'Lax',
-            'secure': not settings.DEBUG,
-            'path': '/',
-            'domain': settings.SESSION_COOKIE_DOMAIN or None
-        }
-        
-        response.set_cookie('verification_code', value=code, **cookie_options)
-        response.set_cookie('verification_email', value=email, **cookie_options)
-        response.set_cookie('verification_timestamp', 
-                          value=str(verification_timestamp), 
-                          **cookie_options)
-        
-        logger.info("✓ Response created with cookies")
-        logger.info("=== EMAIL VERIFICATION SUCCESS ===")
-        return response
-        
-    except json.JSONDecodeError as e:
-        logger.error(f'Invalid JSON in request: {str(e)}')
-        return JsonResponse({
-            'success': False,
-            'error': 'Geçersiz istek formatı. Lütfen tekrar deneyin.',
-            'status': 400
-        }, status=400)
-        
-    except Exception as e:
-        logger.critical(f'✗ Critical error in send_verification_code: {str(e)}')
-        logger.error(f'Error type: {type(e).__name__}')
-        logger.error('Full traceback:')
-        logger.error(traceback.format_exc())
-        
-        # For 500 errors, include more detailed error information
-        error_details = {
-            'error': str(e),
-            'type': type(e).__name__,
-            'traceback': traceback.format_exc() if settings.DEBUG else None
-        }
-        
-        return JsonResponse({
-            'success': False, 
-            'error': 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
-            'details': error_details if settings.DEBUG else None,
-            'status': 500
-        }, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1815,280 +1714,7 @@ def send_gmail_email(to_email, subject, message_text):
     except Exception as e:
         logger.error(f"✗ Gmail API email hatası: {str(e)}")
         raise e
-
-def send_verification_code(request):
-    """E-posta doğrulama kodu gönder"""
-    debug_logs = []
-    
-    try:
-        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG START ===")
         
-        # Request method kontrolü
-        if request.method != 'POST':
-            debug_logs.append(f"[ERROR] Invalid request method: {request.method}")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz istek.',
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'request_validation_failed',
-                    'reason': 'invalid_http_method',
-                    'method': request.method
-                }
-            })
-        
-        # Request body'yi parse et
-        try:
-            data = json.loads(request.body)
-            email = data.get('email', '').strip().lower()
-            debug_logs.append(f"[INFO] Requested email: {email}")
-        except json.JSONDecodeError as e:
-            debug_logs.append(f"[ERROR] JSON decode error: {str(e)}")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz veri formatı.',
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'request_validation_failed',
-                    'reason': 'invalid_json_format',
-                    'error': str(e)
-                }
-            })
-        
-        # Email validasyonu
-        if not email:
-            debug_logs.append("[ERROR] Email is empty")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False, 
-                'error': 'E-posta adresi gerekli.',
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'validation_failed',
-                    'reason': 'email_required',
-                    'email_provided': False
-                }
-            })
-        
-        # Email format kontrolü
-        try:
-            validate_email(email)
-            debug_logs.append(f"[INFO] Email format is valid: {email}")
-        except ValidationError as e:
-            debug_logs.append(f"[ERROR] Invalid email format: {str(e)}")
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': False, 
-                'error': 'Geçersiz e-posta formatı.',
-                'details': str(e),
-                'debug_logs': debug_logs,
-                'debug_info': {
-                    'action': 'validation_failed',
-                    'reason': 'invalid_email_format',
-                    'email_provided': email,
-                    'validation_error': str(e)
-                }
-            })
-        
-        # Rate limiting kontrolü
-        session_key = f"email_verification_{email}"
-        last_sent = request.session.get(session_key)
-        
-        if last_sent:
-            time_diff = timezone.now().timestamp() - last_sent
-            if time_diff < 60:  # 1 dakika bekleme
-                remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
-                    'debug_logs': debug_logs,
-                    'debug_info': {
-                        'action': 'rate_limit_exceeded',
-                        'seconds_since_last_request': int(time_diff),
-                        'seconds_remaining': remaining,
-                        'email': email
-                    }
-                })
-        
-        # Doğrulama kodu oluştur
-        code = str(random.randint(100000, 999999))
-        debug_logs.append(f"[INFO] Generated verification code: {code}")
-        
-        # E-POSTA GÖNDERME BÖLÜMÜ
-        debug_logs.append("[INFO] === STARTING RESEND EMAIL SEND PROCESS ===")
-        
-        try:
-            # Resend API ayarlarını kontrol et
-            debug_logs.append(f"[INFO] RESEND_API_KEY: {'Set' if hasattr(settings, 'RESEND_API_KEY') and settings.RESEND_API_KEY else 'Not set'}")
-            debug_logs.append(f"[INFO] RESEND_FROM_EMAIL: {getattr(settings, 'RESEND_FROM_EMAIL', 'Not set')}")
-            
-            if not hasattr(settings, 'RESEND_API_KEY') or not settings.RESEND_API_KEY:
-                error_msg = "Resend API key is not configured"
-                debug_logs.append(f"[ERROR] {error_msg}")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'E-posta gönderimi için gerekli yapılandırma bulunamadı.',
-                    'details': error_msg if settings.DEBUG else None,
-                    'debug_logs': debug_logs
-                })
-            
-            # E-posta içeriği
-            subject = 'Email Doğrulama Kodu - Yıllık Site'
-            
-            # HTML içerik
-            html_content = f'''
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Email Doğrulama</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
-                    <h2 style="color: #333; margin-bottom: 20px;">Email Doğrulama</h2>
-                    <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
-                        Merhaba,<br><br>
-                        Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
-                    </p>
-                    <div style="background-color: #007bff; color: white; font-size: 32px; font-weight: bold; padding: 20px; border-radius: 8px; letter-spacing: 3px; margin: 20px 0;">
-                        {code}
-                    </div>
-                    <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                        Bu kod <strong>5 dakika</strong> geçerlidir.<br><br>
-                        Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
-                    </p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                    <p style="color: #999; font-size: 12px;">
-                        Bu email Yıllık Site tarafından gönderilmiştir.<br>
-                        <a href="https://yillik.site" style="color: #007bff;">yillik.site</a>
-                    </p>
-                </div>
-            </body>
-            </html>
-            '''
-            
-            # Düz metin içerik
-            text_content = f'''
-Merhaba,
-
-Email adresinizi doğrulamak için aşağıdaki kodu kullanın:
-
-Doğrulama Kodu: {code}
-
-Bu kod 5 dakika geçerlidir.
-
-Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
-
-Teşekkürler!
-Yıllık Site
-https://yillik.site
-            '''.strip()
-            
-            debug_logs.append(f"[INFO] Sending email via Resend to: {email}")
-            debug_logs.append(f"[INFO] From: {settings.RESEND_FROM_EMAIL}")
-            debug_logs.append(f"[INFO] Subject: {subject}")
-            
-            # Resend API ile e-posta gönder
-            resend.api_key = settings.RESEND_API_KEY
-            
-            email_response = resend.Emails.send({
-                "from": settings.RESEND_FROM_EMAIL,
-                "to": [email],
-                "subject": subject,
-                "html": html_content,
-                "text": text_content,
-            })
-            
-            debug_logs.append("[INFO] Resend API email send attempt completed")
-            debug_logs.append(f"[INFO] Resend response: {email_response}")
-            
-            # Session'a kaydet
-            request.session['verification_code'] = code
-            request.session['verification_email'] = email
-            request.session['verification_timestamp'] = timezone.now().timestamp()
-            request.session[session_key] = timezone.now().timestamp()
-            request.session.save()
-            
-            debug_logs.append("[SUCCESS] Session data saved successfully")
-            debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
-            
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            return JsonResponse({
-                'success': True,
-                'message': 'Doğrulama kodu gönderildi.',
-                'debug_logs': debug_logs if settings.DEBUG else None,
-                'debug_info': {
-                    'action': 'verification_code_sent',
-                    'email': email,
-                    'code_length': len(code),
-                    'timestamp': timezone.now().isoformat()
-                } if settings.DEBUG else None
-            })
-                
-        except Exception as email_error:
-            error_msg = f"Unexpected email error: {str(email_error)} (Type: {type(email_error).__name__})"
-            debug_logs.append(f"[ERROR] {error_msg}")
-            debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
-            
-            # Session'ı temizle
-            request.session.pop('verification_code', None)
-            request.session.pop('verification_email', None)
-            request.session.pop('verification_timestamp', None)
-            request.session.save()
-            
-            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-            
-            # Hata mesajını işle
-            error_message = 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.'
-            if 'quota' in str(email_error).lower():
-                error_message = 'Günlük e-posta kotası aşıldı. Lütfen yarın tekrar deneyin.'
-            
-            return JsonResponse({
-                'success': False,
-                'error': error_message,
-                'details': str(email_error) if settings.DEBUG else None,
-                'error_type': type(email_error).__name__,
-                'stack_trace': traceback.format_exc() if settings.DEBUG else None,
-                'debug_logs': debug_logs if settings.DEBUG else None,
-                'debug_info': {
-                    'action': 'email_send_error',
-                    'error_type': type(email_error).__name__,
-                    'email': email,
-                    'timestamp': timezone.now().isoformat(),
-                    'session_cleared': True
-                } if settings.DEBUG else None
-            })
-            
-    except Exception as general_error:
-        error_msg = f"General error in send_verification_code: {str(general_error)} (Type: {type(general_error).__name__})"
-        debug_logs.append(f"[ERROR] {error_msg}")
-        debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
-        
-        # Log the error to server logs as well
-        logger.error(error_msg)
-        logger.error(traceback.format_exc())
-        
-        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-        return JsonResponse({
-            'success': False,
-            'error': 'Sistem hatası. Lütfen daha sonra tekrar deneyin.',
-            'details': str(general_error) if settings.DEBUG else None,
-            'error_type': type(general_error).__name__,
-            'stack_trace': traceback.format_exc() if settings.DEBUG else None,
-            'debug_logs': debug_logs if settings.DEBUG else None,
-            'debug_info': {
-                'action': 'unexpected_error',
-                'error_type': type(general_error).__name__,
-                'timestamp': timezone.now().isoformat(),
-                'session_data_available': 'verification_code' in request.session,
-                'email_attempted': request.session.get('verification_email')
-            } if settings.DEBUG else None
-        })
-
 @require_http_methods(["GET"])
 def get_graduation_years(request):
     try:
