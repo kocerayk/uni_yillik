@@ -1559,21 +1559,6 @@
                 }
             }, 5000);
         }
-    // Email verification functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const emailInput = document.getElementById('email');
-        
-        if (emailInput) {
-            emailInput.addEventListener('blur', function() {
-                const email = this.value.trim();
-                console.log('🔍 EMAIL DEBUG: Email blur event triggered with value:', email);
-                
-                if (email && email.includes('@')) {
-                    sendVerificationCode(email);
-                }
-            });
-        }
-    });
 
     function sendVerificationCode(email) {
         console.log('🚀 EMAIL DEBUG: Starting sendVerificationCode function');
