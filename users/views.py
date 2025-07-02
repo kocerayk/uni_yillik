@@ -226,15 +226,23 @@ def send_verification_code(request):
     try:
         debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG START ===")
         logger.info("=== EMAIL VERIFICATION START ===")
-        logger.info(f"Request method: {request.method}")
-        logger.info(f"Session ID: {request.session.session_key}")
         
-        # Ensure session is created if it doesn't exist
-        if not request.session.session_key:
-            request.session.create()
-            logger.info(f"Created new session with ID: {request.session.session_key}")
-            debug_logs.append(f"[INFO] Created new session with ID: {request.session.session_key}")
+        # Parse JSON data first
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+        except json.JSONDecodeError as e:
+            return JsonResponse({'success': False, 'error': 'Geçersiz veri formatı.'})
         
+        # HIZLI FIX: Test için session'ı temizle
+        if settings.DEBUG:
+            session_key = f"email_verification_{email}"
+            if session_key in request.session:
+                logger.info(f"CLEARING session for testing: {session_key}")
+                debug_logs.append(f"[DEBUG] CLEARING session for testing: {session_key}")
+                request.session.pop(session_key, None)
+                request.session.save()
+                
         # Parse JSON data from request body
         try:
             data = json.loads(request.body)
@@ -307,6 +315,19 @@ def send_verification_code(request):
         if last_sent:
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
+            if time_diff < 0.3:  
+                debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
+                    'debug_logs': debug_logs if settings.DEBUG else None,
+                    'debug_info': {
+                        'action': 'debounce_hit',
+                        'seconds_since_last_request': time_diff,
+                        'email': email
+                    } if settings.DEBUG else None
+                })
             if time_diff < 60:  # 1 dakika bekleme
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
