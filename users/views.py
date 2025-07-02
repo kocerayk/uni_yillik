@@ -309,14 +309,15 @@ def send_verification_code(request):
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
             
-            # Clear last_sent if it's too old (e.g., > 70 seconds)
             if time_diff > 70:
-                debug_logs.append(f"[DEBUG] Clearing expired last_sent value (age: {time_diff:.2f}s)")
-                last_sent = None
-                request.session[session_key] = None
+                # Clear the session key if it's too old
+                debug_logs.append(f"[DEBUG] Old session key found (age: {time_diff}s). Clearing it.")
+                request.session.pop(session_key, None)
+                request.session.save()
             elif time_diff < 2:
-                # Debounce check for very rapid requests
+                # Only apply debounce for very recent requests
                 debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False,
                     'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
@@ -328,11 +329,12 @@ def send_verification_code(request):
                     } if settings.DEBUG else None
                 })
             elif time_diff < 60:
-                # Rate limit check
+                # Rate limit for 60 seconds
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
-                    'success': False,
+                    'success': False, 
                     'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
                     'debug_logs': debug_logs if settings.DEBUG else None,
                     'debug_info': {
