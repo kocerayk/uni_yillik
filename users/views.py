@@ -257,8 +257,10 @@ def send_verification_code(request):
             })
             
         email = data.get('email', '').strip().lower()
-        logger.info(f"Processing email: {email}")
+        request_id = data.get('request_id', str(uuid.uuid4()))
+        
         debug_logs.append(f"[INFO] Requested email: {email}")
+        debug_logs.append(f"[INFO] Request ID: {request_id}")
         
         if not email:
             logger.warning("No email provided in request")
@@ -304,6 +306,19 @@ def send_verification_code(request):
         
         # Önbellek temizleme - 1 saatten eski kilitleri temizle
         cache_timeout = 3600  # 1 saat
+        request_id_key = f"req_{request_id}"
+        
+        # Check if this exact request was already processed
+        if request_id_key in request.session:
+            debug_logs.append(f"[WARNING] Duplicate request detected: {request_id}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Bu istek zaten işlendi.',
+                'code': 'duplicate_request',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            }, status=400)
+            
+        # Clean up old locks
         for key in list(request.session.keys()):
             if key.startswith('email_verification_') and key.endswith('_lock'):
                 lock_time = request.session.get(key)
@@ -355,6 +370,9 @@ def send_verification_code(request):
         
         # Kilit mekanizmasını aktif et ve zaman damgasını kaydet
         try:
+            # Mark this request as processed
+            request.session[request_id_key] = current_time
+            
             # Önce kilit oluştur
             request.session[lock_key] = current_time
             request.session.modified = True

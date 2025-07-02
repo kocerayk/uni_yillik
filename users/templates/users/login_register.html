@@ -1659,9 +1659,17 @@
             sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
         }
         
-        // Prepare request data
-        const requestData = { email: email };
+        // Generate a unique request ID for this verification attempt
+        const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Prepare request data with unique request ID
+        const requestData = { 
+            email: email,
+            request_id: requestId
+        };
+        
         console.log('📦 EMAIL DEBUG: Request data:', requestData);
+        console.log('🆔 EMAIL DEBUG: Using request ID:', requestId);
         
         // Send fetch request with timeout
         console.log('🌐 EMAIL DEBUG: Sending fetch request...');
@@ -1727,6 +1735,12 @@
                 console.groupEnd();
             } else if (settings.DEBUG) {
                 console.warn('⚠️ EMAIL DEBUG: No debug_logs found in response or debug_logs is not an array');
+            }
+            
+            // Handle duplicate requests
+            if (data.code === 'duplicate_request') {
+                console.log('🔄 EMAIL DEBUG: Duplicate request detected, ignoring');
+                return;
             }
             
             // Handle rate limiting
