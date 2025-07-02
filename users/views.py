@@ -213,7 +213,251 @@ yillik.site"""
         raise Exception("Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
 
     return False
-
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def send_verification_code(request):
+    """E-posta doğrulama kodu gönder - Tek işlem garantili"""
+    logger = logging.getLogger('email_debug')
+    debug_logs = []
+    
+    try:
+        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG START ===")
+        logger.info("=== EMAIL VERIFICATION START ===")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Session ID: {request.session.session_key}")
+        
+        # Ensure session is created if it doesn't exist
+        if not request.session.session_key:
+            request.session.create()
+            logger.info(f"Created new session with ID: {request.session.session_key}")
+            debug_logs.append(f"[INFO] Created new session with ID: {request.session.session_key}")
+        
+        # Parse JSON data from request body
+        try:
+            data = json.loads(request.body)
+            logger.info(f"Request data: {data}")
+            debug_logs.append(f"[INFO] Request data parsed successfully")
+        except json.JSONDecodeError as e:
+            error_msg = f"Invalid JSON data received: {str(e)}"
+            logger.error(error_msg)
+            debug_logs.append(f"[ERROR] {error_msg}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz veri formatı. Lütfen tekrar deneyin.',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            })
+            
+        email = data.get('email', '').strip().lower()
+        logger.info(f"Processing email: {email}")
+        debug_logs.append(f"[INFO] Requested email: {email}")
+        
+        if not email:
+            logger.warning("No email provided in request")
+            debug_logs.append("[ERROR] Email is empty")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': 'E-posta adresi gerekli.',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            })
+            
+        # Validate email format
+        try:
+            validate_email(email)
+            logger.info(f"Email format is valid: {email}")
+            debug_logs.append(f"[INFO] Email format is valid: {email}")
+        except ValidationError as e:
+            logger.warning(f"Invalid email format: {email}")
+            debug_logs.append(f"[ERROR] Invalid email format: {str(e)}")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geçersiz e-posta formatı. Lütfen geçerli bir e-posta adresi girin.',
+                'debug_logs': debug_logs if settings.DEBUG else None
+            })
+        
+        # ÇÖZÜM: İşlem durumu kontrolü ve kilitleme
+        processing_key = f"email_processing_{email}"
+        session_key = f"email_verification_{email}"
+        
+        # Şu anda işleniyor mu kontrol et
+        if request.session.get(processing_key, False):
+            debug_logs.append(f"[WARNING] Email {email} is already being processed")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False,
+                'error': 'Bu e-posta için zaten bir işlem devam ediyor.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'already_processing',
+                    'email': email
+                } if settings.DEBUG else None
+            })
+        
+        # İşlemi kilitle
+        request.session[processing_key] = True
+        request.session.save()
+        debug_logs.append(f"[INFO] Processing lock acquired for {email}")
+        
+        try:
+            # Rate limiting kontrolü
+            last_sent = request.session.get(session_key)
+            now_ts = timezone.now().timestamp()
+            debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
+            debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
+            
+            if last_sent:
+                time_diff = now_ts - last_sent
+                debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
+                
+                if time_diff < 60:  # 1 dakika bekleme
+                    remaining = 60 - int(time_diff)
+                    debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                    debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                    return JsonResponse({
+                        'success': False, 
+                        'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
+                        'debug_logs': debug_logs if settings.DEBUG else None,
+                        'debug_info': {
+                            'action': 'rate_limit_exceeded',
+                            'seconds_since_last_request': int(time_diff),
+                            'seconds_remaining': remaining,
+                            'email': email
+                        } if settings.DEBUG else None
+                    })
+            
+            # Generate a 6-digit verification code
+            code = ''.join(random.choices(string.digits, k=6))
+            logger.info(f"Generated verification code for {email}")
+            debug_logs.append(f"[INFO] Generated verification code: {code}")
+            
+            # Generate timestamp and ensure it's an integer
+            verification_timestamp = int(time.time())
+            
+            # Store verification data in session
+            request.session['verification_code'] = str(code)
+            request.session['verification_email'] = str(email).lower()
+            request.session['verification_timestamp'] = int(verification_timestamp)
+            request.session[session_key] = timezone.now().timestamp()
+            
+            # Clear any previous verification status
+            request.session.pop('email_verified', None)
+            request.session.pop('verified_email', None)
+            
+            # Ensure session is marked as modified and save
+            request.session.modified = True
+            request.session.save()
+            
+            logger.info("Session data saved successfully")
+            debug_logs.append("[INFO] Session data saved successfully")
+            
+            # SEND THE VERIFICATION EMAIL
+            try:
+                logger.info("=== SENDING VERIFICATION EMAIL VIA RESEND API ===")
+                debug_logs.append("[INFO] === STARTING RESEND EMAIL SEND PROCESS ===")
+                
+                # Check configuration
+                api_key_status = 'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set'
+                from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')
+                
+                logger.info(f"RESEND_API_KEY: {api_key_status}")
+                logger.info(f"RESEND_FROM_EMAIL: {from_email}")
+                debug_logs.append(f"[INFO] RESEND_API_KEY: {api_key_status}")
+                debug_logs.append(f"[INFO] RESEND_FROM_EMAIL: {from_email}")
+                
+                # Send email
+                send_verification_email_resend(email, code, logger)
+                
+                logger.info("✓ Email sent successfully via Resend API")
+                debug_logs.append("[SUCCESS] Email sent successfully via Resend API")
+                
+                # Store success in session
+                request.session['email_sent'] = True
+                request.session.save()
+                
+                debug_logs.append("[SUCCESS] === EMAIL VERIFICATION SUCCESS ===")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Doğrulama kodu e-posta adresinize gönderildi.',
+                    'debug_logs': debug_logs if settings.DEBUG else None,
+                    'debug_info': {
+                        'action': 'verification_code_sent',
+                        'email': email,
+                        'code_length': len(code),
+                        'timestamp': timezone.now().isoformat()
+                    } if settings.DEBUG else None
+                })
+                
+            except Exception as email_error:
+                logger.error(f"✗ Failed to send email via Resend API: {str(email_error)}")
+                logger.error(f"Error type: {type(email_error).__name__}")
+                logger.error("Full traceback:")
+                logger.error(traceback.format_exc())
+                
+                error_msg = f"Email sending failed: {str(email_error)} (Type: {type(email_error).__name__})"
+                debug_logs.append(f"[ERROR] {error_msg}")
+                debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+                
+                # Clear session data since email failed
+                request.session.pop('verification_code', None)
+                request.session.pop('verification_email', None)
+                request.session.pop('verification_timestamp', None)
+                request.session.pop(session_key, None)
+                request.session.save()
+                
+                debug_logs.append("[INFO] Session data cleared due to email failure")
+                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                
+                # Handle specific error types
+                error_message = 'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+                if 'quota' in str(email_error).lower():
+                    error_message = 'Günlük e-posta kotası aşıldı. Lütfen yarın tekrar deneyin.'
+                elif 'connection' in str(email_error).lower():
+                    error_message = 'E-posta servisine bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.'
+                elif 'timeout' in str(email_error).lower():
+                    error_message = 'E-posta servisine bağlanırken zaman aşımı oluştu. Lütfen tekrar deneyin.'
+                
+                return JsonResponse({
+                    'success': False,
+                    'error': error_message,
+                    'debug_logs': debug_logs if settings.DEBUG else None
+                }, status=500)
+        
+        finally:
+            # İşlem kilidini her durumda kaldır
+            request.session.pop(processing_key, None)
+            request.session.save()
+            debug_logs.append(f"[INFO] Processing lock released for {email}")
+        
+    except Exception as general_error:
+        logger.critical(f'✗ Critical error in send_verification_code: {str(general_error)}')
+        logger.error(f'Error type: {type(general_error).__name__}')
+        logger.error('Full traceback:')
+        logger.error(traceback.format_exc())
+        
+        error_msg = f"General error in send_verification_code: {str(general_error)} (Type: {type(general_error).__name__})"
+        debug_logs.append(f"[ERROR] {error_msg}")
+        debug_logs.append(f"[ERROR] Stack trace: {traceback.format_exc()}")
+        debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+        
+        # Genel hata durumunda da kilidi kaldır
+        try:
+            email = data.get('email', '').strip().lower() if 'data' in locals() else 'unknown'
+            processing_key = f"email_processing_{email}"
+            request.session.pop(processing_key, None)
+            request.session.save()
+        except:
+            pass
+        
+        return JsonResponse({
+            'success': False, 
+            'error': 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+            'debug_logs': debug_logs if settings.DEBUG else None
+        }, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -226,23 +470,15 @@ def send_verification_code(request):
     try:
         debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG START ===")
         logger.info("=== EMAIL VERIFICATION START ===")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Session ID: {request.session.session_key}")
         
-        # Parse JSON data first
-        try:
-            data = json.loads(request.body)
-            email = data.get('email', '').strip().lower()
-        except json.JSONDecodeError as e:
-            return JsonResponse({'success': False, 'error': 'Geçersiz veri formatı.'})
+        # Ensure session is created if it doesn't exist
+        if not request.session.session_key:
+            request.session.create()
+            logger.info(f"Created new session with ID: {request.session.session_key}")
+            debug_logs.append(f"[INFO] Created new session with ID: {request.session.session_key}")
         
-        # HIZLI FIX: Test için session'ı temizle
-        if settings.DEBUG:
-            session_key = f"email_verification_{email}"
-            if session_key in request.session:
-                logger.info(f"CLEARING session for testing: {session_key}")
-                debug_logs.append(f"[DEBUG] CLEARING session for testing: {session_key}")
-                request.session.pop(session_key, None)
-                request.session.save()
-                
         # Parse JSON data from request body
         try:
             data = json.loads(request.body)
@@ -307,42 +543,72 @@ def send_verification_code(request):
         
         # Rate limiting kontrolü
         session_key = f"email_verification_{email}"
+        request_in_progress_key = f"{session_key}_in_progress"
         last_sent = request.session.get(session_key)
         now_ts = timezone.now().timestamp()
         debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
         debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
         
-        if last_sent:
-            time_diff = now_ts - last_sent
-            debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            if time_diff < 0.3:  
-                debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
-                    'debug_logs': debug_logs if settings.DEBUG else None,
-                    'debug_info': {
-                        'action': 'debounce_hit',
-                        'seconds_since_last_request': time_diff,
-                        'email': email
-                    } if settings.DEBUG else None
-                })
-            if time_diff < 60:  # 1 dakika bekleme
-                remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
-                    'debug_logs': debug_logs if settings.DEBUG else None,
-                    'debug_info': {
-                        'action': 'rate_limit_exceeded',
-                        'seconds_since_last_request': int(time_diff),
-                        'seconds_remaining': remaining,
-                        'email': email
-                    } if settings.DEBUG else None
-                })
+        # Check if there's already a request in progress for this email
+        if request.session.get(request_in_progress_key, False):
+            debug_logs.append("[WARNING] Request already in progress for this email")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False,
+                'error': 'Bu e-posta için zaten bir istek işleniyor. Lütfen bekleyin.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'request_in_progress',
+                    'email': email
+                } if settings.DEBUG else None
+            })
+            
+        # Mark that a request is in progress
+        request.session[request_in_progress_key] = True
+        request.session.save()
+        
+        try:
+            if last_sent:
+                time_diff = now_ts - last_sent
+                debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
+                
+                # Only apply rate limiting if the last request was very recent (1 second)
+                if time_diff < 1:  # 1 second cooldown
+                    debug_logs.append("[WARNING] Rate limit hit - request too soon after previous")
+                    debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Lütfen biraz yavaşlayın ve tekrar deneyin.',
+                        'debug_logs': debug_logs if settings.DEBUG else None,
+                        'debug_info': {
+                            'action': 'rate_limit_hit',
+                            'seconds_since_last_request': time_diff,
+                            'email': email
+                        } if settings.DEBUG else None
+                    })
+                    
+                # Standard rate limiting (60 seconds)
+                if time_diff < 60:
+                    remaining = 60 - int(time_diff)
+                    debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                    debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                    return JsonResponse({
+                        'success': False, 
+                        'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
+                        'debug_logs': debug_logs if settings.DEBUG else None,
+                        'debug_info': {
+                            'action': 'rate_limit_exceeded',
+                            'seconds_since_last_request': int(time_diff),
+                            'seconds_remaining': remaining,
+                            'email': email
+                        } if settings.DEBUG else None
+                    })
+        except Exception as e:
+            # Clean up the in-progress flag if something goes wrong
+            request.session.pop(request_in_progress_key, None)
+            request.session.save()
+            logger.error(f"Error during rate limiting: {str(e)}")
+            raise  # Re-raise the exception to be handled by the outer try/except
         
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
@@ -358,9 +624,10 @@ def send_verification_code(request):
         request.session['verification_timestamp'] = int(verification_timestamp)
         request.session[session_key] = timezone.now().timestamp()
         
-        # Clear any previous verification status
+        # Clear any previous verification status and in-progress flag
         request.session.pop('email_verified', None)
         request.session.pop('verified_email', None)
+        request.session.pop(f"{session_key}_in_progress", None)
         
         # Ensure session is marked as modified and save
         request.session.modified = True
@@ -423,6 +690,7 @@ def send_verification_code(request):
             request.session.pop('verification_email', None)
             request.session.pop('verification_timestamp', None)
             request.session.pop(session_key, None)
+            request.session.pop(f"{session_key}_in_progress", None)
             request.session.save()
             
             debug_logs.append("[INFO] Session data cleared due to email failure")

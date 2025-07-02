@@ -1560,8 +1560,6 @@
             }, 5000);
         }
     // Email verification functionality
-    let emailRequestLock = false;
-    
     document.addEventListener('DOMContentLoaded', function() {
         const emailInput = document.getElementById('email');
         
@@ -1578,18 +1576,8 @@
     });
 
     function sendVerificationCode(email) {
-        // Prevent multiple simultaneous requests
-        if (emailRequestLock) {
-            console.log('⏸️ EMAIL DEBUG: Request blocked - already in progress');
-            return;
-        }
-        
         console.log('🚀 EMAIL DEBUG: Starting sendVerificationCode function');
         console.log('📧 EMAIL DEBUG: Email parameter:', email);
-        
-        // Lock the request
-        emailRequestLock = true;
-        console.log('🔒 EMAIL DEBUG: Request locked');
         
         // Get CSRF token
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -1703,11 +1691,6 @@
             console.error('💥 EMAIL DEBUG: Full error:', error);
             
             showMessage('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.', 'error');
-        })
-        .finally(() => {
-            // Always unlock when the request is complete
-            emailRequestLock = false;
-            console.log('🔓 EMAIL DEBUG: Request unlocked');
         });
     }
     </script>
