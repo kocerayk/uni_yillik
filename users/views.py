@@ -299,42 +299,72 @@ def send_verification_code(request):
         
         # Rate limiting kontrolü
         session_key = f"email_verification_{email}"
+        request_in_progress_key = f"{session_key}_in_progress"
         last_sent = request.session.get(session_key)
         now_ts = timezone.now().timestamp()
         debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
         debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
         
-        if last_sent:
-            time_diff = now_ts - last_sent
-            debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            if time_diff < 2:  # 2 saniye debounce (anti-double-click)
-                debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
-                    'debug_logs': debug_logs if settings.DEBUG else None,
-                    'debug_info': {
-                        'action': 'debounce_hit',
-                        'seconds_since_last_request': time_diff,
-                        'email': email
-                    } if settings.DEBUG else None
-                })
-            if time_diff < 60:  # 1 dakika bekleme
-                remaining = 60 - int(time_diff)
-                debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
-                return JsonResponse({
-                    'success': False, 
-                    'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
-                    'debug_logs': debug_logs if settings.DEBUG else None,
-                    'debug_info': {
-                        'action': 'rate_limit_exceeded',
-                        'seconds_since_last_request': int(time_diff),
-                        'seconds_remaining': remaining,
-                        'email': email
-                    } if settings.DEBUG else None
-                })
+        # Check if there's already a request in progress for this email
+        if request.session.get(request_in_progress_key, False):
+            debug_logs.append("[WARNING] Request already in progress for this email")
+            debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+            return JsonResponse({
+                'success': False,
+                'error': 'Bu e-posta için zaten bir istek işleniyor. Lütfen bekleyin.',
+                'debug_logs': debug_logs if settings.DEBUG else None,
+                'debug_info': {
+                    'action': 'request_in_progress',
+                    'email': email
+                } if settings.DEBUG else None
+            })
+            
+        # Mark that a request is in progress
+        request.session[request_in_progress_key] = True
+        request.session.save()
+        
+        try:
+            if last_sent:
+                time_diff = now_ts - last_sent
+                debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
+                
+                # Only apply rate limiting if the last request was very recent (1 second)
+                if time_diff < 1:  # 1 second cooldown
+                    debug_logs.append("[WARNING] Rate limit hit - request too soon after previous")
+                    debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Lütfen biraz yavaşlayın ve tekrar deneyin.',
+                        'debug_logs': debug_logs if settings.DEBUG else None,
+                        'debug_info': {
+                            'action': 'rate_limit_hit',
+                            'seconds_since_last_request': time_diff,
+                            'email': email
+                        } if settings.DEBUG else None
+                    })
+                    
+                # Standard rate limiting (60 seconds)
+                if time_diff < 60:
+                    remaining = 60 - int(time_diff)
+                    debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
+                    debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
+                    return JsonResponse({
+                        'success': False, 
+                        'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
+                        'debug_logs': debug_logs if settings.DEBUG else None,
+                        'debug_info': {
+                            'action': 'rate_limit_exceeded',
+                            'seconds_since_last_request': int(time_diff),
+                            'seconds_remaining': remaining,
+                            'email': email
+                        } if settings.DEBUG else None
+                    })
+        except Exception as e:
+            # Clean up the in-progress flag if something goes wrong
+            request.session.pop(request_in_progress_key, None)
+            request.session.save()
+            logger.error(f"Error during rate limiting: {str(e)}")
+            raise  # Re-raise the exception to be handled by the outer try/except
         
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
@@ -350,9 +380,10 @@ def send_verification_code(request):
         request.session['verification_timestamp'] = int(verification_timestamp)
         request.session[session_key] = timezone.now().timestamp()
         
-        # Clear any previous verification status
+        # Clear any previous verification status and in-progress flag
         request.session.pop('email_verified', None)
         request.session.pop('verified_email', None)
+        request.session.pop(f"{session_key}_in_progress", None)
         
         # Ensure session is marked as modified and save
         request.session.modified = True
@@ -415,6 +446,7 @@ def send_verification_code(request):
             request.session.pop('verification_email', None)
             request.session.pop('verification_timestamp', None)
             request.session.pop(session_key, None)
+            request.session.pop(f"{session_key}_in_progress", None)
             request.session.save()
             
             debug_logs.append("[INFO] Session data cleared due to email failure")
