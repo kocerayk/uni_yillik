@@ -304,12 +304,19 @@ def send_verification_code(request):
         debug_logs.append(f"[DEBUG] last_sent from session: {last_sent}")
         debug_logs.append(f"[DEBUG] now_ts: {now_ts}")
         
+        # Inside send_verification_code, before checking last_sent
         if last_sent:
             time_diff = now_ts - last_sent
             debug_logs.append(f"[DEBUG] time_diff: {time_diff}")
-            if time_diff < 2:
+            
+            # Clear last_sent if it's too old (e.g., > 70 seconds)
+            if time_diff > 70:
+                debug_logs.append(f"[DEBUG] Clearing expired last_sent value (age: {time_diff:.2f}s)")
+                last_sent = None
+                request.session[session_key] = None
+            elif time_diff < 2:
+                # Debounce check for very rapid requests
                 debug_logs.append("[ERROR] Debounce: Request sent too quickly after previous.")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
                     'success': False,
                     'error': 'Çok hızlı tekrar denediniz. Lütfen birkaç saniye bekleyin.',
@@ -321,11 +328,11 @@ def send_verification_code(request):
                     } if settings.DEBUG else None
                 })
             elif time_diff < 60:
+                # Rate limit check
                 remaining = 60 - int(time_diff)
                 debug_logs.append(f"[WARNING] Rate limit hit. Remaining: {remaining} seconds")
-                debug_logs.append("[INFO] === EMAIL VERIFICATION DEBUG END ===")
                 return JsonResponse({
-                    'success': False, 
+                    'success': False,
                     'error': f'Çok sık istek gönderiyorsunuz. {remaining} saniye bekleyin.',
                     'debug_logs': debug_logs if settings.DEBUG else None,
                     'debug_info': {
@@ -335,10 +342,9 @@ def send_verification_code(request):
                         'email': email
                     } if settings.DEBUG else None
                 })
-            # If more than 60 seconds passed, allow sending as normal
         else:
             debug_logs.append("[DEBUG] No last_sent value in session for this email.")
-        
+    
         # Generate a 6-digit verification code
         code = ''.join(random.choices(string.digits, k=6))
         logger.info(f"Generated verification code for {email}")
