@@ -2049,62 +2049,53 @@ def update_personal_info(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-# views.py
+# views.py - Tamamen özel implementasyon
 
 import logging
 import resend
 from django.contrib.auth.views import (
-    PasswordResetView, PasswordResetDoneView, 
-    PasswordResetConfirmView, PasswordResetCompleteView
+    PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 )
 from django.contrib.auth import get_user_model
-from django.template.loader import render_to_string
+from django.contrib.auth.forms import PasswordResetForm
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
-from django.contrib import messages
+from django.views.generic import FormView
+from django.shortcuts import render
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
-class UnifiedPasswordResetView(PasswordResetView):
+class CustomPasswordResetView(FormView):
+    """
+    Tamamen özel password reset view - Django'nun email sistemini kullanmaz
+    """
     template_name = 'users/password_reset_unified.html'
+    form_class = PasswordResetForm
     success_url = '/password_reset/done/'
-    extra_context = {'current_step': 'form'}
     
-    # Bu attributeları None yaparak Django'nun kendi email sistemini devre dışı bırakıyoruz
-    email_template_name = None
-    subject_template_name = None
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_step'] = 'form'
+        context['domain'] = getattr(settings, 'DEFAULT_DOMAIN', '127.0.0.1:8000')
+        context['protocol'] = 'https' if self.request.is_secure() else 'http'
+        return context
+    
     def form_valid(self, form):
         email = form.cleaned_data["email"]
-        users = list(form.get_users(email))
         
-        if not users:
-            logger.warning(f"[Şifre Sıfırlama] Geçerli bir kullanıcı bulunamadı: {email}")
-            # Güvenlik için her zaman başarılı gibi göster
-            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
-                    'redirect_url': self.get_success_url()
-                })
-        else:
+        # Kullanıcıyı bul
+        try:
+            user = User.objects.get(email=email, is_active=True)
+            
             # E-postayı Resend ile gönder
-            user = users[0]
             try:
                 self.send_reset_email(user, email)
                 logger.info(f"[Şifre Sıfırlama] E-posta gönderildi: {email}")
-                
-                if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
-                        'redirect_url': self.get_success_url()
-                    })
             except Exception as e:
                 logger.error(f"[Şifre Sıfırlama] E-posta gönderim hatası: {str(e)}")
                 if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -2112,9 +2103,20 @@ class UnifiedPasswordResetView(PasswordResetView):
                         'success': False,
                         'error': 'E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.'
                     })
+                
+        except User.DoesNotExist:
+            logger.warning(f"[Şifre Sıfırlama] Geçerli bir kullanıcı bulunamadı: {email}")
+        
+        # Her durumda başarılı response döndür (güvenlik için)
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+                'redirect_url': self.get_success_url()
+            })
         
         return super().form_valid(form)
-
+    
     def send_reset_email(self, user, email):
         """
         Resend API kullanarak şifre sıfırlama e-postası gönder
@@ -2128,16 +2130,6 @@ class UnifiedPasswordResetView(PasswordResetView):
         domain = getattr(settings, 'DEFAULT_DOMAIN', self.request.get_host())
         reset_url = f"{protocol}://{domain}{reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})}"
         
-        # E-posta içeriği
-        context = {
-            'user': user,
-            'domain': domain,
-            'protocol': protocol,
-            'uid': uid,
-            'token': token,
-            'reset_url': reset_url,
-        }
-        
         # HTML içeriği hazırla
         html_content = f"""
         <!DOCTYPE html>
@@ -2146,13 +2138,59 @@ class UnifiedPasswordResetView(PasswordResetView):
             <meta charset="utf-8">
             <title>Şifre Sıfırlama</title>
             <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
-                .button {{ display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
-                .warning {{ background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }}
-                .footer {{ text-align: center; margin-top: 30px; color: #666; }}
+                body {{ 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    line-height: 1.6; 
+                    color: #333; 
+                    margin: 0; 
+                    padding: 0; 
+                    background-color: #f4f4f4;
+                }}
+                .container {{ 
+                    max-width: 600px; 
+                    margin: 20px auto; 
+                    background: white;
+                    border-radius: 10px;
+                    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                    overflow: hidden;
+                }}
+                .header {{ 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: white; 
+                    padding: 30px; 
+                    text-align: center; 
+                }}
+                .header h1 {{ margin: 0; font-size: 28px; }}
+                .content {{ 
+                    padding: 40px 30px; 
+                }}
+                .button {{ 
+                    display: inline-block; 
+                    padding: 15px 40px; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: white; 
+                    text-decoration: none; 
+                    border-radius: 25px; 
+                    margin: 20px 0;
+                    font-weight: bold;
+                    transition: transform 0.2s;
+                }}
+                .button:hover {{ transform: translateY(-2px); }}
+                .warning {{ 
+                    background: #fff3cd; 
+                    border-left: 4px solid #ffc107; 
+                    padding: 20px; 
+                    border-radius: 5px; 
+                    margin: 20px 0; 
+                }}
+                .footer {{ 
+                    text-align: center; 
+                    padding: 20px; 
+                    background: #f8f9fa;
+                    color: #666; 
+                    border-top: 1px solid #eee;
+                }}
+                .logo {{ font-size: 24px; font-weight: bold; }}
             </style>
         </head>
         <body>
@@ -2165,9 +2203,14 @@ class UnifiedPasswordResetView(PasswordResetView):
                     
                     <p>Şifre sıfırlama talebiniz başarıyla alındı. Aşağıdaki butona tıklayarak yeni bir şifre oluşturabilirsiniz:</p>
                     
-                    <div style="text-align: center;">
+                    <div style="text-align: center; margin: 30px 0;">
                         <a href="{reset_url}" class="button">🔑 Şifremi Sıfırla</a>
                     </div>
+                    
+                    <p>Veya aşağıdaki bağlantıyı kopyalayıp tarayıcınıza yapıştırabilirsiniz:</p>
+                    <p style="word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                        {reset_url}
+                    </p>
                     
                     <div class="warning">
                         <strong>⚠️ Önemli:</strong> Bu bağlantı yalnızca bir kez kullanılabilir ve sınırlı bir süre için geçerlidir. Lütfen işlemi kısa sürede tamamlayın.
@@ -2178,7 +2221,8 @@ class UnifiedPasswordResetView(PasswordResetView):
                     <p>Sevgilerle 😊</p>
                 </div>
                 <div class="footer">
-                    <p>🎓 <strong>{domain}</strong></p>
+                    <div class="logo">🎓 {domain}</div>
+                    <p>Bu e-posta otomatik olarak gönderilmiştir.</p>
                 </div>
             </div>
         </body>
@@ -2191,19 +2235,14 @@ class UnifiedPasswordResetView(PasswordResetView):
         params = {
             "from": settings.DEFAULT_FROM_EMAIL,
             "to": [email],
-            "subject": f"🔐 Şifre Sıfırlama - {domain}",
+            "subject": f"🔐 Şifre Sıfırlama Talebi - {domain}",
             "html": html_content,
         }
         
         response = resend.Emails.send(params)
         return response
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['domain'] = getattr(settings, 'DEFAULT_DOMAIN', '127.0.0.1:8000')
-        context['protocol'] = 'https' if self.request.is_secure() else 'http'
-        return context
-
+# Diğer view'lar aynı kalıyor
 class UnifiedPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'users/password_reset_unified.html'
     extra_context = {'current_step': 'done'}
