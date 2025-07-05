@@ -117,12 +117,12 @@ def send_verification_email_resend(email, code, logger):
             <title>Email Doğrulama</title>
         </head>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+            <div style="background-color: #ffeeee; padding: 30px; border-radius: 10px;">
                 <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Email Doğrulama</h2>
                 <p style="color: #666; margin-bottom: 20px;">Merhaba,</p>
                 <p style="color: #666; margin-bottom: 30px;">Email adresinizi doğrulamak için aşağıdaki kodu kullanın:</p>
                 
-                <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                <div style="background-color: #ee6e6e; color: white; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
                     <h1 style="margin: 0; font-family: monospace; letter-spacing: 3px; font-size: 32px;">{code}</h1>
                 </div>
                 
@@ -132,7 +132,7 @@ def send_verification_email_resend(email, code, logger):
                 <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
                 <p style="color: #6c757d; font-size: 14px; text-align: center;">
                     Bu email Yıllık Site tarafından gönderilmiştir.<br>
-                    <a href="https://yillik.site" style="color: #007bff; text-decoration: none;">yillik.site</a>
+                    <a href="https://yillik.site" style="color: #ee6e6e; text-decoration: none;">yillik.site</a>
                 </p>
             </div>
         </body>
@@ -2144,7 +2144,7 @@ class CustomPasswordResetView(FormView):
                     color: #333; 
                     margin: 0; 
                     padding: 0; 
-                    background-color: #f4f4f4;
+                    background-color: #ffeeee;
                 }}
                 .container {{ 
                     max-width: 600px; 
@@ -2155,7 +2155,7 @@ class CustomPasswordResetView(FormView):
                     overflow: hidden;
                 }}
                 .header {{ 
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    background: linear-gradient(135deg, #ee6e6e 0%, #fec5c5 100%); 
                     color: white; 
                     padding: 30px; 
                     text-align: center; 
@@ -2167,7 +2167,7 @@ class CustomPasswordResetView(FormView):
                 .button {{ 
                     display: inline-block; 
                     padding: 15px 40px; 
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    background: linear-gradient(135deg, #ee6e6e 0%, #fec5c5 100%); 
                     color: white; 
                     text-decoration: none; 
                     border-radius: 25px; 
@@ -2186,7 +2186,7 @@ class CustomPasswordResetView(FormView):
                 .footer {{ 
                     text-align: center; 
                     padding: 20px; 
-                    background: #f8f9fa;
+                    background: #ffeeee;
                     color: #666; 
                     border-top: 1px solid #eee;
                 }}
@@ -2221,7 +2221,7 @@ class CustomPasswordResetView(FormView):
                     <p>Sevgilerle 😊</p>
                 </div>
                 <div class="footer">
-                    <div class="logo">🎓 {domain}</div>
+                    <div class="logo"> {domain}</div>
                     <p>Bu e-posta otomatik olarak gönderilmiştir.</p>
                 </div>
             </div>
