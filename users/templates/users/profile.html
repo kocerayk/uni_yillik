@@ -1041,16 +1041,11 @@
             <div class="form-group department-group">
                 <label for="department">Bölüm</label>
                 <div class="input-container">
-                    <input type="text" id="department" name="department" value="{{ user.department }}" class="form-control" {% if user.has_edited_department %}disabled{% endif %}>
-                    {% if not user.has_edited_department %}
+                    <input type="text" id="department" name="department" value="{{ user.department }}" class="form-control">
                     <button type="button" class="save-btn" onclick="saveDepartment()" title="Bölüm bilgisini kaydet">
                         <i class="fas fa-check"></i>
                     </button>
-                    {% endif %}
                 </div>
-                {% if not user.has_edited_department %}
-                <div class="edit-warning">Bölüm bilgisini sadece bir kez düzenleyebilirsiniz</div>
-                {% endif %}
             </div>
         </form>
 
@@ -1535,28 +1530,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showAlert('success', 'Bölüm bilgisi başarıyla güncellendi.');
-                // Update the department display in profile meta
-                const departmentDisplay = document.querySelector('.profile-meta');
-                const existingDepartment = departmentDisplay.querySelector('.department-text');
-                
-                if (existingDepartment) {
-                    existingDepartment.textContent = `${department} Bölümü`;
-                } else {
-                    const departmentText = document.createElement('span');
-                    departmentText.className = 'department-text';
-                    departmentText.textContent = `${department} Bölümü`;
-                    departmentDisplay.appendChild(departmentText);
-                }
-                
-                // Disable the input and remove the save button
-                document.getElementById('department').disabled = true;
-                const saveBtn = document.querySelector('.department-group .save-btn');
-                if (saveBtn) saveBtn.remove();
-                
-                // Remove the warning text
-                const warningText = document.querySelector('.department-group .edit-warning');
-                if (warningText) warningText.remove();
+                showAlert('success', 'Bölüm bilgisi başarıyla güncellendi');
             } else {
                 showAlert('error', data.error || 'Bölüm bilgisi güncellenirken bir hata oluştu.');
             }

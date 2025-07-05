@@ -2006,32 +2006,15 @@ def update_personal_info(request):
         
         # Handle department update if only department is being updated
         if department is not None and first_name is None and last_name is None:
-            if request.user.has_edited_department:
-                return JsonResponse({'success': False, 'error': 'Bölüm bilgisi sadece bir kez düzenlenebilir'})
-            
             request.user.department = department
-            request.user.has_edited_department = True
             request.user.save()
             return JsonResponse({'success': True, 'message': 'Bölüm bilgisi başarıyla güncellendi'})
         
-        # Handle name update if name fields are being updated
-        if first_name is not None or last_name is not None:
-            if not first_name or not last_name:
-                return JsonResponse({'success': False, 'error': 'Ad ve soyad alanları zorunludur'})
-            
-            # Check if user has already edited their name
+        # Handle name update if only name is being updated
+        if first_name is not None and last_name is not None and department is None:
             if request.user.has_edited_name:
-                return JsonResponse({'success': False, 'error': 'İsim ve soyisim sadece bir kez düzenlenebilir'})
+                return JsonResponse({'success': False, 'error': 'İsim bilgileri sadece bir kez düzenlenebilir'})
             
-            # Update username based on first and last name
-            new_username = f"{first_name.lower()}.{last_name.lower()}"
-            
-            # Check if username already exists
-            if CustomUser.objects.filter(username=new_username).exclude(id=request.user.id).exists():
-                counter = 1
-                while CustomUser.objects.filter(username=f"{new_username}{counter}").exists():
-                    counter += 1
-                new_username = f"{new_username}{counter}"
             
             # Only update name-related fields
             request.user.first_name = first_name
