@@ -2049,44 +2049,171 @@ def update_personal_info(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+# views.py
+
+import logging
+import resend
+from django.contrib.auth.views import (
+    PasswordResetView, PasswordResetDoneView, 
+    PasswordResetConfirmView, PasswordResetCompleteView
+)
+from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
+from django.http import JsonResponse
+from django.urls import reverse
+from django.contrib import messages
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
+
 class UnifiedPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset_unified.html'
-    email_template_name = 'reset_email.html'
-    subject_template_name = 'reset_subject.txt'
+    email_template_name = 'users/reset_email.html'
+    subject_template_name = 'users/reset_subject.txt'
     success_url = '/password_reset/done/'
     extra_context = {'current_step': 'form'}
-    
+
     def form_valid(self, form):
         email = form.cleaned_data["email"]
         users = list(form.get_users(email))
+        
         if not users:
             logger.warning(f"[Şifre Sıfırlama] Geçerli bir kullanıcı bulunamadı: {email}")
+            # Güvenlik için her zaman başarılı gibi göster
+            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+                    'redirect_url': self.get_success_url()
+                })
         else:
-            logger.info(f"[Şifre Sıfırlama] E-posta gönderilecek: {email}")
+            # E-postayı Resend ile gönder
+            user = users[0]
+            try:
+                self.send_reset_email(user, email)
+                logger.info(f"[Şifre Sıfırlama] E-posta gönderildi: {email}")
+                
+                if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+                        'redirect_url': self.get_success_url()
+                    })
+            except Exception as e:
+                logger.error(f"[Şifre Sıfırlama] E-posta gönderim hatası: {str(e)}")
+                if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.'
+                    })
+        
         return super().form_valid(form)
-    
+
+    def send_reset_email(self, user, email):
+        """
+        Resend API kullanarak şifre sıfırlama e-postası gönder
+        """
+        # Token ve UID oluştur
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        # URL oluştur
+        protocol = 'https' if self.request.is_secure() else 'http'
+        domain = getattr(settings, 'DEFAULT_DOMAIN', self.request.get_host())
+        reset_url = f"{protocol}://{domain}{reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})}"
+        
+        # E-posta içeriği
+        context = {
+            'user': user,
+            'domain': domain,
+            'protocol': protocol,
+            'uid': uid,
+            'token': token,
+            'reset_url': reset_url,
+        }
+        
+        # HTML içeriği hazırla
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Şifre Sıfırlama</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                .button {{ display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                .warning {{ background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+                .footer {{ text-align: center; margin-top: 30px; color: #666; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🔐 Şifre Sıfırlama</h1>
+                </div>
+                <div class="content">
+                    <p>Merhaba <strong>{user.get_full_name() or user.username}</strong> 👋,</p>
+                    
+                    <p>Şifre sıfırlama talebiniz başarıyla alındı. Aşağıdaki butona tıklayarak yeni bir şifre oluşturabilirsiniz:</p>
+                    
+                    <div style="text-align: center;">
+                        <a href="{reset_url}" class="button">🔑 Şifremi Sıfırla</a>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Önemli:</strong> Bu bağlantı yalnızca bir kez kullanılabilir ve sınırlı bir süre için geçerlidir. Lütfen işlemi kısa sürede tamamlayın.
+                    </div>
+                    
+                    <p>Eğer bu talebi siz yapmadıysanız, bu e-postayı güvenle yok sayabilirsiniz.</p>
+                    
+                    <p>Sevgilerle 😊</p>
+                </div>
+                <div class="footer">
+                    <p>🎓 <strong>{domain}</strong></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Resend ile e-posta gönder
+        resend.api_key = settings.RESEND_API_KEY
+        
+        params = {
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [email],
+            "subject": f"🔐 Şifre Sıfırlama - {domain}",
+            "html": html_content,
+        }
+        
+        response = resend.Emails.send(params)
+        return response
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['domain'] = getattr(settings, 'DEFAULT_DOMAIN', '127.0.0.1:8000')
         context['protocol'] = 'https' if self.request.is_secure() else 'http'
         return context
 
-
 class UnifiedPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'users/password_reset_unified.html'
     extra_context = {'current_step': 'done'}
-
 
 class UnifiedPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'users/password_reset_unified.html'
     success_url = '/reset/done/'
     extra_context = {'current_step': 'confirm'}
 
-
 class UnifiedPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_unified.html'
     extra_context = {'current_step': 'complete'}
-
 
 @login_required
 @require_http_methods(["POST"])
