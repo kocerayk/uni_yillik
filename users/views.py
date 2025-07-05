@@ -2072,10 +2072,12 @@ User = get_user_model()
 
 class UnifiedPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset_unified.html'
-    email_template_name = 'users/reset_email.html'
-    subject_template_name = 'users/reset_subject.txt'
     success_url = '/password_reset/done/'
     extra_context = {'current_step': 'form'}
+    
+    # Bu attributeları None yaparak Django'nun kendi email sistemini devre dışı bırakıyoruz
+    email_template_name = None
+    subject_template_name = None
 
     def form_valid(self, form):
         email = form.cleaned_data["email"]

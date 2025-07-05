@@ -62,18 +62,10 @@ urlpatterns = [
     path('delete-account/', views.delete_account, name='delete_account'),
 
     # Password reset URLs
-    path('password_reset/',
-         views.UnifiedPasswordResetView.as_view(),
-         name='password_reset'),
-    path('password_reset/done/',
-         views.UnifiedPasswordResetDoneView.as_view(),
-         name='password_reset_done'),
-    path('reset/<uidb64>/<token>/',
-         views.UnifiedPasswordResetConfirmView.as_view(),
-         name='password_reset_confirm'),
-    path('reset/done/',
-         views.UnifiedPasswordResetCompleteView.as_view(),
-         name='password_reset_complete'),
+    path('password_reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
+    path('password_reset/done/', views.UnifiedPasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', views.UnifiedPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset/done/', views.UnifiedPasswordResetCompleteView.as_view(), name='password_reset_complete'),
          
     # Email notifications
     path('settings/update-email-notifications/',
