@@ -1,4 +1,5 @@
 {% extends 'base_generic.html' %}
+{% load static %}
 
 {% block title %}{{ user.get_full_name }} - Yıllık{% endblock %}
 
@@ -6,66 +7,20 @@
 <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
 
 <style>
+    /* Using theme variables from base_generic.html */
     :root[data-theme="pink"] {
         --paper-color: #ffeeee;
         --glass-frame: var(--yearbook-bg);
         --shadow-color: rgba(238, 110, 110, 0.20);
     }
-
+    
     :root[data-theme="black"] {
         --paper-color: var(--card-paper-bg);
         --glass-frame: var(--yearbook-bg);
         --shadow-color: rgba(0, 0, 0, 0.3);
     }
-
-    :root[data-theme="black"] .note-card:hover,
-    :root[data-theme="black"] .yearbook-add-btn:hover {
-        border-color: var(--pink-accent);
-        box-shadow: var(--pink-accent-shadow), var(--shadow);
-    }
-
-    :root[data-theme="black"] .btn:hover {
-        border-color: var(--pink-accent);
-        box-shadow: var(--pink-accent-shadow);
-    }
-
-    .profile-photo {
-        width: 190px;
-        height: 190px;
-        border-radius: 50%;
-        overflow: hidden;
-        margin-bottom: 15px;
-        position: relative;
-        background: #fff;
-        box-shadow:
-            0 0 0 4px var(--paper-color),
-            0 0 0 6px rgba(255, 255, 255, 0.8),
-            0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: box-shadow 0.3s ease;
-        border: none;
-    }
-
-    :root[data-theme="black"] .profile-photo {
-        box-shadow:
-            0 0 0 4px #333,
-            0 0 0 6px rgba(255, 255, 255, 0.1),
-            0 4px 12px rgba(0, 0, 0, 0.3);
-        background: #444;
-    }
-
-    .profile-photo:hover {
-        box-shadow:
-            0 0 0 4px var(--paper-color),
-            0 0 0 6px var(--glass-frame),
-            0 6px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    :root[data-theme="black"] .profile-photo:hover {
-        box-shadow:
-            0 0 0 4px #333,
-            0 0 0 6px #bbbbbb,
-            0 6px 16px rgba(0, 0, 0, 0.3);
-    }
+    
+    /* Removed pink accent hover effects for black theme */
 
     body {
         min-height: 100vh;
@@ -76,7 +31,7 @@
     main {
         flex: 1;
         position: relative;
-        z-index: 1;
+        z-index: 1; 
     }
 
     .yearbook-container {
@@ -89,7 +44,35 @@
         position: relative;
         min-height: calc(100vh - var(--nav-height) - 100px);
         padding-bottom: 0px;
-        perspective: 1000px;
+        perspective: 1000px; 
+    }
+
+    .yearbook-glass {
+        background: var(--yearbook-bg);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 24px;
+        box-shadow:
+            0 4px 12px var(--shadow-color),
+            inset 0 0 8px rgba(255, 255, 255, 0.3);
+        position: sticky;
+        top: calc(var(--nav-height) + 60px);
+        transform-origin: top;
+        transition: transform 0.3s ease;
+        height: 500px;
+        width: 1000px;
+        margin: 0 auto;
+        z-index: 2;
+        transform-style: preserve-3d;
+        /* Improve text rendering during transformations */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        backface-visibility: hidden;
+        will-change: transform;
+        /* Prevent text pixelation during scaling */
+        font-smooth: always;
+        filter: none !important;
     }
 
     .yearbook-cover {
@@ -117,39 +100,14 @@
         filter: none !important;
     }
 
-    .yearbook-glass {
-        background: var(--yearbook-bg, #fcc3c3);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 24px;
-        box-shadow:
-            0 4px 12px var(--shadow-color),
-            inset 0 0 8px rgba(255, 255, 255, 0.3);
-        position: sticky;
-        top: calc(var(--nav-height) + 60px);
-        transform-origin: top;
-        transition: transform 0.3s ease;
-        height: 500px;
-        width: 1000px;
-        margin: 0 auto;
-        z-index: 2;
-        transform-style: preserve-3d;
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        backface-visibility: hidden;
-        will-change: transform;
-        font-smooth: always;
-        filter: none !important;
-    }
-
-    /* Modified card styles for black theme */
+        /* Modified card styles for black theme */
     :root[data-theme="black"] .yearbook-cover {
         background: var(--yearbook-bg);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         color: #fff;
     }
 
+    /* Modified card styles for black theme */
     :root[data-theme="black"] .yearbook-glass {
         background: var(--yearbook-bg);
         box-shadow: none;
@@ -271,7 +229,9 @@
         border-radius: 19.2px;
         padding: 20px;
         box-shadow: 0 8px 16px var(--shadow-color);
-        height: 100%;
+        min-height: 420px;
+        max-height: 600px;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         /* Improve text clarity */
@@ -280,17 +240,18 @@
         -moz-osx-font-smoothing: grayscale;
         /* Prevent text pixelation during scaling */
         font-smooth: always;
+        filter: none !important;
         transform: translateZ(0);
     }
 
-    /* Apply filter reset only to direct children that need it */
+        /* Apply filter reset only to direct children that need it */
     .profile-section > *:not(.graduation-img),
     .review-section > *:not(.graduation-img) {
         filter: none !important;
     }
-
+    
     /* Modified card styles for black theme */
-    :root[data-theme="black"] .profile-section,
+    :root[data-theme="black"] .profile-section, 
     :root[data-theme="black"] .review-section {
         background: #333333; /* darker gray background */
         box-shadow: none;
@@ -314,6 +275,34 @@
         margin-bottom: 15px;
         position: relative;
         background: #fff;
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px rgba(255, 255, 255, 0.8),
+            0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+        border: none;
+    }
+
+    :root[data-theme="black"] .profile-photo {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px rgba(255, 255, 255, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.3);
+        background: #444;
+    }
+
+    .profile-photo:hover {
+        box-shadow:
+            0 0 0 4px var(--paper-color),
+            0 0 0 6px var(--glass-frame),
+            0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    :root[data-theme="black"] .profile-photo:hover {
+        box-shadow:
+            0 0 0 4px #333,
+            0 0 0 6px #bbbbbb,
+            0 6px 16px rgba(0, 0, 0, 0.3);
     }
 
     .profile-photo img {
@@ -370,37 +359,8 @@
     }
 
     .detail-item i {
-        color: var(--glass-frame);
+        color: var(--secondary-color);
     }
-
-    .edit-button-container {
-        margin-top: 15px;
-    }
-
-    .edit-message-btn {
-        align-self: flex-end;
-        padding: 8px 24px;
-        background: var(--glass-frame);
-        color: #fff;
-        border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-        margin-top: 15px;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        text-decoration: none; /* Alt çizgiyi kaldırır */
-    }
-
-    .edit-message-btn:hover {
-        background: #f8a8a8;
-    }
-
 
     .review-section {
         text-align: left;
@@ -422,19 +382,15 @@
         padding-right: 10px;
         word-wrap: break-word;
         white-space: normal;
-        /* Scrollbar styling */
         scrollbar-width: thin;
         scrollbar-color: var(--glass-frame) transparent;
     }
-
     .review-content::-webkit-scrollbar {
         width: 6px;
     }
-
     .review-content::-webkit-scrollbar-track {
         background: transparent;
     }
-
     .review-content::-webkit-scrollbar-thumb {
         background-color: var(--glass-frame);
         border-radius: 10px;
@@ -451,69 +407,119 @@
         display: none;
     }
 
-    /* Edit button styling to match settings page buttons */
-    .edit-message-btn {
+    .delete-icon-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 12px;
-        color: var(--white);
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 500;
+        border-radius: 50%;
+        background: var(--paper-color);
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
         transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
+        z-index: 2;
+        text-decoration: none;
+        box-shadow: none;
+    }
+    
+    .delete-icon-btn:hover {
+        background: var(--secondary-color);
+        transform: none;
+    }
+    
+    .delete-icon-btn i {
+        font-size: 14px;
     }
 
-    .edit-message-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .edit-message-btn::after {
-        content: '';
+    /* Visibility icon button */
+    .visibility-icon-btn {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 5px;
-        height: 5px;
-        background: rgba(255, 255, 255, 0.5);
-        opacity: 0;
-        border-radius: 100%;
-        transform: scale(1, 1) translate(-50%, -50%);
-        transform-origin: 50% 50%;
+        top: 50px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--paper-color);
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 2;
+        text-decoration: none;
+        box-shadow: none;
     }
 
-    .edit-message-btn:hover::after {
-        animation: ripple 1s ease-out;
+    .visibility-icon-btn:hover {
+        background: var(--secondary-color);
+        transform: none;
     }
 
-    @keyframes ripple {
-        0% {
-            transform: scale(0, 0);
-            opacity: 0.5;
-        }
-        100% {
-            transform: scale(20, 20);
-            opacity: 0;
-        }
+    .visibility-icon-btn i {
+        font-size: 14px;
     }
 
-    :root[data-theme="black"] .edit-message-btn {
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Style for hidden messages */
+    .message-hidden {
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
     }
-
-    :root[data-theme="black"] .edit-message-btn:hover {
+    .message-hidden:hover {
+        opacity: 1;
+    }
+    
+    /* Black theme specific styles for the delete icon */
+    :root[data-theme="black"] .delete-icon-btn {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    :root[data-theme="black"] .delete-icon-btn:hover {
         border-color: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 0.05);
     }
-
+    
+    /* Pink theme specific styles for the delete icon */
+    :root[data-theme="pink"] .delete-icon-btn {
+        border-color: var(--yearbook-bg);
+        color: var(--yearbook-bg);
+    }
+    
+    :root[data-theme="pink"] .delete-icon-btn:hover {
+        background: rgba(252, 195, 195, 0.1);
+    }
+    
+    /* Black theme specific styles for the visibility icon */
+    :root[data-theme="black"] .visibility-icon-btn {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    :root[data-theme="black"] .visibility-icon-btn:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Pink theme specific styles for the visibility icon */
+    :root[data-theme="pink"] .visibility-icon-btn {
+        border-color: var(--yearbook-bg);
+        color: var(--yearbook-bg);
+    }
+    
+    :root[data-theme="pink"] .visibility-icon-btn:hover {
+        background: rgba(252, 195, 195, 0.1);
+    }
+    
+    /* Position the review section relative for absolute positioning of the delete button */
+    .review-section {
+        position: relative;
+    }
+    
     @media (max-width: 768px) {
         .yearbook-container {
             padding: 12px;
@@ -551,12 +557,8 @@
         }
     }
 
-    /* Edit Message Button Theming */
-    :root[data-theme="pink"] .edit-message-btn {
-        border: 1px solid var(--yearbook-bg);
-        color: var(--yearbook-bg);
-    }
 
+    /* Polaroid-style image container */
     .image-container {
         width: 100%;
         height: 350px;
@@ -619,6 +621,7 @@
         z-index: 1;
     }
 
+
     /* Black theme styling for image container */
     :root[data-theme="black"] .image-container {
         background-color: rgba(20,20,20);
@@ -650,86 +653,6 @@
             0 0 0 1px rgba(0,0,0,0.05);
     }
 
-    :root[data-theme="pink"] .edit-message-btn i {
-        color: var(--yearbook-bg);
-    }
-
-    :root[data-theme="pink"] .edit-message-btn:hover {
-        background: rgba(252, 195, 195, 0.1);
-        border-color: var(--yearbook-bg);
-        color: var(--yearbook-bg);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Keep the existing black theme styles */
-    :root[data-theme="black"] .edit-message-btn {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    :root[data-theme="black"] .edit-message-btn:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Add this new style for the edit icon button */
-    .edit-icon-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background: var(--paper-color);
-        border: none;
-        color: var(--text-color);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        z-index: 2;
-        text-decoration: none;
-        box-shadow: none;
-    }
-
-    .edit-icon-btn:hover {
-        background: var(--secondary-color);
-        transform: none;
-    }
-
-    .edit-icon-btn i {
-        font-size: 14px;
-    }
-
-    /* Black theme specific styles for the edit icon */
-    :root[data-theme="black"] .edit-icon-btn {
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    :root[data-theme="black"] .edit-icon-btn:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* Pink theme specific styles for the edit icon */
-    :root[data-theme="pink"] .edit-icon-btn {
-        border-color: var(--yearbook-bg);
-        color: var(--yearbook-bg);
-    }
-
-    :root[data-theme="pink"] .edit-icon-btn:hover {
-        background: rgba(252, 195, 195, 0.1);
-    }
-
-    /* Position the review section relative for absolute positioning of the edit button */
-    .review-section {
-        position: relative;
-    }
-
-    /* Remove the old edit button container */
-    .edit-button-container {
-        display: none;
-    }
 
     .text-overlay.text-inline {
         position: absolute;
@@ -1014,8 +937,29 @@
     }
 
     .image-container {
+        width: 100%;
+        height: 350px;
+        background-color: var(--card-paper-bg);
+        border-radius: 12px;
+        overflow: visible;
         position: relative;
-        cursor: pointer;
+        margin: 0 auto 30px;
+        padding: 22px 22px 80px;
+        box-shadow:
+            0 1px 3px rgba(237, 109, 109, 0.12),
+            0 1px 2px rgba(237, 109, 109, 0.24),
+            0 0 0 1px rgba(237, 109, 109, 0.05),
+            0 8px 16px rgba(237, 109, 109, 0.08);
+        transform: rotate(1deg);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .image-container:hover {
+        transform: rotate(0deg) translateY(-5px);
+        box-shadow:
+            0 12px 24px rgba(238, 110, 110, 0.2),
+            0 6px 12px rgba(238, 110, 110, 0.1),
+            0 0 0 1px rgba(237, 109, 109, 0.05);
     }
 
     .image-upload-overlay {
@@ -1035,7 +979,39 @@
         cursor: pointer;
     }
 
-    .image-container:hover .image-upload-overlay {
+    .image-container::before {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        right: 22px;
+        bottom: 80px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px var(--inset-highlight);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    :root[data-theme="black"] .image-container {
+        background-color: rgba(20,20,20);
+        box-shadow:
+            0 1px 3px rgba(0,0,0,0.5),
+            0 1px 2px rgba(0,0,0,0.6),
+            0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    :root[data-theme="black"] .image-container::before {
+        box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+    }
+
+    :root[data-theme="black"] .image-container:hover {
+        box-shadow:
+        0 12px 24px rgba(0,0,0,0.3),
+        0 6px 12px rgba(0,0,0,0.2),
+        0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    .image-upload-overlay {
         opacity: 1;
         transform: translateY(0);
     }
@@ -1112,16 +1088,16 @@
             scrollbar-width: thin;
             scrollbar-color: var(--accent-color) var(--card-paper-bg);
         }
-
+        
         .review-content::-webkit-scrollbar {
             width: 4px;
         }
-
+        
         .review-content::-webkit-scrollbar-track {
             background: var(--card-paper-bg);
             border-radius: 2px;
         }
-
+        
         .review-content::-webkit-scrollbar-thumb {
             background-color: var(--accent-color);
             border-radius: 2px;
@@ -1195,18 +1171,18 @@
         .yearbook-content {
             gap: 15px;
         }
-
+        
         .image-container {
             margin-top: 0;
             margin-bottom: auto;
         }
-
+        
         .graduation-img {
             width: 90% !important;
             left: 5% !important;
             margin: 0 auto;
         }
-
+        
         .benim-notlarim {
             height: 60px;
             margin-top: auto;
@@ -1565,63 +1541,44 @@
     }
 
 
-        @media (max-width: 900px) {
-            .benim-notlarim {
-                font-size: 72px;
-                position: absolute;
-                left: 50%;
-                transform: translateX(-50%) translateY(50px);
-                bottom: 100px;
-                text-align: center;
-                width: 100%;
-                height: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
+    @media (max-width: 900px) {
+        .benim-notlarim {
+            font-size: 72px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-70%) translateY(50px);
+            bottom: 100px;
+            text-align: center;
+            width: 100%;
+            height: auto;
+        }
 
-            .benim {
-                font-size: 80px;
-                text-align: center;
-            }
+        .benim {
+            font-size: 80px;
+            text-align: center;
+        }
 
-            .image-container {
-                max-width: 650px;
-                margin: 0 auto 30px;
-            }
-
-            .graduation-img {
-                width: 100% !important;
-                height: auto;
-                display: block;
-                margin: 0 auto;
-            }
-            
-            /* Additional responsive styles for 900px and below */
-            .yearbook-container {
-                padding: 10px;
-                gap: 80px;
-                max-width: 100%;
-            }
-
-            .yearbook-glass,
-            .yearbook-cover {
-                width: 98%;
-                height: 800px;
-                padding: 18px;
-                top: calc(var(--nav-height) + 40px);
-            }
+        .image-container {
+            max-width: 650px;
+            margin: 0 auto 30px;
+        }
 
 
-            .profile-section,
-            .review-section,
-            .cover-profile-section {
-                padding: 16px;
-            }
+        .graduation-img {
+            width: 100% !important;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+    }
+
+
+    @media (max-width: 600px) {
         .benim-notlarim {
             font-size: 72px !important;
             position: absolute;
             left: 50%;
+            margin-left: -36px; 
             transform: translateX(-60%) translateY(50px) !important;
             bottom: 100px;
             text-align: center;
@@ -1660,61 +1617,16 @@
     }
 
 
-    @media (max-width: 600px) {
-        .yearbook-container {
-            padding: 8px;
-            gap: 40px;
-            min-height: calc(100vh - var(--nav-height) - 50px);
-        }
-
-        .yearbook-glass,
-        .yearbook-cover {
-            width: 100%;
-            height: 700px;
-            padding: 15px;
-            border-radius: 16px;
-            top: calc(var(--nav-height) + 20px);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .yearbook-cover-content {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .yearbook-content {
-            gap: 15px;
-        }
-
-        .image-container {
-            margin-top: 0;
-            margin-bottom: auto;
-        }
-
-        .graduation-img {
-            width: 90% !important;
-            left: 5% !important;
-            margin: 0 auto;
-        }
-
+    @media (max-width: 400px) {
         .benim-notlarim {
-            height: 60px;
-            margin: auto auto 20px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            width: 100%;
             font-size: 72px !important;
             position: absolute;
             left: 50%;
-            transform: translateX(-50%) translateY(50px) !important;
+            transform: translateX(-70%) translateY(50px) !important;
             bottom: 100px;
+            text-align: center;
+            width: 100%;
+            height: auto !important;
         }
 
         .benim {
@@ -1722,246 +1634,20 @@
             text-align: center;
         }
 
-        .profile-section,
-        .review-section,
-        .cover-profile-section {
-            padding: 14px;
-            border-radius: 12px;
-        }
-
-        .profile-photo {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 10px;
-        }
-
-        .profile-name {
-            font-size: 1.2rem;
-            margin-bottom: 4px;
-        }
-
-        .profile-class {
-            font-size: 0.8rem;
-            margin-bottom: 10px;
-        }
-
-        .profile-details {
-            gap: 8px;
-        }
-
-        .detail-item {
-            font-size: 0.85rem;
-        }
-
-        .review-content {
-            font-size: 0.85rem;
-            line-height: 1.4;
-            max-height: 280px;
-            overflow-y: auto;
-            padding-right: 8px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-color) var(--card-paper-bg);
-        }
-
-        .review-date {
-            font-size: 0.75rem;
-            margin-top: 12px;
-        }
-
         .image-container {
-            height: 420px;
-            padding: 15px 15px 40px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            max-width: 100%;
-        }
-
-        .image-container::before,
-        .yearbook-cover .image-container::before {
-            top: 15px;
-            left: 15px;
-            right: 15px;
-            bottom: 40px;
-            border-radius: 6px;
+            max-width: 650px;
+            margin: 0 auto 30px;
         }
 
         .graduation-img {
-            width: calc(100% - 30px) !important;
-            height: calc(100% - 55px);
-            top: 15px;
-            left: 15px;
-            border-radius: 3px;
-        }
-
-        .yearbook-cover .graduation-img {
-            width: calc(100% - 30px) !important;
-            height: calc(100% - 55px);
-            top: 15px;
-            left: 15px;
-            border-radius: 3px;
-        }
-
-        .benim {
-            font-size: 40px !important;
-            line-height: 1;
-        }
-
-        .image-upload-overlay {
-            top: 20px;
-            right: 20px;
-            width: 30px;
-            height: 30px;
-        }
-
-        .image-upload-overlay i {
-            font-size: 0.8rem;
-        }
-    }
-
-
-    @media (max-width: 400px) {
-        .yearbook-container {
-            padding: 5px;
-            gap: 30px;
-        }
-
-        .yearbook-glass,
-        .yearbook-cover {
-            width: 100%;
-            height: 600px;
-            padding: 12px;
-            border-radius: 14px;
-        }
-
-        .yearbook-content,
-        .yearbook-cover-content {
-            gap: 12px;
-        }
-
-        .profile-section,
-        .review-section,
-        .cover-profile-section {
-            padding: 12px;
-            border-radius: 10px;
-        }
-
-        .profile-photo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 8px;
-        }
-
-        .profile-name {
-            font-size: 1.1rem;
-            margin-bottom: 3px;
-        }
-
-        .profile-class {
-            font-size: 0.75rem;
-            margin-bottom: 8px;
-        }
-
-        .profile-details {
-            gap: 6px;
-        }
-
-        .detail-item {
-            font-size: 0.8rem;
+            width: 100% !important;
+            height: auto;
+            display: block;
+            margin: 0 auto;
         }
 
         .review-content {
-            font-size: 0.8rem;
-            line-height: 1.3;
-            max-height: 240px;
-        }
-
-        .review-date {
-            font-size: 0.7rem;
-        }
-
-        .image-container {
-            height: 360px;
-            padding: 12px 12px 35px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-        }
-
-        .image-container::before,
-        .yearbook-cover .image-container::before {
-            top: 12px;
-            left: 12px;
-            right: 12px;
-            bottom: 35px;
-            border-radius: 5px;
-        }
-
-        .graduation-img {
-            width: calc(100% - 24px) !important;
-            height: calc(100% - 47px);
-            top: 12px;
-            left: 12px;
-            border-radius: 2px;
-        }
-
-        .benim-notlarim {
-            height: 50px;
-            font-size: 60px !important;
-        }
-
-        .benim {
-            font-size: 70px !important;
-        }
-    }
-
-
-    /* Landscape orientation styles */
-    @media (max-width: 900px) and (orientation: landscape) {
-        .yearbook-container {
-            gap: 40px;
-        }
-
-        .yearbook-glass,
-        .yearbook-cover {
-            height: 500px;
-        }
-
-        .image-container {
-            height: 200px;
-        }
-
-        .benim-notlarim {
-            height: 100px;
-            font-size: 60px !important;
-            transform: translateX(-50%) translateY(30px) !important;
-        }
-
-        .benim {
-            font-size: 70px !important;
-        }
-
-        .profile-section,
-        .review-section {
-            padding: 10px;
-        }
-    }
-
-    @media (max-width: 600px) and (orientation: landscape) {
-        .yearbook-glass,
-        .yearbook-cover {
-            height: 480px;
-        }
-
-        .image-container {
-            height: 180px;
-        }
-
-        .benim-notlarim {
-            height: 80px;
-            font-size: 50px !important;
-        }
-
-        .benim {
-            font-size: 60px !important;
+            max-height: 340px;
         }
     }
 </style>
@@ -1969,7 +1655,7 @@
 <div class="yearbook-container">
     <div class="yearbook-cover">
         <div class="image-container">
-            <img src="{% if user.notes_graduation_photo %}{{ user.notes_graduation_photo.url }}{% else %}{% static 'yearbook/images/sample-photo.jpg' %}{% endif %}"
+            <img src="{% if user.graduation_photo %}{{ user.graduation_photo.url }}{% else %}{% static 'yearbook/images/sample-photo.jpg' %}{% endif %}"
                  alt="Mezuniyet Fotoğrafı"
                  class="graduation-img"
                  id="graduationImage"
@@ -1984,64 +1670,60 @@
         </div>
         <div class="text-container">
             <div class="benim-notlarim">
-                <div class="benim">NOTLARIM</div>
+                <div class="benim">SAYFAM</div>
             </div>
         </div>
     </div>
 
-    {% if notes %}
-        {% for note in notes %}
-        <div class="yearbook-glass">
-            <div class="yearbook-content">
-                <div class="profile-section">
-                    <div class="profile-photo">
-                        {% if note.receiver.profile_photo %}
-                            <img src="{{ note.receiver.profile_photo.url }}"
-                                 alt="{{ note.receiver.get_full_name }}"
-                                 onerror="handlePhotoError(this)"
-                                 onload="handlePhotoLoad(this)">
-                        {% endif %}
-                        <div class="initials">{{ note.receiver.get_initials }}</div>
-                    </div>
-                    <div class="profile-info">
-                        <h2 class="profile-name">{{ note.receiver.get_full_name }}</h2>
-                        <div class="profile-class">
-                            {{ note.receiver.school.name }}
-                        </div>
-                        <div class="profile-details">
-                            {% if note.receiver.department %}
-                            <div class="detail-item">
-                                <i class="fas fa-graduation-cap"></i>
-                                <span>{{ note.receiver.department }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="detail-item edit-button-container">
-                                <a href="{% url 'edit_message' note.id %}" class="edit-message-btn">
-                                    <i class="fas fa-edit"></i>
-                                    <span>Düzenle</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+    {% for message in messages %}
+    <div class="yearbook-glass {% if not message.visible %}message-hidden{% endif %}" data-message-container-id="{{ message.id }}">
+        <div class="yearbook-content">
+            <div class="profile-section">
+                <div class="profile-photo">
+                    {% if message.sender.profile_photo %}
+                        <img src="{{ message.sender.profile_photo.url }}"
+                             alt="{{ message.sender.get_full_name }}"
+                             onerror="handlePhotoError(this)"
+                             onload="handlePhotoLoad(this)">
+                    {% endif %}
+                    <div class="initials">{{ message.sender.get_initials }}</div>
                 </div>
-                <div class="review-section">
-    <a href="{% url 'edit_message' note.id %}" class="edit-icon-btn" title="Düzenle">
-        <i class="fas fa-edit"></i>
-    </a>
-                    <div class="review-content">
-                        {{ note.content|linebreaks }}
+                <div class="profile-info">
+                    <h2 class="profile-name">{{ message.sender.get_full_name }}</h2>
+                    <div class="profile-class">
+                        {{ message.sender.school.name }}<br>
+                        {{ message.sender.graduation_year.year }}
                     </div>
-                    <div class="review-date">
-                        {{ note.created_at|date:"d.m.Y" }}
+                    <div class="profile-details">
+                        {% if message.sender.department %}
+                        <div class="detail-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>{{ message.sender.department }}</span>
+                        </div>
+          {% endif %}
                     </div>
                 </div>
             </div>
+            <div class="review-section">
+                <button onclick="toggleMessageVisibility('{{ message.id }}')" class="visibility-icon-btn" title="Görünürlüğü Değiştir">
+                    <i class="fas {% if message.visible %}fa-eye{% else %}fa-eye-slash{% endif %}"></i>
+                </button>
+                <button onclick="deleteYearbookCard('{{ message.id }}')" class="delete-icon-btn" title="Sil">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <div class="review-content">
+                    {{ message.content|linebreaks }}
+                </div>
+                <div class="review-date">
+                    {{ message.created_at|date:"d.m.Y" }}
+                </div>
+            </div>
         </div>
-        {% endfor %}
-    {% endif %}
+    </div>
+      {% endfor %}
 </div>
 
-<!-- Graduation Photo Upload Modal -->
+    <!-- Graduation Photo Upload Modal -->
 <div class="photo-upload-modal" id="graduationPhotoUploadModal">
     <div class="modal-content">
         <div class="section-header">
@@ -2087,8 +1769,9 @@ function handlePhotoLoad(img) {
     const container = img.parentElement;
     const initials = container.querySelector('.initials');
     img.style.display = 'block';
-    if (initials) initials.style.display = 'none';
+    initials.style.display = 'none';
 }
+
 
 // Graduation photo handling
 let selectedGraduationPhoto = null;
@@ -2196,19 +1879,20 @@ async function saveGraduationPhoto() {
     const originalBtnText = saveBtn.innerHTML;
 
     try {
+        // Show loading state
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yükleniyor...';
 
         const formData = new FormData();
         formData.append('graduation_photo', selectedGraduationPhoto);
 
+        // Get CSRF token from cookie
         const csrftoken = getCookie('csrftoken');
         if (!csrftoken) {
             throw new Error('CSRF token bulunamadı. Sayfayı yenileyip tekrar deneyin.');
         }
 
-        // Use the notes-specific endpoint
-        const response = await fetch('/profile/update-notes-graduation-photo/', {
+        const response = await fetch('/profile/update-graduation-photo/', {
             method: 'POST',
             body: formData,
             headers: {
@@ -2225,21 +1909,27 @@ async function saveGraduationPhoto() {
         }
 
         if (data.success) {
-            showMessage(data.message || 'Notlar sayfası mezuniyet fotoğrafı başarıyla güncellendi', 'success');
+            showMessage(data.message || 'Mezuniyet fotoğrafı başarıyla güncellendi', 'success');
+
+            // Update the image source with the new URL from the server
             const graduationImg = document.getElementById('graduationImage');
             if (graduationImg) {
+                // Create a new image to preload
                 const newImg = new Image();
                 newImg.onload = function() {
-                    // Add timestamp to prevent caching
+                    // Only update the source if the image loads successfully
                     graduationImg.src = data.url + (data.url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                    // Update theme for the new image
                     updateImageTheme();
                 };
                 newImg.onerror = function() {
                     console.error('Failed to load new image:', data.url);
                     showMessage('Fotoğraf yüklenirken bir hata oluştu', 'error');
                 };
+                // Start loading the new image
                 newImg.src = data.url;
             }
+
             closeGraduationPhotoUpload();
         } else {
             throw new Error(data.error || 'Bilinmeyen bir hata oluştu');
@@ -2248,10 +1938,49 @@ async function saveGraduationPhoto() {
         console.error('Hata:', error);
         showMessage(`Fotoğraf yüklenirken bir hata oluştu: ${error.message}`, 'error');
     } finally {
+        // Reset button state
         if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.innerHTML = '<i class="fas fa-save"></i> Kaydet';
         }
+    }
+}
+
+async function toggleMessageVisibility(messageId) {
+    const url = `/message/toggle-visibility/${messageId}/`;
+    const csrftoken = getCookie('csrftoken');
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const icon = document.querySelector(`.visibility-icon-btn[onclick="toggleMessageVisibility('${messageId}')"] i`);
+            const messageContainer = document.querySelector(`.yearbook-glass[data-message-container-id='${messageId}']`);
+
+            if (data.visible) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                messageContainer.classList.remove('message-hidden');
+            } else {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                messageContainer.classList.add('message-hidden');
+            }
+        } else {
+            throw new Error(data.error || 'Bir hata oluştu.');
+        }
+    } catch (error) {
+        console.error('Visibility toggle failed:', error);
+        showMessage(error.message, 'error');
     }
 }
 
@@ -2294,12 +2023,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update image theme on load
     updateImageTheme();
 
-    // Update image theme when theme changes
-    const themeObserver = new MutationObserver(updateImageTheme);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme']
-    });
     const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
     const container = document.querySelector('.yearbook-container');
 
@@ -2385,32 +2108,40 @@ document.addEventListener('DOMContentLoaded', function() {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-        function updateCardPositions() {
+    function updateCardPositions() {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const windowHeight = window.innerHeight;
+        const containerTop = container.offsetTop;
+
+        const secondCard = cards[1];
+        const secondCardRect = secondCard.getBoundingClientRect();
+        const secondCardTop = secondCardRect.top + scrollTop - containerTop;
+
+        const secondCardProgress = (scrollTop - secondCardTop + windowHeight * 0.5) / (windowHeight * 1.2);
+        const easedSecondCardProgress = easeInOutCubic(Math.max(0, Math.min(1, secondCardProgress)));
+
+        // No scaling effect for cover card
+        coverCard.style.transform = 'translateX(0%) scale(1)';
+        coverCard.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
 
         cards.forEach((card, index) => {
+            if (index === 0) return;
+
             const cardRect = card.getBoundingClientRect();
-            const cardCenter = cardRect.top + cardRect.height/2;
-            const progress = Math.min(1, Math.max(0, (windowHeight/2 - cardCenter) / windowHeight));
+            const cardTop = cardRect.top + scrollTop - containerTop;
+            const scrollProgress = (scrollTop - cardTop + windowHeight * 0.5) / (windowHeight * 1.2);
 
-            // Y ekseninde hafif hareket
-            const translateY = progress * 20 * (index % 2 ? 1 : -1);
+            const easedProgress = easeInOutCubic(Math.max(0, Math.min(1, scrollProgress)));
 
-            // 3D rotasyon
-            const rotateX = progress * 5;
-            const rotateY = progress * 2 * (index % 2 ? 1 : -1);
-
-            // Opacity
-            const opacity = 1 - progress * 0.2;
-
-            card.style.transform = `
-                translateY(${translateY}px)
-                rotateX(${rotateX}deg)
-                rotateY(${rotateY}deg)
-            `;
-            card.style.opacity = opacity;
-            card.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease`;
+            if (scrollProgress > 0) {
+                // No scaling effect, only vertical translation
+                const translateY = Math.min(0, -easedProgress * 30);
+                card.style.transform = `translateY(${translateY}px)`;
+                card.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            } else {
+                card.style.transform = 'scale(1) translateY(0)';
+                card.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            }
         });
     }
 
@@ -2435,5 +2166,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateCardPositions();
 });
+    // Add the deleteYearbookCard function
+    window.deleteYearbookCard = function(messageId) {
+        if (confirm('Bu mesajı silmek istediğinizden emin misiniz?')) {
+            window.location.href = '/delete-message/' + messageId + '/';
+        }
+    };
+
 </script>
 {% endblock %}
