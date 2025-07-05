@@ -2155,7 +2155,7 @@ class CustomPasswordResetView(FormView):
                     overflow: hidden;
                 }}
                 .header {{ 
-                    background: linear-gradient(135deg, #ee6e6e 0%, #fec5c5 100%); 
+                    background: #ee6e6e; 
                     color: white; 
                     padding: 30px; 
                     text-align: center; 
@@ -2167,7 +2167,7 @@ class CustomPasswordResetView(FormView):
                 .button {{ 
                     display: inline-block; 
                     padding: 15px 40px; 
-                    background: linear-gradient(135deg, #ee6e6e 0%, #fec5c5 100%); 
+                    background: #ee6e6e; 
                     color: white; 
                     text-decoration: none; 
                     border-radius: 25px; 
