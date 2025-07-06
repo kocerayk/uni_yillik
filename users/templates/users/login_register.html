@@ -42,11 +42,21 @@
 
         html, body {
             height: 100%;
-            max-height: 100vh;
-            overflow: hidden;
-            position: relative;
             width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+            position: static;
             overscroll-behavior: none;
+        }
+
+        /* Desktop için body ayarları */
+        @media (min-width: 769px) {
+            body {
+                overflow: hidden;
+                position: fixed;
+                max-height: 100vh;
+            }
         }
 
         body {
@@ -57,7 +67,6 @@
             background-size: cover;
             background-attachment: fixed;
             color: var(--text-color);
-            overflow: hidden;
         }
 
 
@@ -67,33 +76,17 @@
         }
 
         *::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 0;
         }
 
         *::-webkit-scrollbar-thumb {
-            background-color: rgba(255,255,255,0.4);
-            border-radius: 20px;
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 40px;
         }
 
         *::-webkit-scrollbar-track {
             background: transparent;
-        }
-
-        /* Mobil için scrollbar stilleri */
-        @media (max-width: 768px) {
-            .register-form::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .register-form::-webkit-scrollbar-thumb {
-                background-color: rgba(255,255,255,0.4);
-                border-radius: 20px;
-            }
-
-            .register-form::-webkit-scrollbar-track {
-                background: transparent;
-            }
         }
 
         .split-screen {
@@ -242,6 +235,51 @@
             }
         }
 
+        /* Mobil cihazlar için özel ayarlar */
+        @media (max-width: 768px) {
+            .split-screen {
+                min-height: 100vh;
+                height: auto; /* 100% yerine auto */
+            }
+
+            .right-section {
+                min-height: 70vh;
+                height: auto; /* Sabit yükseklik yerine auto */
+            }
+
+            .card {
+                max-height: none; /* Maksimum yükseklik sınırını kaldır */
+                height: auto; /* Sabit yükseklik yerine auto */
+                overflow: visible; /* hidden yerine visible */
+            }
+
+            .form-container {
+                height: auto; /* 100% yerine auto */
+                overflow: visible; /* hidden yerine visible */
+            }
+
+            .register-form {
+                position: static; /* absolute yerine static */
+                transform: none; /* Transform animasyonlarını kaldır */
+                opacity: 1;
+                overflow-y: visible; /* auto yerine visible */
+                overflow-x: visible; /* hidden yerine visible */
+                max-height: none; /* Maksimum yükseklik sınırını kaldır */
+                height: auto; /* Sabit yükseklik yerine auto */
+                padding-bottom: 20px;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Mobilde form geçişi için JavaScript ile class toggle */
+            .register-form.mobile-hidden {
+                display: none;
+            }
+            
+            .login-form.mobile-hidden {
+                display: none;
+            }
+        }
+
         .right-section {
             width: 50%;
             min-height: 100vh;
@@ -293,7 +331,7 @@
             transform: translateX(100%);
             opacity: 0;
             transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch; /* iOS için smooth scrolling */
         }
 
         .register-form.active {
