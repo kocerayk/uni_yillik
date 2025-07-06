@@ -42,9 +42,9 @@
 
         html, body {
             height: 100%;
-            max-height: 100vh;
-            overflow: hidden;
-            position: fixed;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: relative;
             width: 100%;
             overscroll-behavior: none;
         }
@@ -212,6 +212,27 @@
             
             .welcome-illustration {
                 max-width: 200px;
+            }
+            
+            .card {
+                max-height: none;
+                height: auto;
+            }
+
+            .right-section {
+                min-height: auto;
+                height: auto;
+                align-items: flex-start;
+                padding: 20px;
+            }
+
+            .register-form {
+                max-height: none;
+                height: auto;
+                overflow-y: auto;
+                position: relative;
+                transform: none;
+                opacity: 1;
             }
         }
 
