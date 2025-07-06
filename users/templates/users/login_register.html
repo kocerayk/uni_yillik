@@ -640,27 +640,22 @@
             .right-section {
                 width: 100%;
                 min-height: 70vh;
-                max-height: 100vh;
-                padding: 0;
-                position: relative;
+                padding: 0 20px 40px;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
             }
 
             .card {
                 width: 100%;
-                height: auto;
-                max-height: 100%;
-                max-width: 480px;
-                margin: 0 auto;
+                max-width: 500px;
+                margin: 20px 0 0;
                 padding: 25px 20px;
-                box-shadow: none;
-                border-radius: 0;
+                border-radius: 16px;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
-                position: relative;
-                background: rgba(255, 255, 255, 0.25);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                border: 1px solid rgba(255, 255, 255, 0.3);
+                max-height: calc(100vh - 100px);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             }
 
             .logo-desktop {
