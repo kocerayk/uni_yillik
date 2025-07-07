@@ -2126,6 +2126,22 @@
             </div>
         </div>
         {% endfor %}
+    {% else %}
+        <div class="yearbook-glass">
+            <div class="yearbook-content">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-pen-fancy"></i>
+                    </div>
+                    <h3>Henüz hiç not yazmadınız</h3>
+                    <p>Arkadaşlarınıza anılarınızı paylaşmak için ilk notunuzu yazın. Her not, mezuniyet hatıralarınızın özel bir parçası olacak.</p>
+                    <a href="{% url 'search_people' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        İlk Notu Yaz
+                    </a>
+                </div>
+            </div>
+        </div>
     {% endif %}
 </div>
 
