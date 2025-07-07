@@ -1573,11 +1573,11 @@
     }
 
 
-    /* Scroll Indicator */
-    .scroll-indicator {
+    /* Scroll Hint Arrow */
+    .scroll-hint-arrow {
         position: fixed;
-        bottom: 40px;
-        right: 40px;
+        bottom: 30px;
+        right: 30px;
         width: 50px;
         height: 50px;
         border-radius: 50%;
@@ -1588,70 +1588,84 @@
         align-items: center;
         justify-content: center;
         z-index: 100;
-        animation: scrollBounce 2s ease-in-out infinite;
-        cursor: pointer;
+        animation: bounce 2s infinite;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
     }
 
-    .scroll-indicator:hover {
+    .scroll-hint-arrow:hover {
         background: rgba(255, 255, 255, 0.2);
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
 
-    .scroll-indicator i {
-        font-size: 18px;
+    .scroll-hint-arrow i {
+        font-size: 20px;
         color: rgba(255, 255, 255, 0.8);
-        transition: color 0.3s ease;
     }
 
-    .scroll-indicator:hover i {
-        color: rgba(255, 255, 255, 1);
-    }
-
-    @keyframes scrollBounce {
-        0%, 100% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(-8px);
-        }
-    }
-
-    /* Black theme adjustments */
-    :root[data-theme="black"] .scroll-indicator {
+    /* Black theme için */
+    :root[data-theme="black"] .scroll-hint-arrow {
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    :root[data-theme="black"] .scroll-indicator:hover {
+    :root[data-theme="black"] .scroll-hint-arrow:hover {
         background: rgba(0, 0, 0, 0.5);
     }
 
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-        .scroll-indicator {
-            bottom: 30px;
-            right: 30px;
-            width: 45px;
-            height: 45px;
+    /* Pink theme için */
+    :root[data-theme="pink"] .scroll-hint-arrow {
+        background: rgba(252, 195, 195, 0.2);
+        border: 1px solid rgba(252, 195, 195, 0.3);
+    }
+
+    :root[data-theme="pink"] .scroll-hint-arrow:hover {
+        background: rgba(252, 195, 195, 0.3);
+    }
+
+    :root[data-theme="pink"] .scroll-hint-arrow i {
+        color: var(--yearbook-bg);
+    }
+
+    /* Bounce animasyonu */
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
         }
-        
-        .scroll-indicator i {
-            font-size: 16px;
+        40% {
+            transform: translateY(-8px);
+        }
+        60% {
+            transform: translateY(-4px);
         }
     }
 
-    @media (max-width: 480px) {
-        .scroll-indicator {
+    /* Mobile için küçültme */
+    @media (max-width: 768px) {
+        .scroll-hint-arrow {
             bottom: 20px;
             right: 20px;
+            width: 44px;
+            height: 44px;
+        }
+        
+        .scroll-hint-arrow i {
+            font-size: 18px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .scroll-hint-arrow {
+            bottom: 15px;
+            right: 15px;
             width: 40px;
             height: 40px;
         }
         
-        .scroll-indicator i {
-            font-size: 14px;
+        .scroll-hint-arrow i {
+            font-size: 16px;
         }
     }
 
@@ -1838,26 +1852,13 @@
         </div>
     </div>
     
-    <!-- Scroll to Top Button -->
-    <div class="scroll-indicator" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <i class="fas fa-chevron-up"></i>
+    <!-- Scroll Hint Arrow -->
+    <div class="scroll-hint-arrow" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})">
+        <i class="fas fa-chevron-down"></i>
     </div>
 </div>
 
 <script>
-    // Scroll indicator functionality
-    const scrollIndicator = document.querySelector('.scroll-indicator');
-    
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-            scrollIndicator.style.display = 'flex';
-        } else {
-            scrollIndicator.style.display = 'none';
-        }
-    });
-    
-    // Initialize as hidden
-    scrollIndicator.style.display = 'none';
 function handlePhotoError(img) {
     const container = img.parentElement;
     const initials = container.querySelector('.initials');
