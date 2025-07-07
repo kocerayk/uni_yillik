@@ -1449,13 +1449,27 @@ def send_message(request, receiver_id):
                 """
 
                 try:
-                    send_mail(
-                        subject=subject,
-                        message=message_content.strip(),
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[receiver.email],
-                        fail_silently=True,
-                    )
+                    # Resend API ile e-posta gönder
+                    url = "https://api.resend.com/emails"
+                    headers = {
+                        "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                        "Content-Type": "application/json"
+                    }
+                    
+                    data = {
+                        "from": settings.RESEND_FROM_EMAIL,
+                        "to": [receiver.email],
+                        "subject": subject,
+                        "text": message_content.strip()
+                    }
+                    
+                    response = requests.post(url, headers=headers, json=data)
+                    
+                    if response.status_code != 200:
+                        logger.error(f"Resend API hatası: {response.status_code} - {response.text}")
+                    else:
+                        logger.info(f"E-posta başarıyla gönderildi: {receiver.email}")
+                        
                 except Exception as e:
                     logger.error(f"E-posta gönderilirken hata oluştu: {str(e)}")
             
