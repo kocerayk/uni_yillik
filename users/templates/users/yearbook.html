@@ -1572,7 +1572,6 @@
         }
     }
 
-
     /* Scroll Hint Arrow */
     .scroll-hint-arrow {
         position: fixed;
@@ -1595,20 +1594,26 @@
         transform: translateY(-2px);
     }
 
-    .scroll-hint-arrow i {
-        font-size: 24px;
-        color: rgba(255, 255, 255, 0.8);
-        font-weight: 300;
+    .scroll-hint-arrow::after {
+        content: '';
+        width: 12px;
+        height: 12px;
+        border-right: 2px solid rgba(255, 255, 255, 0.8);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+        transform: rotate(45deg);
+        margin-top: -4px;
     }
 
     /* Black theme için */
-    :root[data-theme="black"] .scroll-hint-arrow i {
-        color: rgba(255, 255, 255, 0.7);
+    :root[data-theme="black"] .scroll-hint-arrow::after {
+        border-right: 2px solid rgba(255, 255, 255, 0.7);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.7);
     }
 
     /* Pink theme için */
-    :root[data-theme="pink"] .scroll-hint-arrow i {
-        color: var(--yearbook-bg);
+    :root[data-theme="pink"] .scroll-hint-arrow::after {
+        border-right: 2px solid var(--yearbook-bg);
+        border-bottom: 2px solid var(--yearbook-bg);
     }
 
     /* Bounce animasyonu - daha yavaş */
@@ -1633,8 +1638,9 @@
             height: 36px;
         }
         
-        .scroll-hint-arrow i {
-            font-size: 20px;
+        .scroll-hint-arrow::after {
+            width: 10px;
+            height: 10px;
         }
     }
 
@@ -1646,8 +1652,9 @@
             height: 32px;
         }
         
-        .scroll-hint-arrow i {
-            font-size: 18px;
+        .scroll-hint-arrow::after {
+            width: 8px;
+            height: 8px;
         }
     }
 
@@ -1832,12 +1839,8 @@
                 Kaydet
             </button>
         </div>
+        <div class="scroll-hint-arrow" id="scrollHint"></div>
     </div>
-</div>
-
-<!-- Scroll Hint Arrow -->
-<div class="scroll-hint-arrow" id="scrollHint">
-    <i class="fas fa-chevron-down"></i>
 </div>
 
 <script>
