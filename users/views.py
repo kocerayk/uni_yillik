@@ -76,7 +76,14 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
+import re
 
 def send_verification_email_resend(email, code, logger):
     """
@@ -1556,21 +1563,54 @@ def settings_view(request):
 # Geri Bildirim Sayfası:
 # Kullanıcıların yilliksite@gmail.com adresine geri bildirim göndermesini sağlar
 # ----------------------------------------------------------------------
-@login_required
+
+
+@csrf_protect
+@require_http_methods(["GET", "POST"])
 def feedback_view(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
-        message_content = request.POST.get('message')
+        email = request.POST.get('email', '').strip()
+        message_content = request.POST.get('message', '').strip()
         
         # Form doğrulama
         if not email or not message_content:
             messages.error(request, 'Lütfen tüm alanları doldurun.')
             return render(request, 'users/feedback.html')
-            
+        
+        # Email format doğrulama
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            messages.error(request, 'Lütfen geçerli bir e-posta adresi girin.')
+            return render(request, 'users/feedback.html')
+        
+        # Mesaj uzunluğu kontrolü
+        if len(message_content) < 10:
+            messages.error(request, 'Geri bildiriminiz en az 10 karakter olmalıdır.')
+            return render(request, 'users/feedback.html')
+        
+        if len(message_content) > 1000:
+            messages.error(request, 'Geri bildiriminiz en fazla 1000 karakter olabilir.')
+            return render(request, 'users/feedback.html')
+        
         # E-posta gönderme
         try:
             subject = 'Yıllık Sitesi Geri Bildirimi'
-            message = f"Gönderen: {email}\n\nMesaj:\n{message_content}"
+            
+            # Daha düzenli mesaj formatı
+            message = f"""
+Yıllık Sitesi Geri Bildirimi
+
+Gönderen E-posta: {email}
+Tarih: {request.META.get('HTTP_DATE', 'Bilinmiyor')}
+IP Adresi: {request.META.get('REMOTE_ADDR', 'Bilinmiyor')}
+
+Mesaj:
+{message_content}
+
+---
+Bu mesaj otomatik olarak gönderilmiştir.
+            """.strip()
+            
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = ['yilliksite@gmail.com']
             
@@ -1584,9 +1624,13 @@ def feedback_view(request):
             
             messages.success(request, 'Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!')
             return redirect('feedback_view')
+            
         except Exception as e:
-            messages.error(request, f'Geri bildirim gönderilirken bir hata oluştu: {str(e)}')
+            print(f"Email gönderme hatası: {str(e)}")  # Debug için
+            messages.error(request, 'Geri bildirim gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.')
+            return render(request, 'users/feedback.html')
     
+    # GET request için template'i render et
     return render(request, 'users/feedback.html')
 
 
