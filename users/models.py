@@ -6,7 +6,7 @@ from model_utils import FieldTracker
 
 # Üniversiteleri tutan model
 class School(models.Model):
-    name = models.CharField(max_length=255, unique=True)  # Her üniversite bir kez eklenebilir
+    name = models.CharField(max_length=255, unique=True)  
     logo = models.ImageField(upload_to='school_logos/', blank=True, null=True)
     tracker = FieldTracker(fields=['name'])
 

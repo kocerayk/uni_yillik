@@ -83,7 +83,6 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
-import re
 
 def send_verification_email_resend(email, code, logger):
     """
@@ -1592,16 +1591,33 @@ def feedback_view(request):
             messages.error(request, 'Geri bildiriminiz en fazla 1000 karakter olabilir.')
             return render(request, 'users/feedback.html')
         
-        # E-posta gönderme
+        # E-posta gönderme (Resend ile)
         try:
+            # Resend API key'ini ayarla
+            resend.api_key = settings.RESEND_API_KEY
+            
             subject = 'Yıllık Sitesi Geri Bildirimi'
             
-            # Daha düzenli mesaj formatı
-            message = f"""
+            # HTML ve Text formatında mesaj
+            html_message = f"""
+            <html>
+            <body>
+                <h2>Yıllık Sitesi Geri Bildirimi</h2>
+                <p><strong>Gönderen E-posta:</strong> {email}</p>
+                <p><strong>IP Adresi:</strong> {request.META.get('REMOTE_ADDR', 'Bilinmiyor')}</p>
+                <hr>
+                <h3>Mesaj:</h3>
+                <p>{message_content.replace(chr(10), '<br>')}</p>
+                <hr>
+                <p><small>Bu mesaj otomatik olarak gönderilmiştir.</small></p>
+            </body>
+            </html>
+            """
+            
+            text_message = f"""
 Yıllık Sitesi Geri Bildirimi
 
 Gönderen E-posta: {email}
-Tarih: {request.META.get('HTTP_DATE', 'Bilinmiyor')}
 IP Adresi: {request.META.get('REMOTE_ADDR', 'Bilinmiyor')}
 
 Mesaj:
@@ -1611,19 +1627,22 @@ Mesaj:
 Bu mesaj otomatik olarak gönderilmiştir.
             """.strip()
             
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = ['yilliksite@gmail.com']
+            # Resend ile e-posta gönder
+            response = resend.Emails.send({
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": ["yilliksite@gmail.com"],
+                "subject": subject,
+                "html": html_message,
+                "text": text_message,
+            })
             
-            send_mail(
-                subject,
-                message,
-                from_email,
-                recipient_list,
-                fail_silently=False,
-            )
+            print(f"Resend response: {response}")  # Debug için
             
-            messages.success(request, 'Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!')
-            return redirect('feedback_view')
+            if response.get('id'):
+                messages.success(request, 'Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!')
+                return redirect('feedback_view')
+            else:
+                raise Exception(f"Resend gönderim hatası: {response}")
             
         except Exception as e:
             print(f"Email gönderme hatası: {str(e)}")  # Debug için
