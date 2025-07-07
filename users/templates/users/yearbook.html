@@ -1573,85 +1573,7 @@
     }
 
 
-    @media (max-width: 600px) {
-        .benim-notlarim {
-            font-size: 72px !important;
-            position: absolute;
-            left: 50%;
-            margin-left: -36px; 
-            transform: translateX(-60%) translateY(50px) !important;
-            bottom: 100px;
-            text-align: center;
-            width: 100%;
-            height: auto !important;
-        }
-
-        .benim {
-            font-size: 80px !important;
-            text-align: center;
-        }
-
-        .image-container {
-            max-width: 650px;
-            margin: 0 auto 30px;
-        }
-
-
-        .graduation-img {
-            width: 100% !important;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-
-        .review-content {
-            font-size: 0.85rem;
-            line-height: 1.4;
-            max-height: 340px;
-            overflow-y: auto;
-            padding-right: 8px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-color) var(--card-paper-bg);
-        }
-    }
-
-
-    @media (max-width: 400px) {
-        .benim-notlarim {
-            font-size: 72px !important;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-70%) translateY(50px) !important;
-            bottom: 100px;
-            text-align: center;
-            width: 100%;
-            height: auto !important;
-        }
-
-        .benim {
-            font-size: 80px !important;
-            text-align: center;
-        }
-
-        .image-container {
-            max-width: 650px;
-            margin: 0 auto 30px;
-        }
-
-        .graduation-img {
-            width: 100% !important;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .review-content {
-            max-height: 340px;
-        }
-    }
-
-    /* Scroll Indicator Arrow */
+    /* Scroll Indicator */
     .scroll-indicator {
         position: fixed;
         bottom: 40px;
@@ -1730,6 +1652,84 @@
         
         .scroll-indicator i {
             font-size: 14px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .benim-notlarim {
+            font-size: 72px !important;
+            position: absolute;
+            left: 50%;
+            margin-left: -36px; 
+            transform: translateX(-60%) translateY(50px) !important;
+            bottom: 100px;
+            text-align: center;
+            width: 100%;
+            height: auto !important;
+        }
+
+        .benim {
+            font-size: 80px !important;
+            text-align: center;
+        }
+
+        .image-container {
+            max-width: 650px;
+            margin: 0 auto 30px;
+        }
+
+
+        .graduation-img {
+            width: 100% !important;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+
+        .review-content {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--card-paper-bg);
+        }
+    }
+
+
+    @media (max-width: 400px) {
+        .benim-notlarim {
+            font-size: 72px !important;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-70%) translateY(50px) !important;
+            bottom: 100px;
+            text-align: center;
+            width: 100%;
+            height: auto !important;
+        }
+
+        .benim {
+            font-size: 80px !important;
+            text-align: center;
+        }
+
+        .image-container {
+            max-width: 650px;
+            margin: 0 auto 30px;
+        }
+
+        .graduation-img {
+            width: 100% !important;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .review-content {
+            max-height: 340px;
         }
     }
 </style>
@@ -1836,14 +1836,28 @@
                 Kaydet
             </button>
         </div>
-
-        <div class="scroll-indicator">
-            <i class="fas fa-chevron-down"></i>
-        </div>
+    </div>
+    
+    <!-- Scroll to Top Button -->
+    <div class="scroll-indicator" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-chevron-up"></i>
     </div>
 </div>
 
 <script>
+    // Scroll indicator functionality
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollIndicator.style.display = 'flex';
+        } else {
+            scrollIndicator.style.display = 'none';
+        }
+    });
+    
+    // Initialize as hidden
+    scrollIndicator.style.display = 'none';
 function handlePhotoError(img) {
     const container = img.parentElement;
     const initials = container.querySelector('.initials');
