@@ -1578,60 +1578,40 @@
         position: fixed;
         bottom: 30px;
         right: 30px;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1000;
-        animation: bounce 2s infinite;
+        animation: bounce 3s infinite;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         cursor: pointer;
         opacity: 1;
         pointer-events: auto;
     }
 
     .scroll-hint-arrow:hover {
-        background: rgba(255, 255, 255, 0.2);
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
 
     .scroll-hint-arrow i {
-        font-size: 20px;
+        font-size: 24px;
         color: rgba(255, 255, 255, 0.8);
+        font-weight: 300;
     }
 
     /* Black theme için */
-    :root[data-theme="black"] .scroll-hint-arrow {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    :root[data-theme="black"] .scroll-hint-arrow:hover {
-        background: rgba(0, 0, 0, 0.5);
+    :root[data-theme="black"] .scroll-hint-arrow i {
+        color: rgba(255, 255, 255, 0.7);
     }
 
     /* Pink theme için */
-    :root[data-theme="pink"] .scroll-hint-arrow {
-        background: rgba(252, 195, 195, 0.2);
-        border: 1px solid rgba(252, 195, 195, 0.3);
-    }
-
-    :root[data-theme="pink"] .scroll-hint-arrow:hover {
-        background: rgba(252, 195, 195, 0.3);
-    }
-
     :root[data-theme="pink"] .scroll-hint-arrow i {
         color: var(--yearbook-bg);
     }
 
-    /* Bounce animasyonu */
+    /* Bounce animasyonu - daha yavaş */
     @keyframes bounce {
         0%, 20%, 50%, 80%, 100% {
             transform: translateY(0);
@@ -1649,12 +1629,12 @@
         .scroll-hint-arrow {
             bottom: 20px;
             right: 20px;
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
         }
         
         .scroll-hint-arrow i {
-            font-size: 18px;
+            font-size: 20px;
         }
     }
 
@@ -1662,12 +1642,12 @@
         .scroll-hint-arrow {
             bottom: 15px;
             right: 15px;
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
         }
         
         .scroll-hint-arrow i {
-            font-size: 16px;
+            font-size: 18px;
         }
     }
 
