@@ -1423,30 +1423,97 @@ def view_friend(request, friend_id):
 def send_message(request, receiver_id):
     receiver = get_object_or_404(CustomUser, id=receiver_id)
 
-    if request.method == 'POST':
-        content = request.POST.get('content')
-        if content:
-            # Create the message
-            message = Message.objects.create(sender=request.user, receiver=receiver, content=content)
 
-            # Send email notification if enabled
-            if receiver.email_notifications_enabled:
-                subject = f'📩 Yeni bir mesajınız var! - {request.user.get_full_name() or request.user.email}'
-                message_content = f"""
-                Merhaba {receiver.get_full_name() or receiver.username}👋,
+    # Send email notification if enabled
+    if receiver.email_notifications_enabled:
+        subject = f'📩 Yeni Mesajınız Var! - {request.user.get_full_name() or request.user.email}'
+        
+        # HTML template
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="tr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Yeni Mesajınız</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #ee6e6e 0%, #d45a5a 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: bold;">
+                        📩 Yeni Mesajınız Var!
+                    </h1>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 40px 30px;">
+                    <h2 style="color: #333; margin-top: 0; font-size: 20px;">
+                        Merhaba {receiver.get_full_name() or receiver.username}! 👋
+                    </h2>
+                    
+                    <div style="background-color: #f8f9fa; border-left: 4px solid #ee6e6e; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                        <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0;">
+                            <strong style="color: #ee6e6e;">{request.user.get_full_name() or request.user.email}</strong> 
+                            size yeni bir mesaj gönderdi.
+                        </p>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 25px 0;">
+                        Mesajınızı okumak için aşağıdaki butona tıklayarak giriş yapabilirsiniz:
+                    </p>
+                    
+                    <!-- Button -->
+                    <div style="text-align: center; margin: 35px 0;">
+                        <a href="{request.build_absolute_uri(reverse('login_register'))}" 
+                        style="background: linear-gradient(135deg, #ee6e6e 0%, #d45a5a 100%); 
+                                color: white; 
+                                text-decoration: none; 
+                                padding: 15px 30px; 
+                                border-radius: 25px; 
+                                font-weight: bold; 
+                                font-size: 16px; 
+                                display: inline-block; 
+                                box-shadow: 0 4px 15px rgba(238, 110, 110, 0.3);
+                                transition: all 0.3s ease;">
+                            👉 Mesajımı Oku
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="background-color: #f8f9fa; padding: 25px 30px; border-top: 1px solid #eee;">
+                    <p style="color: #999; font-size: 14px; line-height: 1.5; margin: 0; text-align: center;">
+                        Eğer bu mesajı beklemiyorsanız, bu e-postayı güvenle yok sayabilirsiniz.
+                    </p>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <p style="color: #ee6e6e; font-size: 16px; margin: 0; font-weight: bold;">
+                            Sevgilerle 😊
+                        </p>
+                        <p style="color: #666; font-size: 14px; margin: 5px 0 0 0;">
+                            🎓 {request.get_host()}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Plain text version (fallback)
+        text_content = f"""
+        Merhaba {receiver.get_full_name() or receiver.username}!
 
-                {request.user.get_full_name() or request.user.email} size bir mesaj gönderdi.
+        {request.user.get_full_name() or request.user.email} size yeni bir mesaj gönderdi.
 
-                Mesajınızı görmek için aşağıdaki bağlantıya tıklayarak giriş yapabilirsiniz:
+        Mesajınızı okumak için: {request.build_absolute_uri(reverse('login_register'))}
 
-                👉 {request.build_absolute_uri(reverse('login_register'))}
+        Eğer bu mesajı beklemiyorsanız, bu e-postayı güvenle yok sayabilirsiniz.
 
-                Eğer bu mesajı beklemiyorsanız, bu e-postayı güvenle yok sayabilirsiniz.
-
-                Sevgilerle 😊
-
-                🎓 {request.get_host()}
-                """
+        Sevgilerle,
+        {request.get_host()}
+        """
 
                 try:
                     # Resend API ile e-posta gönder
