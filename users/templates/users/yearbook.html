@@ -748,7 +748,7 @@
         right: 0;
         bottom: 0;
         background: rgba(0, 0, 0, 0.8);
-        z-index: 1000;
+        z-index: 2000;
         align-items: center;
         justify-content: center;
     }
@@ -1587,11 +1587,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 100;
+        z-index: 1000;
         animation: bounce 2s infinite;
         transition: all 0.3s ease;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         cursor: pointer;
+        opacity: 1;
+        pointer-events: auto;
     }
 
     .scroll-hint-arrow:hover {
@@ -1851,11 +1853,11 @@
             </button>
         </div>
     </div>
-    
-    <!-- Scroll Hint Arrow -->
-    <div class="scroll-hint-arrow" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})">
-        <i class="fas fa-chevron-down"></i>
-    </div>
+</div>
+
+<!-- Scroll Hint Arrow -->
+<div class="scroll-hint-arrow" id="scrollHint">
+    <i class="fas fa-chevron-down"></i>
 </div>
 
 <script>
@@ -2123,6 +2125,41 @@ function updateImageTheme() {
 document.addEventListener('DOMContentLoaded', function() {
     // Update image theme on load
     updateImageTheme();
+    
+    // Initialize scroll hint functionality
+    const scrollHint = document.getElementById('scrollHint');
+    
+    // Add click event to scroll to bottom
+    if (scrollHint) {
+        scrollHint.addEventListener('click', function() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Toggle scroll hint visibility
+        function toggleScrollHint() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            if (scrollTop + windowHeight >= documentHeight - 100) {
+                scrollHint.style.opacity = '0';
+                scrollHint.style.pointerEvents = 'none';
+            } else {
+                scrollHint.style.opacity = '1';
+                scrollHint.style.pointerEvents = 'auto';
+            }
+        }
+        
+        // Initial check
+        toggleScrollHint();
+        
+        // Add scroll event listener
+        window.addEventListener('scroll', toggleScrollHint);
+        window.addEventListener('resize', toggleScrollHint);
+    }
 
     const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
     const container = document.querySelector('.yearbook-container');
