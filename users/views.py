@@ -83,6 +83,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 
 def send_verification_email_resend(email, code, logger):
     """
@@ -1530,8 +1531,10 @@ def send_message(request, receiver_id):
 @login_required
 def my_notes(request):
     notes = Message.objects.filter(sender=request.user).order_by('-created_at')
-    return render(request, 'users/my_notes.html', {'notes': notes})
-
+    return render(request, 'users/my_notes.html', {
+        'notes': notes,
+        'today': timezone.now()
+    })
 
 @login_required
 @require_POST
