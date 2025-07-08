@@ -385,36 +385,26 @@
             }
         }
 
-        /* Mobile Menu Styles */
-        .nav-links {
-            transition: var(--transition);
-        }
-
-        .mobile-menu-btn {
-            transition: var(--transition);
-            z-index: 1001;
-        }
-
-        /* Mobile Menu Styles - Minimal ve Dar Tasarım */
+        /* Mobile Menu Styles - Minimal Design */
         @media (max-width: 48em) {
             :root {
-                /* Mobile menu variables - Yarı genişlik */
-                --mobile-menu-width: 140px; /* 280px'den 140px'e düşürüldü */
+                /* Mobile menu variables - Daha dar tasarım */
+                --mobile-menu-width: 200px; /* 280px'den 200px'e düşürüldü */
                 --mobile-menu-bg: rgba(var(--background-color-rgb), 0.95);
-                --mobile-menu-blur: blur(20px);
+                --mobile-menu-blur: blur(15px);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
-                --mobile-menu-radius: 0 0 0 24px;
-                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
-                --mobile-menu-padding: 80px 16px 20px; /* Daha dar padding */
+                --mobile-menu-radius: 0 0 0 var(--border-radius);
+                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+                --mobile-menu-padding: 70px 15px 15px; /* Daha az padding */
 
-                /* Menu Items - Minimal tasarım */
-                --menu-item-height: 48px; /* 60px'den 48px'e düşürüldü */
-                --menu-item-padding: 0 16px; /* 1.5rem'den 16px'e düşürüldü */
+                /* Menu Items - Minimal boyutlar */
+                --menu-item-height: 40px; /* 60px'den 40px'e düşürüldü */
+                --menu-item-padding: 0 12px; /* 1.5rem'den 12px'e düşürüldü */
                 --menu-item-bg: rgba(255, 255, 255, 0.08);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.9);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
                 --menu-item-text: rgba(255, 255, 255, 0.9);
-                --menu-item-text-active: var(--primary-color);
+                --menu-item-text-active: #fff;
                 --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
                 /* Mobile Button Variables */
@@ -422,7 +412,7 @@
                 --mobile-btn-bg: rgba(255, 255, 255, 0.15);
                 --mobile-btn-bg-active: rgba(255, 255, 255, 0.25);
                 --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.2);
-                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                --mobile-btn-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
                 --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
 
@@ -432,19 +422,8 @@
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
                 --menu-item-bg: rgba(255, 255, 255, 0.05);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.12);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.9);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.18);
                 --menu-item-text: rgba(255, 255, 255, 0.9);
-                --menu-item-text-active: var(--primary-color);
-            }
-
-            /* Black Theme Mobile Menu Overrides */
-            :root[data-theme="black"] {
-                --mobile-menu-bg: rgba(42, 42, 42, 0.95);
-                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.15);
-                --menu-item-bg: rgba(255, 255, 255, 0.05);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
-                --menu-item-text: rgba(255, 255, 255, 0.95);
                 --menu-item-text-active: #fff;
             }
 
@@ -464,11 +443,11 @@
                 border-radius: 12px;
                 background: var(--mobile-btn-bg);
                 color: var(--white);
-                font-size: 1.1rem;
+                font-size: 1.1rem; /* 1.3rem'den 1.1rem'e düşürüldü */
                 cursor: pointer;
                 transition: var(--mobile-btn-transition);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
+                backdrop-filter: var(--mobile-menu-blur);
+                -webkit-backdrop-filter: var(--mobile-menu-blur);
                 border: var(--mobile-btn-border);
                 box-shadow: var(--mobile-btn-shadow);
             }
@@ -482,7 +461,7 @@
                 transform: translateY(-50%) scale(0.95);
             }
 
-            /* Navigation Links Container - Updated with theme colors */
+            /* Navigation Links Container - Daha dar */
             .nav-links {
                 position: fixed;
                 top: 0;
@@ -490,26 +469,23 @@
                 width: var(--mobile-menu-width);
                 height: 100vh;
 
-                /* Theme-based background with opacity */
-                background: rgba(var(--background-color-rgb), 0.98) !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
+                background: var(--mobile-menu-bg);
+                backdrop-filter: var(--mobile-menu-blur);
+                -webkit-backdrop-filter: var(--mobile-menu-blur);
 
-                /* Border and radius */
-                border-left: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 0 0 0 var(--border-radius);
-                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+                border-left: var(--mobile-menu-border);
+                border-radius: var(--mobile-menu-radius);
+                box-shadow: var(--mobile-menu-shadow);
 
-                /* Layout */
                 display: flex;
                 flex-direction: column;
-                align-items: center;
+                align-items: stretch;
                 justify-content: flex-start;
                 padding: var(--mobile-menu-padding);
                 margin: 0;
                 list-style: none;
+                gap: 6px; /* Sekmeler arası boşluk */
 
-                /* Animation */
                 transform: translateX(100%);
                 opacity: 0;
                 pointer-events: none;
@@ -524,33 +500,33 @@
                 pointer-events: all;
             }
 
-            /* Menu Items - Yuvarlak Tasarım */
-            .nav-links li {
-                width: 100%;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-            }
-
+            /* Menu Items - Minimal ve Yuvarlak */
             .nav-links a {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
+                width: 100%;
+                height: var(--menu-item-height);
+                padding: var(--menu-item-padding);
+                margin: 0;
+
                 background: var(--menu-item-bg);
                 color: var(--menu-item-text);
                 text-decoration: none;
                 font-weight: 500;
-                font-size: 1.1rem;
-                border-radius: 50%;
-                margin: 8px 0;
-                transition: var(--menu-item-transition);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
+                font-size: 0.85rem; /* 1rem'den 0.85rem'e düşürüldü */
+
+                border: none;
+                border-radius: 20px; /* Yuvarlak köşeler */
+                text-align: left;
+                gap: 10px; /* 1rem'den 10px'e düşürüldü */
+
                 transform: translateX(30px);
                 opacity: 0;
+                transition: var(--menu-item-transition);
+
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                position: relative;
             }
 
             .nav-links.active a {
@@ -558,36 +534,110 @@
                 opacity: 1;
             }
 
-            /* Icon styling - Sadece icon göster */
+            /* Icon styling - Daha küçük */
             .nav-links a i {
-                font-size: 1.1rem;
-                color: inherit;
-                opacity: 0.9;
-                transition: all 0.3s ease;
-                margin: 0;
-                width: auto;
+                font-size: 1rem; /* 1.2rem'den 1rem'e düşürüldü */
+                width: 18px; /* 24px'den 18px'e düşürüldü */
                 text-align: center;
+                color: inherit;
+                opacity: 0.8;
+                transition: all 0.3s ease;
+                flex-shrink: 0;
             }
 
-            /* Hover effects - Yuvarlak büyüme */
+            /* Hover effects - Minimal */
             .nav-links a:hover {
                 background: var(--menu-item-bg-hover);
-                transform: scale(1.1);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                transform: translateX(-2px); /* Daha az hareket */
             }
 
             .nav-links a:hover i {
                 opacity: 1;
-                transform: scale(1.05);
+                transform: scale(1.05); /* Daha az büyüme */
             }
 
-            /* Active state - Büyük yuvarlak beyaz */
+            /* Active state - Yuvarlak ve Minimal */
             .nav-links a.active {
                 background: var(--menu-item-bg-active);
                 color: var(--menu-item-text-active);
                 font-weight: 600;
-                transform: scale(1.15);
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border-left: none; /* Sol border kaldırıldı */
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            }
+
+            .nav-links a.active i {
+                opacity: 1;
+                color: var(--primary-color);
+                transform: scale(1.1);
+            }
+
+            /* Staggered animation for menu items */
+            .nav-links.active a:nth-child(1) { transition-delay: 0.1s; }
+            .nav-links.active a:nth-child(2) { transition-delay: 0.15s; }
+            .nav-links.active a:nth-child(3) { transition-delay: 0.2s; }
+            .nav-links.active a:nth-child(4) { transition-delay: 0.25s; }
+            .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
+        }
+
+        /* Smaller mobile screens */
+        @media (max-width: 480px) {
+            :root {
+                --mobile-menu-width: 180px; /* 260px'den 180px'e düşürüldü */
+                --mobile-menu-radius: 30px 0 0 30px;
+                --menu-item-height: 38px; /* Daha da küçük */
+                --mobile-btn-size: 2.3rem;
+            }
+
+            .mobile-menu-btn {
+                right: 1rem;
+                font-size: 1rem;
+            }
+
+            .nav-links a {
+                font-size: 0.8rem;
+                gap: 8px;
+            }
+
+            .nav-links a i {
+                font-size: 0.9rem;
+                width: 16px;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 400px) {
+            :root {
+                --mobile-menu-width: 160px; /* 240px'den 160px'e düşürüldü */
+                --mobile-menu-radius: 25px 0 0 25px;
+                --menu-item-height: 36px; /* En küçük boyut */
+                --mobile-btn-size: 2.2rem;
+            }
+
+            .mobile-menu-btn {
+                right: 0.8rem;
+                font-size: 0.95rem;
+            }
+
+            .nav-links a {
+                font-size: 0.75rem;
+                gap: 6px;
+            }
+
+            .nav-links a i {
+                font-size: 0.85rem;
+                width: 14px;
+            }
+
+            .nav-links {
+                padding: 65px 12px 12px;
+                gap: 4px;
+            }
+        }
+                -webkit-backdrop-filter: blur(20px);
                 border-left: 4px solid var(--primary-color);
             }
 
@@ -614,54 +664,29 @@
             .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
         }
 
-        /* Küçük mobile ekranlar için */
+        /* Smaller mobile screens - keep rounded corners */
         @media (max-width: 480px) {
             :root {
-                --mobile-menu-width: 120px; /* Daha da dar */
-                --mobile-menu-radius: 0 0 0 20px;
+                --mobile-menu-width: 260px;
+                --mobile-menu-radius: 40px 0 0 40px; /* Slightly smaller radius for smaller screens */
             }
 
             .mobile-menu-btn {
-                right: 0.8rem;
-                font-size: 1rem;
+                right: 1.25rem;
+                font-size: 1.2rem;
             }
 
             .nav-links a {
-                width: 36px;
-                height: 36px;
-                font-size: 1rem;
+                font-size: 0.95rem;
             }
 
             .nav-links a i {
-                font-size: 1rem;
+                font-size: 1.1rem;
+                width: 22px;
             }
         }
 
-        /* Çok küçük ekranlar için */
-        @media (max-width: 400px) {
-            :root {
-                --mobile-menu-width: 100px; /* En dar */
-                --mobile-menu-radius: 0 0 0 18px;
-            }
-
-            .mobile-menu-btn {
-                right: 0.6rem;
-                font-size: 0.9rem;
-                width: 2.2rem;
-                height: 2.2rem;
-            }
-
-            .nav-links a {
-                width: 32px;
-                height: 32px;
-                font-size: 0.9rem;
-                margin: 6px 0;
-            }
-
-            .nav-links a i {
-                font-size: 0.9rem;
-            }
-        } /* Very small screens */
+        /* Very small screens */
         /* Very small screens - keep rounded corners */
         @media (max-width: 400px) {
             :root {
