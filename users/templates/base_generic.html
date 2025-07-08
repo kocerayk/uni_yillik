@@ -502,6 +502,61 @@
                 text-decoration: none !important;
                 border: none !important;
             }
+
+            .nav-links.active {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            /* Menu Items - Yuvarlak Tasarım */
+            .nav-links li {
+                width: var(--menu-item-size);
+                height: var(--menu-item-size);
+                margin: 0;
+                padding: 0;
+            }
+
+            .nav-links a {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                
+                background: var(--menu-item-bg);
+                color: var(--menu-item-text);
+                text-decoration: none;
+                
+                border-radius: 50%; /* Tam yuvarlak */
+                border: none;
+                
+                transition: var(--menu-item-transition);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                
+                /* Animasyon için başlangıç pozisyonu */
+                transform: translateX(30px) scale(0.8);
+                opacity: 0;
+                
+                position: relative;
+                overflow: hidden;
+            }
+
+            .nav-links.active a {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+
+            /* Icon styling - Daha küçük ikonlar */
+            .nav-links a i {
+                font-size: 1.1rem;
+                color: inherit;
+                opacity: 0.9;
+                transition: all 0.3s ease;
+                text-decoration: none !important;
+                border: none !important;
+            }
             .nav-links a i {
                 font-size: 1.4rem;
                 color: inherit;
@@ -574,6 +629,37 @@
             .nav-links.active a:nth-child(3) { transition-delay: 0.2s; }
             .nav-links.active a:nth-child(4) { transition-delay: 0.25s; }
             .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
+        }
+
+        /* Küçük mobil ekranlar için daha da minimal */
+        @media (max-width: 480px) {
+            :root {
+                --mobile-menu-width: 5.5rem; /* Daha da dar */
+                --menu-item-size: 38px;
+            }
+        }
+
+        /* Çok küçük ekranlar */
+        @media (max-width: 400px) {
+            :root {
+                --mobile-menu-width: 5rem; /* En dar */
+                --menu-item-size: 35px;
+            }
+            
+            .nav-links a i {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            :root {
+                --mobile-menu-width: 4.5rem; /* Ultra dar */
+                --menu-item-size: 32px;
+            }
+            
+            .nav-links a i {
+                font-size: 0.9rem;
+            }
         }
 
         /* Küçük mobil ekranlar için daha da minimal */
