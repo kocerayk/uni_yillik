@@ -396,23 +396,32 @@
                 --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
                 --mobile-menu-padding: calc(var(--nav-height) + 15px) 8px 15px; /* Çok minimal padding */
 
-                /* Menu Items - Küçük yuvarlak butonlar */
-                --menu-item-size: 42px; /* Daha küçük butonlar */
-                --menu-item-bg: rgba(255, 255, 255, 0.1);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.25);
-                --menu-item-text: rgba(255, 255, 255, 0.95);
+                /* Menu Items - Cam halka butonlar */
+                --menu-item-size: 48px; /* Biraz daha büyük cam halkalar */
+                --menu-item-bg: rgba(255, 255, 255, 0.08);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.22);
+                --menu-item-border: 1px solid rgba(255, 255, 255, 0.2);
+                --menu-item-border-hover: 1px solid rgba(255, 255, 255, 0.35);
+                --menu-item-border-active: 1px solid rgba(255, 255, 255, 0.5);
+                --menu-item-text: rgba(255, 255, 255, 0.9);
                 --menu-item-text-active: #fff;
-                --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                --menu-item-transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                --menu-item-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                --menu-item-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
+                --menu-item-shadow-active: 0 6px 24px rgba(0, 0, 0, 0.2);
             }
 
             /* Black Theme Mobile Menu Overrides */
             :root[data-theme="black"] {
                 --mobile-menu-bg: rgba(42, 42, 42, 0.95);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.15);
-                --menu-item-bg: rgba(255, 255, 255, 0.05);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
+                --menu-item-bg: rgba(255, 255, 255, 0.03);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.08);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.12);
+                --menu-item-border: 1px solid rgba(255, 255, 255, 0.1);
+                --menu-item-border-hover: 1px solid rgba(255, 255, 255, 0.25);
+                --menu-item-border-active: 1px solid rgba(255, 255, 255, 0.4);
             }
 
             /* Navigation Links Container - Minimal ve Dar */
@@ -473,8 +482,9 @@
                 color: var(--menu-item-text);
                 text-decoration: none;
                 
-                border-radius: 50%; /* Tam yuvarlak */
-                border: none;
+                border-radius: 50%;
+                border: var(--menu-item-border);
+                box-shadow: var(--menu-item-shadow);
                 
                 transition: var(--menu-item-transition);
                 backdrop-filter: blur(8px);
@@ -495,7 +505,7 @@
 
             /* Icon styling - Daha küçük ikonlar */
             .nav-links a i {
-                font-size: 1.1rem;
+                font-size: 1.2rem;
                 color: inherit;
                 opacity: 0.9;
                 transition: all 0.3s ease;
@@ -506,10 +516,11 @@
             /* Hover effects - Yuvarlak büyüme */
             .nav-links a:hover {
                 background: var(--menu-item-bg-hover);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
+                border-color: var(--menu-item-border-hover);
+                box-shadow: var(--menu-item-shadow-hover);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 transform: translateX(0) scale(1.1);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             }
 
             .nav-links a:hover i {
@@ -521,10 +532,11 @@
             .nav-links a.active {
                 background: var(--menu-item-bg-active);
                 color: var(--menu-item-text-active);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
+                border-color: var(--menu-item-border-active);
+                box-shadow: var(--menu-item-shadow-active);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
                 transform: translateX(0) scale(1.15);
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
             }
 
             .nav-links a.active::before {
@@ -572,6 +584,18 @@
         @media (max-width: 480px) {
             :root {
                 --mobile-menu-width: 5.5rem; /* Daha da dar */
+                --menu-item-size: 42px;
+            }
+            
+            .nav-links a i {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Çok küçük ekranlar */
+        @media (max-width: 400px) {
+            :root {
+                --mobile-menu-width: 5rem; /* En dar */
                 --menu-item-size: 38px;
             }
             
@@ -580,26 +604,14 @@
             }
         }
 
-        /* Çok küçük ekranlar */
-        @media (max-width: 400px) {
+        @media (max-width: 360px) {
             :root {
-                --mobile-menu-width: 5rem; /* En dar */
-                --menu-item-size: 35px;
+                --mobile-menu-width: 4.5rem; /* Ultra dar */
+                --menu-item-size: 36px;
             }
             
             .nav-links a i {
                 font-size: 0.95rem;
-            }
-        }
-
-        @media (max-width: 360px) {
-            :root {
-                --mobile-menu-width: 4.5rem; /* Ultra dar */
-                --menu-item-size: 32px;
-            }
-            
-            .nav-links a i {
-                font-size: 0.9rem;
             }
         }
 
