@@ -388,16 +388,16 @@
         /* Mobile Menu Styles - Minimal ve Dar Tasarım */
         @media (max-width: 48em) {
             :root {
-                /* Minimal mobile menu variables */
-                --mobile-menu-width: 80px; /* Çok dar */
+                /* Ultra minimal mobile menu variables */
+                --mobile-menu-width: 6rem; /* Menu butonunun 2 katı (3rem x 2) */
                 --mobile-menu-bg: rgba(var(--background-color-rgb), 0.95);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
                 --mobile-menu-radius: 0 0 0 var(--border-radius);
                 --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
-                --mobile-menu-padding: calc(var(--nav-height) + 20px) 10px 20px; /* Minimal padding */
+                --mobile-menu-padding: calc(var(--nav-height) + 15px) 8px 15px; /* Çok minimal padding */
 
-                /* Menu Items - Yuvarlak ve minimal */
-                --menu-item-size: 60px; /* Yuvarlak için eşit boy */
+                /* Menu Items - Küçük yuvarlak butonlar */
+                --menu-item-size: 42px; /* Daha küçük butonlar */
                 --menu-item-bg: rgba(255, 255, 255, 0.1);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
                 --menu-item-bg-active: rgba(255, 255, 255, 0.25);
@@ -413,55 +413,9 @@
                 --menu-item-bg: rgba(255, 255, 255, 0.05);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
                 --menu-item-bg-active: rgba(255, 255, 255, 0.2);
-                --menu-item-text: rgba(255, 255, 255, 0.95);
-                --menu-item-text-active: #fff;
             }
 
-            /* Mobile Button Variables */
-            :root {
-                --mobile-btn-size: 3rem;
-                --mobile-btn-bg: rgba(255, 255, 255, 0.2);
-                --mobile-btn-bg-active: rgba(255, 255, 255, 0.3);
-                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.3);
-                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            }
-
-            /* Mobile Menu Button - Fixed Position */
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: var(--mobile-btn-size);
-                height: var(--mobile-btn-size);
-                position: fixed;
-                right: 1.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-                z-index: 1002;
-                border: none;
-                border-radius: 16px;
-                background: var(--mobile-btn-bg);
-                color: var(--white);
-                font-size: 1.3rem;
-                cursor: pointer;
-                transition: var(--mobile-btn-transition);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                border: var(--mobile-btn-border);
-                box-shadow: var(--mobile-btn-shadow);
-            }
-
-            .mobile-menu-btn:hover {
-                background: var(--mobile-btn-bg-active);
-                transform: translateY(-50%) scale(1.05);
-            }
-
-            .mobile-menu-btn:active {
-                transform: translateY(-50%) scale(0.95);
-            }
-
-            /* Navigation Links Container - Updated with theme colors */
+            /* Navigation Links Container - Minimal ve Dar */
             .nav-links {
                 position: fixed;
                 top: 0;
@@ -469,33 +423,28 @@
                 width: var(--mobile-menu-width);
                 height: 100vh;
 
-                /* Theme-based background with opacity */
-                background: rgba(var(--background-color-rgb), 0.98) !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
+                background: var(--mobile-menu-bg);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
 
-                /* Border and radius */
-                border-left: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 0 0 0 var(--border-radius);
-                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
-
-                /* Layout */
+                border-left: var(--mobile-menu-border);
+                border-radius: var(--mobile-menu-radius);
+                box-shadow: var(--mobile-menu-shadow);
+                
                 display: flex;
                 flex-direction: column;
-                align-items: stretch;
+                align-items: center;
                 justify-content: flex-start;
-                padding: calc(var(--nav-height) + 20px) 20px 20px 20px;
+                padding: var(--mobile-menu-padding);
+                gap: 10px; /* Yuvarlaklar arası daha az boşluk */
+                
                 margin: 0;
                 list-style: none;
-
-                /* Animation */
                 transform: translateX(100%);
                 opacity: 0;
                 pointer-events: none;
                 transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
                 z-index: 1001;
-
-                /* Ensure rounded corners are visible */
                 overflow: hidden;
             }
 
@@ -519,16 +468,22 @@
                 justify-content: center;
                 width: 100%;
                 height: 100%;
+                
                 background: var(--menu-item-bg);
                 color: var(--menu-item-text);
                 text-decoration: none;
+                
                 border-radius: 50%; /* Tam yuvarlak */
                 border: none;
+                
                 transition: var(--menu-item-transition);
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
+                
+                /* Animasyon için başlangıç pozisyonu */
                 transform: translateX(30px) scale(0.8);
                 opacity: 0;
+                
                 position: relative;
                 overflow: hidden;
             }
@@ -538,7 +493,15 @@
                 opacity: 1;
             }
 
-            /* Icon styling - Sadece icon, text yok */
+            /* Icon styling - Daha küçük ikonlar */
+            .nav-links a i {
+                font-size: 1.1rem;
+                color: inherit;
+                opacity: 0.9;
+                transition: all 0.3s ease;
+                text-decoration: none !important;
+                border: none !important;
+            }
             .nav-links a i {
                 font-size: 1.4rem;
                 color: inherit;
@@ -616,67 +579,33 @@
         /* Küçük mobil ekranlar için daha da minimal */
         @media (max-width: 480px) {
             :root {
-                --mobile-menu-width: 75px;
-                --menu-item-size: 55px;
+                --mobile-menu-width: 5.5rem; /* Daha da dar */
+                --menu-item-size: 38px;
             }
         }
 
         /* Çok küçük ekranlar */
         @media (max-width: 400px) {
             :root {
-                --mobile-menu-width: 70px;
-                --menu-item-size: 50px;
+                --mobile-menu-width: 5rem; /* En dar */
+                --menu-item-size: 35px;
             }
             
             .nav-links a i {
-                font-size: 1.3rem;
+                font-size: 1rem;
             }
         }
 
         @media (max-width: 360px) {
             :root {
-                --mobile-menu-width: 65px;
-                --menu-item-size: 45px;
+                --mobile-menu-width: 4.5rem; /* Ultra dar */
+                --menu-item-size: 32px;
             }
             
             .nav-links a i {
-                font-size: 1.2rem;
+                font-size: 0.9rem;
             }
-        }
-
-            /* Menu Items - Glass Effect */
-            /* Menu Items - Keep existing glass effect */
-            .nav-links a {
-                display: flex;
-                align-items: center;
-                width: 100%;
-                padding: var(--menu-item-padding);
-                margin: 0;
-
-                /* Styling - Keep existing glass effect */
-                background: var(--menu-item-bg);
-                color: var(--menu-item-text);
-                text-decoration: none;
-                font-weight: 500;
-                font-size: 1rem;
-
-                /* Layout */
-                border: none;
-                border-radius: 0;
-                text-align: left;
-                gap: 1rem;
-
-                /* Animation */
-                transform: translateX(30px);
-                opacity: 0;
-                transition: var(--menu-item-transition);
-
-                /* Enhanced Glass effect */
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                position: relative;
-            }
-
+            
             .nav-links.active a {
                 transform: translateX(0);
                 opacity: 1;
@@ -835,39 +764,37 @@
             }
 
             /* Navigation Links Container - Updated with rounded corners and navbar styling */
-            /* Navigation Links Container - Minimal ve Dar */
             .nav-links {
                 position: fixed;
                 top: 0;
                 right: 0;
                 width: var(--mobile-menu-width);
                 height: 100vh;
+
+                /* Updated background to match navbar */
                 background: var(--mobile-menu-bg);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
+                backdrop-filter: blur(var(--mobile-menu-blur));
+                -webkit-backdrop-filter: blur(var(--mobile-menu-blur));
+
+                /* Updated border and radius */
                 border-left: var(--mobile-menu-border);
                 border-radius: var(--mobile-menu-radius);
                 box-shadow: var(--mobile-menu-shadow);
                 display: flex;
                 flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
                 padding: var(--mobile-menu-padding);
-                gap: 15px; /* Yuvarlaklar arası boşluk */
                 margin: 0;
                 list-style: none;
                 transform: translateX(100%);
-                opacity: 0;
-                pointer-events: none;
-                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                 z-index: 1001;
+
+                /* Ensure rounded corners are visible */
                 overflow: hidden;
             }
 
             .nav-links.active {
                 transform: translateX(0);
-                opacity: 1;
-                pointer-events: auto;
             }
 
             /* Menu Items - Taller Design */
