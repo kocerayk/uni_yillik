@@ -1760,52 +1760,53 @@
         </div>
     </div>
 
-    {% for message in messages %}
-    <div class="yearbook-glass {% if not message.visible %}message-hidden{% endif %}" data-message-container-id="{{ message.id }}">
-        <div class="yearbook-content">
-            <div class="profile-section">
-                <div class="profile-photo">
-                    {% if message.sender.profile_photo %}
-                        <img src="{{ message.sender.profile_photo.url }}"
-                             alt="{{ message.sender.get_full_name }}"
-                             onerror="handlePhotoError(this)"
-                             onload="handlePhotoLoad(this)">
-                    {% endif %}
-                    <div class="initials">{{ message.sender.get_initials }}</div>
-                </div>
-                <div class="profile-info">
-                    <h2 class="profile-name">{{ message.sender.get_full_name }}</h2>
-                    <div class="profile-class">
-                        {{ message.sender.school.name }}<br>
-                        {{ message.sender.graduation_year.year }}
+    {% if messages %}
+        {% for message in messages %}
+        <div class="yearbook-glass {% if not message.visible %}message-hidden{% endif %}" data-message-container-id="{{ message.id }}">
+            <div class="yearbook-content">
+                <div class="profile-section">
+                    <div class="profile-photo">
+                        {% if message.sender.profile_photo %}
+                            <img src="{{ message.sender.profile_photo.url }}"
+                                alt="{{ message.sender.get_full_name }}"
+                                onerror="handlePhotoError(this)"
+                                onload="handlePhotoLoad(this)">
+                        {% endif %}
+                        <div class="initials">{{ message.sender.get_initials }}</div>
                     </div>
-                    <div class="profile-details">
-                        {% if message.sender.department %}
-                        <div class="detail-item">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span>{{ message.sender.department }}</span>
+                    <div class="profile-info">
+                        <h2 class="profile-name">{{ message.sender.get_full_name }}</h2>
+                        <div class="profile-class">
+                            {{ message.sender.school.name }}<br>
+                            {{ message.sender.graduation_year.year }}
                         </div>
-          {% endif %}
+                        <div class="profile-details">
+                            {% if message.sender.department %}
+                            <div class="detail-item">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span>{{ message.sender.department }}</span>
+                            </div>
+            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="review-section">
-                <button onclick="toggleMessageVisibility('{{ message.id }}')" class="visibility-icon-btn" title="Görünürlüğü Değiştir">
-                    <i class="fas {% if message.visible %}fa-eye{% else %}fa-eye-slash{% endif %}"></i>
-                </button>
-                <button onclick="deleteYearbookCard('{{ message.id }}')" class="delete-icon-btn" title="Sil">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <div class="review-content">
-                    {{ message.content|linebreaks }}
-                </div>
-                <div class="review-date">
-                    {{ message.created_at|date:"d.m.Y" }}
+                <div class="review-section">
+                    <button onclick="toggleMessageVisibility('{{ message.id }}')" class="visibility-icon-btn" title="Görünürlüğü Değiştir">
+                        <i class="fas {% if message.visible %}fa-eye{% else %}fa-eye-slash{% endif %}"></i>
+                    </button>
+                    <button onclick="deleteYearbookCard('{{ message.id }}')" class="delete-icon-btn" title="Sil">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <div class="review-content">
+                        {{ message.content|linebreaks }}
+                    </div>
+                    <div class="review-date">
+                        {{ message.created_at|date:"d.m.Y" }}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
     {% else %}
         <!-- Default note when no notes exist -->
         <div class="yearbook-glass">
@@ -1813,9 +1814,9 @@
                 <div class="profile-section">
                     <div class="profile-photo">
                         <img src="{% static 'yearbook/images/nonote.png' %}"
-                             alt="YILLIK"
-                             onerror="handlePhotoError(this)"
-                             onload="handlePhotoLoad(this)">
+                            alt="YILLIK"
+                            onerror="handlePhotoError(this)"
+                            onload="handlePhotoLoad(this)">
                         <div class="initials">YL</div>
                     </div>
                     <div class="profile-info">
