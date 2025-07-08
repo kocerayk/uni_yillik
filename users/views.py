@@ -1439,7 +1439,7 @@ def send_message(request, receiver_id):
                 sender=request.user,
                 receiver=receiver,
                 content=content,
-                is_visible=True
+                visible=True
             )
             
             # Send email notification if enabled
