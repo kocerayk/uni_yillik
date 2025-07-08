@@ -386,19 +386,18 @@
         }
 
         /* Mobile Menu Styles - Minimal ve Dar Tasarım */
-        /* Mobile Menu Styles - Minimal ve Dar Tasarım */
         @media (max-width: 48em) {
             :root {
                 /* Ultra minimal mobile menu variables */
-                --mobile-menu-width: 4rem; /* 6rem'den 4rem'e düşürüldü */
+                --mobile-menu-width: 6rem; /* Menu butonunun 2 katı (3rem x 2) */
                 --mobile-menu-bg: rgba(var(--background-color-rgb), 0.95);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
                 --mobile-menu-radius: 0 0 0 var(--border-radius);
                 --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
-                --mobile-menu-padding: calc(var(--nav-height) + 15px) 4px 15px; /* 8px'den 4px'e düşürüldü */
+                --mobile-menu-padding: calc(var(--nav-height) + 15px) 8px 15px; /* Çok minimal padding */
 
                 /* Menu Items - Küçük yuvarlak butonlar */
-                --menu-item-size: 36px; /* 42px'den 36px'e düşürüldü */
+                --menu-item-size: 42px; /* Daha küçük butonlar */
                 --menu-item-bg: rgba(255, 255, 255, 0.1);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
                 --menu-item-bg-active: rgba(255, 255, 255, 0.25);
@@ -580,31 +579,31 @@
         /* Küçük mobil ekranlar için daha da minimal */
         @media (max-width: 480px) {
             :root {
-                --mobile-menu-width: 3.5rem; /* 5.5rem'den 3.5rem'e düşürüldü */
-                --menu-item-size: 32px; /* 38px'den 32px'e düşürüldü */
+                --mobile-menu-width: 5.5rem; /* Daha da dar */
+                --menu-item-size: 38px;
             }
         }
 
         /* Çok küçük ekranlar */
         @media (max-width: 400px) {
             :root {
-                --mobile-menu-width: 3rem; /* 5rem'den 3rem'e düşürüldü */
-                --menu-item-size: 28px; /* 35px'den 28px'e düşürüldü */
+                --mobile-menu-width: 5rem; /* En dar */
+                --menu-item-size: 35px;
             }
             
             .nav-links a i {
-                font-size: 0.9rem;
+                font-size: 1rem;
             }
         }
 
         @media (max-width: 360px) {
             :root {
-                --mobile-menu-width: 2.8rem; /* 4.5rem'den 2.8rem'e düşürüldü */
-                --menu-item-size: 26px; /* 32px'den 26px'e düşürüldü */
+                --mobile-menu-width: 4.5rem; /* Ultra dar */
+                --menu-item-size: 32px;
             }
             
             .nav-links a i {
-                font-size: 0.85rem;
+                font-size: 0.9rem;
             }
             
             .nav-links.active a {
