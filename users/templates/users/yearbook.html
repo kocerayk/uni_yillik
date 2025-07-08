@@ -1805,7 +1805,43 @@
             </div>
         </div>
     </div>
-      {% endfor %}
+    {% endfor %}
+    {% else %}
+        <!-- Default note when no notes exist -->
+        <div class="yearbook-glass">
+            <div class="yearbook-content">
+                <div class="profile-section">
+                    <div class="profile-photo">
+                        <img src="{% static 'yearbook/images/nonote.png' %}"
+                             alt="YILLIK"
+                             onerror="handlePhotoError(this)"
+                             onload="handlePhotoLoad(this)">
+                        <div class="initials">YL</div>
+                    </div>
+                    <div class="profile-info">
+                        <h2 class="profile-name">YILLIK</h2>
+                        <div class="profile-class">
+                            {{ user.school.name }}
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-item">
+                                <i class="fas fa-heart"></i>
+                                <span>Hoş geldin!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-section">
+                    <div class="review-content">
+                        Merhaba! Henüz sana hiç not yazılmamış. Arkadaşlarınla iletişime geçerek onlardan sana güzel notlar yazmalarını isteyebilirsin. Aynı zamanda sen de onlara unutulmaz notlar yazarak bu özel anları paylaşabilirsin.
+                    </div>
+                    <div class="review-date">
+                        {{ today|date:"d.m.Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
     <!-- Graduation Photo Upload Modal -->
