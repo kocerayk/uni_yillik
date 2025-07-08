@@ -395,35 +395,35 @@
             z-index: 1001;
         }
 
-        /* Mobile Menu Styles - Updated with rounded corners and navbar color */
+        /* Mobile Menu Styles - Cleaner and more compact */
         @media (max-width: 48em) {
             :root {
                 /* Mobile menu variables */
-                --mobile-menu-width: 280px;
+                --mobile-menu-width: 220px; /* 280px'den 220px'e düşürüldü */
                 --mobile-menu-bg: rgba(var(--background-color-rgb), 0.98);
                 --mobile-menu-blur: none;
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
                 --mobile-menu-radius: 0 0 0 var(--border-radius);
                 --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
-                --mobile-menu-padding: 80px 20px 20px; /* Rounded left corners */
+                --mobile-menu-padding: 80px 15px 20px; /* Daha dar padding */
 
-                /* Menu Items - Keep existing glass styling */
-                --menu-item-height: 60px;
-                --menu-item-padding: 0 1.5rem;
-                --menu-item-bg: rgba(255, 255, 255, 0.1);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.25);
-                --menu-item-text: rgba(255, 255, 255, 0.95);
+                /* Menu Items - Cleaner styling */
+                --menu-item-height: 50px;
+                --menu-item-padding: 0 1rem;
+                --menu-item-bg: transparent;
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.1);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.15);
+                --menu-item-text: rgba(255, 255, 255, 0.9);
                 --menu-item-text-active: #fff;
                 --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
                 /* Mobile Button Variables */
-                --mobile-btn-size: 3rem;
+                --mobile-btn-size: 2.8rem;
                 --mobile-btn-bg: rgba(255, 255, 255, 0.2);
                 --mobile-btn-bg-active: rgba(255, 255, 255, 0.3);
-                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.3);
-                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.2);
+                --mobile-btn-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                --mobile-btn-transition: all 0.2s ease;
             }
 
             /* Black Theme Mobile Menu Overrides */
@@ -483,15 +483,13 @@
                 transform: translateY(-50%) scale(0.95);
             }
 
-            /* Navigation Links Container - Updated with theme colors */
+            /* Navigation Links Container - Cleaner mobile menu */
             .nav-links {
                 position: fixed;
                 top: 0;
                 right: 0;
                 width: var(--mobile-menu-width);
                 height: 100vh;
-
-                /* Theme-based background with opacity */
                 background: rgba(var(--background-color-rgb), 0.98) !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
@@ -755,25 +753,31 @@
             .nav-links li {
                 width: 100%;
                 margin: 0;
-                padding: 0;
             }
 
             .nav-links a {
                 display: flex;
                 align-items: center;
-                height: var(--menu-item-height);
-                padding: var(--menu-item-padding);
-                background: var(--menu-item-bg);
-                color: var(--menu-item-text);
-                text-decoration: none;
-                font-weight: 500;
-                font-size: 0.95rem;
-                transition: var(--transition);
-                border-left: 3px solid transparent;
-                margin: 4px 0;
-                border-radius: 8px;
+                padding: 12px 16px !important;
+                height: auto;
+                color: var(--menu-item-text) !important;
+                text-decoration: none !important;
+                transition: var(--menu-item-transition);
+                background: transparent !important;
+                border-radius: 12px !important;
+                margin: 2px 0 !important;
+                border: none !important;
+                border-left: none !important;
+                transform: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
             }
-
+            
+            .nav-links a::before {
+                display: none !important;
+            }
+            
             .nav-links a i {
                 font-size: 1.1rem;
                 width: 24px;
