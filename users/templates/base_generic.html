@@ -385,49 +385,49 @@
             }
         }
 
-        /* Mobile Menu Styles - Minimal Design */
+        /* Mobile Menu Styles - Minimal ve Dar Tasarım */
         @media (max-width: 48em) {
             :root {
-                /* Mobile menu variables - Daha dar tasarım */
-                --mobile-menu-width: 200px; /* 280px'den 200px'e düşürüldü */
+                /* Minimal mobile menu variables */
+                --mobile-menu-width: 80px; /* Çok dar */
                 --mobile-menu-bg: rgba(var(--background-color-rgb), 0.95);
-                --mobile-menu-blur: blur(15px);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
                 --mobile-menu-radius: 0 0 0 var(--border-radius);
-                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-                --mobile-menu-padding: 70px 15px 15px; /* Daha az padding */
+                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+                --mobile-menu-padding: calc(var(--nav-height) + 20px) 10px 20px; /* Minimal padding */
 
-                /* Menu Items - Minimal boyutlar */
-                --menu-item-height: 40px; /* 60px'den 40px'e düşürüldü */
-                --menu-item-padding: 0 12px; /* 1.5rem'den 12px'e düşürüldü */
-                --menu-item-bg: rgba(255, 255, 255, 0.08);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
-                --menu-item-text: rgba(255, 255, 255, 0.9);
+                /* Menu Items - Yuvarlak ve minimal */
+                --menu-item-size: 60px; /* Yuvarlak için eşit boy */
+                --menu-item-bg: rgba(255, 255, 255, 0.1);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.25);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
                 --menu-item-text-active: #fff;
                 --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-
-                /* Mobile Button Variables */
-                --mobile-btn-size: 2.5rem; /* 3rem'den 2.5rem'e düşürüldü */
-                --mobile-btn-bg: rgba(255, 255, 255, 0.15);
-                --mobile-btn-bg-active: rgba(255, 255, 255, 0.25);
-                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.2);
-                --mobile-btn-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
 
             /* Black Theme Mobile Menu Overrides */
             :root[data-theme="black"] {
                 --mobile-menu-bg: rgba(42, 42, 42, 0.95);
-                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
+                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.15);
                 --menu-item-bg: rgba(255, 255, 255, 0.05);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.12);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.18);
-                --menu-item-text: rgba(255, 255, 255, 0.9);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
                 --menu-item-text-active: #fff;
             }
 
-            /* Mobile Menu Button - Daha küçük */
+            /* Mobile Button Variables */
+            :root {
+                --mobile-btn-size: 3rem;
+                --mobile-btn-bg: rgba(255, 255, 255, 0.2);
+                --mobile-btn-bg-active: rgba(255, 255, 255, 0.3);
+                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.3);
+                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+
+            /* Mobile Menu Button - Fixed Position */
             .mobile-menu-btn {
                 display: flex;
                 align-items: center;
@@ -435,19 +435,19 @@
                 width: var(--mobile-btn-size);
                 height: var(--mobile-btn-size);
                 position: fixed;
-                right: 1rem;
+                right: 1.5rem;
                 top: 50%;
                 transform: translateY(-50%);
                 z-index: 1002;
                 border: none;
-                border-radius: 12px;
+                border-radius: 16px;
                 background: var(--mobile-btn-bg);
                 color: var(--white);
-                font-size: 1.1rem; /* 1.3rem'den 1.1rem'e düşürüldü */
+                font-size: 1.3rem;
                 cursor: pointer;
                 transition: var(--mobile-btn-transition);
-                backdrop-filter: var(--mobile-menu-blur);
-                -webkit-backdrop-filter: var(--mobile-menu-blur);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 border: var(--mobile-btn-border);
                 box-shadow: var(--mobile-btn-shadow);
             }
@@ -461,7 +461,7 @@
                 transform: translateY(-50%) scale(0.95);
             }
 
-            /* Navigation Links Container - Daha dar */
+            /* Navigation Links Container - Updated with theme colors */
             .nav-links {
                 position: fixed;
                 top: 0;
@@ -469,28 +469,33 @@
                 width: var(--mobile-menu-width);
                 height: 100vh;
 
-                background: var(--mobile-menu-bg);
-                backdrop-filter: var(--mobile-menu-blur);
-                -webkit-backdrop-filter: var(--mobile-menu-blur);
+                /* Theme-based background with opacity */
+                background: rgba(var(--background-color-rgb), 0.98) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
 
-                border-left: var(--mobile-menu-border);
-                border-radius: var(--mobile-menu-radius);
-                box-shadow: var(--mobile-menu-shadow);
+                /* Border and radius */
+                border-left: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0 0 0 var(--border-radius);
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
 
+                /* Layout */
                 display: flex;
                 flex-direction: column;
                 align-items: stretch;
                 justify-content: flex-start;
-                padding: var(--mobile-menu-padding);
+                padding: calc(var(--nav-height) + 20px) 20px 20px 20px;
                 margin: 0;
                 list-style: none;
-                gap: 6px; /* Sekmeler arası boşluk */
 
+                /* Animation */
                 transform: translateX(100%);
                 opacity: 0;
                 pointer-events: none;
                 transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
                 z-index: 1001;
+
+                /* Ensure rounded corners are visible */
                 overflow: hidden;
             }
 
@@ -500,79 +505,104 @@
                 pointer-events: all;
             }
 
-            /* Menu Items - Minimal ve Yuvarlak */
+            /* Menu Items - Yuvarlak Tasarım */
+            .nav-links li {
+                width: var(--menu-item-size);
+                height: var(--menu-item-size);
+                margin: 0;
+                padding: 0;
+            }
+
             .nav-links a {
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 width: 100%;
-                height: var(--menu-item-height);
-                padding: var(--menu-item-padding);
-                margin: 0;
-
+                height: 100%;
                 background: var(--menu-item-bg);
                 color: var(--menu-item-text);
                 text-decoration: none;
-                font-weight: 500;
-                font-size: 0.85rem; /* 1rem'den 0.85rem'e düşürüldü */
-
+                border-radius: 50%; /* Tam yuvarlak */
                 border: none;
-                border-radius: 20px; /* Yuvarlak köşeler */
-                text-align: left;
-                gap: 10px; /* 1rem'den 10px'e düşürüldü */
-
-                transform: translateX(30px);
-                opacity: 0;
                 transition: var(--menu-item-transition);
-
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
+                transform: translateX(30px) scale(0.8);
+                opacity: 0;
                 position: relative;
+                overflow: hidden;
             }
 
             .nav-links.active a {
-                transform: translateX(0);
+                transform: translateX(0) scale(1);
                 opacity: 1;
             }
 
-            /* Icon styling - Daha küçük */
+            /* Icon styling - Sadece icon, text yok */
             .nav-links a i {
-                font-size: 1rem; /* 1.2rem'den 1rem'e düşürüldü */
-                width: 18px; /* 24px'den 18px'e düşürüldü */
-                text-align: center;
+                font-size: 1.4rem;
                 color: inherit;
-                opacity: 0.8;
+                opacity: 0.9;
                 transition: all 0.3s ease;
-                flex-shrink: 0;
+                text-decoration: none !important;
+                border: none !important;
             }
 
-            /* Hover effects - Minimal */
+            /* Hover effects - Yuvarlak büyüme */
             .nav-links a:hover {
                 background: var(--menu-item-bg-hover);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                transform: translateX(-2px); /* Daha az hareket */
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                transform: translateX(0) scale(1.1);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             }
 
             .nav-links a:hover i {
                 opacity: 1;
-                transform: scale(1.05); /* Daha az büyüme */
+                transform: scale(1.1);
             }
 
-            /* Active state - Yuvarlak ve Minimal */
+            /* Active state - Güçlü glow efekti */
             .nav-links a.active {
                 background: var(--menu-item-bg-active);
                 color: var(--menu-item-text-active);
-                font-weight: 600;
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                border-left: none; /* Sol border kaldırıldı */
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                transform: translateX(0) scale(1.15);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .nav-links a.active::before {
+                content: '';
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                background: linear-gradient(45deg, 
+                    rgba(255, 255, 255, 0.4) 0%, 
+                    rgba(255, 255, 255, 0.2) 50%, 
+                    rgba(255, 255, 255, 0.4) 100%);
+                border-radius: 50%;
+                z-index: -1;
+                animation: activeGlow 2s ease-in-out infinite alternate;
+            }
+
+            @keyframes activeGlow {
+                0% {
+                    opacity: 0.5;
+                    transform: scale(1);
+                }
+                100% {
+                    opacity: 0.8;
+                    transform: scale(1.05);
+                }
             }
 
             .nav-links a.active i {
                 opacity: 1;
                 color: var(--primary-color);
-                transform: scale(1.1);
+                transform: scale(1.2);
             }
 
             /* Staggered animation for menu items */
@@ -583,60 +613,108 @@
             .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
         }
 
-        /* Smaller mobile screens */
+        /* Küçük mobil ekranlar için daha da minimal */
         @media (max-width: 480px) {
             :root {
-                --mobile-menu-width: 180px; /* 260px'den 180px'e düşürüldü */
-                --mobile-menu-radius: 30px 0 0 30px;
-                --menu-item-height: 38px; /* Daha da küçük */
-                --mobile-btn-size: 2.3rem;
-            }
-
-            .mobile-menu-btn {
-                right: 1rem;
-                font-size: 1rem;
-            }
-
-            .nav-links a {
-                font-size: 0.8rem;
-                gap: 8px;
-            }
-
-            .nav-links a i {
-                font-size: 0.9rem;
-                width: 16px;
+                --mobile-menu-width: 75px;
+                --menu-item-size: 55px;
             }
         }
 
-        /* Very small screens */
+        /* Çok küçük ekranlar */
         @media (max-width: 400px) {
             :root {
-                --mobile-menu-width: 160px; /* 240px'den 160px'e düşürüldü */
-                --mobile-menu-radius: 25px 0 0 25px;
-                --menu-item-height: 36px; /* En küçük boyut */
-                --mobile-btn-size: 2.2rem;
+                --mobile-menu-width: 70px;
+                --menu-item-size: 50px;
             }
-
-            .mobile-menu-btn {
-                right: 0.8rem;
-                font-size: 0.95rem;
-            }
-
-            .nav-links a {
-                font-size: 0.75rem;
-                gap: 6px;
-            }
-
+            
             .nav-links a i {
-                font-size: 0.85rem;
-                width: 14px;
-            }
-
-            .nav-links {
-                padding: 65px 12px 12px;
-                gap: 4px;
+                font-size: 1.3rem;
             }
         }
+
+        @media (max-width: 360px) {
+            :root {
+                --mobile-menu-width: 65px;
+                --menu-item-size: 45px;
+            }
+            
+            .nav-links a i {
+                font-size: 1.2rem;
+            }
+        }
+
+            /* Menu Items - Glass Effect */
+            /* Menu Items - Keep existing glass effect */
+            .nav-links a {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                padding: var(--menu-item-padding);
+                margin: 0;
+
+                /* Styling - Keep existing glass effect */
+                background: var(--menu-item-bg);
+                color: var(--menu-item-text);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1rem;
+
+                /* Layout */
+                border: none;
+                border-radius: 0;
+                text-align: left;
+                gap: 1rem;
+
+                /* Animation */
+                transform: translateX(30px);
+                opacity: 0;
+                transition: var(--menu-item-transition);
+
+                /* Enhanced Glass effect */
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                position: relative;
+            }
+
+            .nav-links.active a {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            /* Icon styling */
+            .nav-links a i {
+                font-size: 1.2rem;
+                width: 24px;
+                text-align: center;
+                color: inherit;
+                opacity: 0.8;
+                transition: all 0.3s ease;
+            }
+
+            /* Hover effects - Enhanced Glass */
+            .nav-links a:hover {
+                background: var(--menu-item-bg-hover);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                transform: translateX(-4px);
+            }
+
+            .nav-links a:hover::before {
+                opacity: 1;
+            }
+
+            .nav-links a:hover i {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            /* Active state - Strong Glass Effect */
+            .nav-links a.active {
+                background: var(--menu-item-bg-active);
+                color: var(--menu-item-text-active);
+                font-weight: 600;
+                backdrop-filter: blur(20px);
                 -webkit-backdrop-filter: blur(20px);
                 border-left: 4px solid var(--primary-color);
             }
@@ -757,37 +835,39 @@
             }
 
             /* Navigation Links Container - Updated with rounded corners and navbar styling */
+            /* Navigation Links Container - Minimal ve Dar */
             .nav-links {
                 position: fixed;
                 top: 0;
                 right: 0;
                 width: var(--mobile-menu-width);
                 height: 100vh;
-
-                /* Updated background to match navbar */
                 background: var(--mobile-menu-bg);
-                backdrop-filter: blur(var(--mobile-menu-blur));
-                -webkit-backdrop-filter: blur(var(--mobile-menu-blur));
-
-                /* Updated border and radius */
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 border-left: var(--mobile-menu-border);
                 border-radius: var(--mobile-menu-radius);
                 box-shadow: var(--mobile-menu-shadow);
                 display: flex;
                 flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
                 padding: var(--mobile-menu-padding);
+                gap: 15px; /* Yuvarlaklar arası boşluk */
                 margin: 0;
                 list-style: none;
                 transform: translateX(100%);
-                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
                 z-index: 1001;
-
-                /* Ensure rounded corners are visible */
                 overflow: hidden;
             }
 
             .nav-links.active {
                 transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
             }
 
             /* Menu Items - Taller Design */
