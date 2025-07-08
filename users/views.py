@@ -1334,12 +1334,17 @@ def yearbook(request):
                 target_student = prev_student
             
             if target_student:
+                # Get messages for the target student
+                target_messages = Message.objects.filter(receiver=target_student).order_by('-created_at')
+                
                 context = {
                     'user': target_student,
                     'school': target_student.school,
                     'graduation_year': target_student.graduation_year,
                     'has_prev': student_list.index(target_student) > 0,
-                    'has_next': student_list.index(target_student) < len(student_list) - 1
+                    'has_next': student_list.index(target_student) < len(student_list) - 1,
+                    'messages': target_messages,
+                    'today': timezone.now()
                 }
                 return render(request, "users/yearbook_content.html", context)
             
@@ -1351,7 +1356,8 @@ def yearbook(request):
             'graduation_year': request.user.graduation_year,
             'has_prev': current_index > 0,
             'has_next': current_index < len(student_list) - 1,
-            'messages': user_messages  # Add messages to context
+            'messages': user_messages,
+            'today': timezone.now()
         }
         return render(request, "users/yearbook.html", context)
     except Exception as e:
