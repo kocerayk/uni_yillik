@@ -395,47 +395,46 @@
             z-index: 1001;
         }
 
-        /* Mobile Menu Styles - Cleaner and more compact */
+        /* Mobile Menu Styles - Minimal ve Dar Tasarım */
         @media (max-width: 48em) {
             :root {
-                /* Mobile menu variables */
-                --mobile-menu-width: 220px; /* 280px'den 220px'e düşürüldü */
-                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.98);
-                --mobile-menu-blur: none;
+                /* Mobile menu variables - Yarı genişlik */
+                --mobile-menu-width: 140px; /* 280px'den 140px'e düşürüldü */
+                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.95);
+                --mobile-menu-blur: blur(20px);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
-                --mobile-menu-radius: 0 0 0 var(--border-radius);
+                --mobile-menu-radius: 0 0 0 24px;
                 --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
-                --mobile-menu-padding: 80px 15px 20px; /* Daha dar padding */
+                --mobile-menu-padding: 80px 16px 20px; /* Daha dar padding */
 
-                /* Menu Items - Cleaner styling */
-                --menu-item-height: 50px;
-                --menu-item-padding: 0 1rem;
-                --menu-item-bg: transparent;
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.1);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.15);
+                /* Menu Items - Minimal tasarım */
+                --menu-item-height: 48px; /* 60px'den 48px'e düşürüldü */
+                --menu-item-padding: 0 16px; /* 1.5rem'den 16px'e düşürüldü */
+                --menu-item-bg: rgba(255, 255, 255, 0.08);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.9);
                 --menu-item-text: rgba(255, 255, 255, 0.9);
-                --menu-item-text-active: #fff;
+                --menu-item-text-active: var(--primary-color);
                 --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
                 /* Mobile Button Variables */
-                --mobile-btn-size: 2.8rem;
-                --mobile-btn-bg: rgba(255, 255, 255, 0.2);
-                --mobile-btn-bg-active: rgba(255, 255, 255, 0.3);
+                --mobile-btn-size: 2.5rem; /* 3rem'den 2.5rem'e düşürüldü */
+                --mobile-btn-bg: rgba(255, 255, 255, 0.15);
+                --mobile-btn-bg-active: rgba(255, 255, 255, 0.25);
                 --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.2);
-                --mobile-btn-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                --mobile-btn-transition: all 0.2s ease;
+                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
 
             /* Black Theme Mobile Menu Overrides */
             :root[data-theme="black"] {
-                /* Keep the same glass-color as navbar for consistency */
-                --mobile-menu-bg: var(--glass-color);
-                --mobile-menu-border: var(--border);
+                --mobile-menu-bg: rgba(42, 42, 42, 0.95);
+                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
                 --menu-item-bg: rgba(255, 255, 255, 0.05);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
-                --menu-item-text: rgba(255, 255, 255, 0.95);
-                --menu-item-text-active: #fff;
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.12);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.9);
+                --menu-item-text: rgba(255, 255, 255, 0.9);
+                --menu-item-text-active: var(--primary-color);
             }
 
             /* Black Theme Mobile Menu Overrides */
@@ -449,7 +448,7 @@
                 --menu-item-text-active: #fff;
             }
 
-            /* Mobile Menu Button - Fixed Position */
+            /* Mobile Menu Button - Daha küçük */
             .mobile-menu-btn {
                 display: flex;
                 align-items: center;
@@ -457,19 +456,19 @@
                 width: var(--mobile-btn-size);
                 height: var(--mobile-btn-size);
                 position: fixed;
-                right: 1.5rem;
+                right: 1rem;
                 top: 50%;
                 transform: translateY(-50%);
                 z-index: 1002;
                 border: none;
-                border-radius: 16px;
+                border-radius: 12px;
                 background: var(--mobile-btn-bg);
                 color: var(--white);
-                font-size: 1.3rem;
+                font-size: 1.1rem;
                 cursor: pointer;
                 transition: var(--mobile-btn-transition);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
                 border: var(--mobile-btn-border);
                 box-shadow: var(--mobile-btn-shadow);
             }
@@ -483,13 +482,15 @@
                 transform: translateY(-50%) scale(0.95);
             }
 
-            /* Navigation Links Container - Cleaner mobile menu */
+            /* Navigation Links Container - Updated with theme colors */
             .nav-links {
                 position: fixed;
                 top: 0;
                 right: 0;
                 width: var(--mobile-menu-width);
                 height: 100vh;
+
+                /* Theme-based background with opacity */
                 background: rgba(var(--background-color-rgb), 0.98) !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
@@ -502,9 +503,9 @@
                 /* Layout */
                 display: flex;
                 flex-direction: column;
-                align-items: stretch;
+                align-items: center;
                 justify-content: flex-start;
-                padding: calc(var(--nav-height) + 20px) 20px 20px 20px;
+                padding: var(--mobile-menu-padding);
                 margin: 0;
                 list-style: none;
 
@@ -514,8 +515,6 @@
                 pointer-events: none;
                 transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
                 z-index: 1001;
-
-                /* Ensure rounded corners are visible */
                 overflow: hidden;
             }
 
@@ -525,37 +524,33 @@
                 pointer-events: all;
             }
 
-            /* Menu Items - Glass Effect */
-            /* Menu Items - Keep existing glass effect */
+            /* Menu Items - Yuvarlak Tasarım */
+            .nav-links li {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+            }
+
             .nav-links a {
                 display: flex;
                 align-items: center;
-                width: 100%;
-                padding: var(--menu-item-padding);
-                margin: 0;
-
-                /* Styling - Keep existing glass effect */
+                justify-content: center;
+                width: 40px;
+                height: 40px;
                 background: var(--menu-item-bg);
                 color: var(--menu-item-text);
                 text-decoration: none;
                 font-weight: 500;
-                font-size: 1rem;
-
-                /* Layout */
-                border: none;
-                border-radius: 0;
-                text-align: left;
-                gap: 1rem;
-
-                /* Animation */
+                font-size: 1.1rem;
+                border-radius: 50%;
+                margin: 8px 0;
+                transition: var(--menu-item-transition);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
                 transform: translateX(30px);
                 opacity: 0;
-                transition: var(--menu-item-transition);
-
-                /* Enhanced Glass effect */
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                position: relative;
             }
 
             .nav-links.active a {
@@ -563,40 +558,36 @@
                 opacity: 1;
             }
 
-            /* Icon styling */
+            /* Icon styling - Sadece icon göster */
             .nav-links a i {
-                font-size: 1.2rem;
-                width: 24px;
-                text-align: center;
+                font-size: 1.1rem;
                 color: inherit;
-                opacity: 0.8;
+                opacity: 0.9;
                 transition: all 0.3s ease;
+                margin: 0;
+                width: auto;
+                text-align: center;
             }
 
-            /* Hover effects - Enhanced Glass */
+            /* Hover effects - Yuvarlak büyüme */
             .nav-links a:hover {
                 background: var(--menu-item-bg-hover);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                transform: translateX(-4px);
-            }
-
-            .nav-links a:hover::before {
-                opacity: 1;
+                transform: scale(1.1);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             }
 
             .nav-links a:hover i {
                 opacity: 1;
-                transform: scale(1.1);
+                transform: scale(1.05);
             }
 
-            /* Active state - Strong Glass Effect */
+            /* Active state - Büyük yuvarlak beyaz */
             .nav-links a.active {
                 background: var(--menu-item-bg-active);
                 color: var(--menu-item-text-active);
                 font-weight: 600;
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
+                transform: scale(1.15);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
                 border-left: 4px solid var(--primary-color);
             }
 
@@ -623,29 +614,54 @@
             .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
         }
 
-        /* Smaller mobile screens - keep rounded corners */
+        /* Küçük mobile ekranlar için */
         @media (max-width: 480px) {
             :root {
-                --mobile-menu-width: 260px;
-                --mobile-menu-radius: 40px 0 0 40px; /* Slightly smaller radius for smaller screens */
+                --mobile-menu-width: 120px; /* Daha da dar */
+                --mobile-menu-radius: 0 0 0 20px;
             }
 
             .mobile-menu-btn {
-                right: 1.25rem;
-                font-size: 1.2rem;
+                right: 0.8rem;
+                font-size: 1rem;
             }
 
             .nav-links a {
-                font-size: 0.95rem;
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
             }
 
             .nav-links a i {
-                font-size: 1.1rem;
-                width: 22px;
+                font-size: 1rem;
             }
         }
 
-        /* Very small screens */
+        /* Çok küçük ekranlar için */
+        @media (max-width: 400px) {
+            :root {
+                --mobile-menu-width: 100px; /* En dar */
+                --mobile-menu-radius: 0 0 0 18px;
+            }
+
+            .mobile-menu-btn {
+                right: 0.6rem;
+                font-size: 0.9rem;
+                width: 2.2rem;
+                height: 2.2rem;
+            }
+
+            .nav-links a {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+                margin: 6px 0;
+            }
+
+            .nav-links a i {
+                font-size: 0.9rem;
+            }
+        } /* Very small screens */
         /* Very small screens - keep rounded corners */
         @media (max-width: 400px) {
             :root {
@@ -753,31 +769,25 @@
             .nav-links li {
                 width: 100%;
                 margin: 0;
+                padding: 0;
             }
 
             .nav-links a {
                 display: flex;
                 align-items: center;
-                padding: 12px 16px !important;
-                height: auto;
-                color: var(--menu-item-text) !important;
-                text-decoration: none !important;
-                transition: var(--menu-item-transition);
-                background: transparent !important;
-                border-radius: 12px !important;
-                margin: 2px 0 !important;
-                border: none !important;
-                border-left: none !important;
-                transform: none !important;
-                box-shadow: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
+                height: var(--menu-item-height);
+                padding: var(--menu-item-padding);
+                background: var(--menu-item-bg);
+                color: var(--menu-item-text);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 0.95rem;
+                transition: var(--transition);
+                border-left: 3px solid transparent;
+                margin: 4px 0;
+                border-radius: 8px;
             }
-            
-            .nav-links a::before {
-                display: none !important;
-            }
-            
+
             .nav-links a i {
                 font-size: 1.1rem;
                 width: 24px;
