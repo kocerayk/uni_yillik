@@ -2113,9 +2113,9 @@
                     </div>
                 </div>
                 <div class="review-section">
-    <a href="{% url 'edit_message' note.id %}" class="edit-icon-btn" title="Düzenle">
-        <i class="fas fa-edit"></i>
-    </a>
+                    <a href="{% url 'edit_message' note.id %}" class="edit-icon-btn" title="Düzenle">
+                        <i class="fas fa-edit"></i>
+                    </a>
                     <div class="review-content">
                         {{ note.content|linebreaks }}
                     </div>
@@ -2126,6 +2126,47 @@
             </div>
         </div>
         {% endfor %}
+    {% else %}
+        <!-- Default note when no notes exist -->
+        <div class="yearbook-glass">
+            <div class="yearbook-content">
+                <div class="profile-section">
+                    <div class="profile-photo">
+                        <img src="{% static 'yearbook/images/a (5).png' %}"
+                             alt="YILLIK"
+                             onerror="handlePhotoError(this)"
+                             onload="handlePhotoLoad(this)">
+                        <div class="initials">YL</div>
+                    </div>
+                    <div class="profile-info">
+                        <h2 class="profile-name">YILLIK</h2>
+                        <div class="profile-class">
+                            {{ user.school.name }}
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-item">
+                                <i class="fas fa-heart"></i>
+                                <span>Hoş geldin!</span>
+                            </div>
+                            <div class="detail-item edit-button-container">
+                                <a href="{% url 'search_users' %}" class="edit-message-btn">
+                                    <i class="fas fa-search"></i>
+                                    <span>Arkadaş Bul</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-section">
+                    <div class="review-content">
+                        Merhaba! Henüz sana hiç not yazılmamış. Arkadaşlarınla iletişime geçerek onlardan sana güzel notlar yazmalarını isteyebilirsin. Aynı zamanda sen de onlara unutulmaz notlar yazarak bu özel anları paylaşabilirsin. Arkadaş bulmak için yukarıdaki "Arkadaş Bul" butonuna tıklayabilirsin!
+                    </div>
+                    <div class="review-date">
+                        {{ today|date:"d.m.Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 </div>
 
