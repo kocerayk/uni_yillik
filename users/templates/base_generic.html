@@ -172,28 +172,80 @@
             margin-right: 50px; /* Sola kaydırma için */
         }
 
+        /* Desktop Navigation Links - Yuvarlak Aktif Efekt */
         .nav-links a {
             color: var(--white);
             text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 12px;
-            transition: var(--transition);
+            padding: 12px 16px;
+            border-radius: 50px; /* Tam yuvarlak */
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             align-items: center;
             gap: 8px;
+            position: relative;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             text-decoration: none !important;
         }
 
-        /* Remove underlines and borders from Font Awesome icons */
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-color);
+            font-weight: 600;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .nav-links a.active::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                rgba(255, 255, 255, 0.6) 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                rgba(255, 255, 255, 0.6) 100%);
+            border-radius: 50px;
+            z-index: -1;
+            animation: activeGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes activeGlow {
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0.8;
+                transform: scale(1.02);
+            }
+        }
+
+        /* Icon animation */
         .nav-links a i {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             text-decoration: none !important;
             border-bottom: none !important;
             outline: none !important;
+        }
+
+        .nav-links a:hover i {
+            transform: scale(1.1);
+        }
+
+        .nav-links a.active i {
+            transform: scale(1.15);
+            color: var(--primary-color);
         }
 
         /* Override browser User-Agent styles */
@@ -903,19 +955,19 @@
             <ul class="nav-links">
                 <li><a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active"{% endif %}>
                     <i class="fas fa-user"></i> 
-                </a>Profil</li>
+                </a></li>
                 <li><a href="{% url 'yearbook' %}" {% if request.resolver_match.url_name == 'yearbook' %}class="active"{% endif %}>
                     <i class="fas fa-book"></i> 
-                </a>Sayfam</li>
+                </a></li>
                 <li><a href="{% url 'my_notes' %}" {% if request.resolver_match.url_name == 'my_notes' %}class="active"{% endif %}>
                     <i class="fas fa-pen"></i> 
-                </a>Notlarım</li>
+                </a></li>
                 <li><a href="{% url 'settings_view' %}" {% if request.resolver_match.url_name == 'settings_view' %}class="active"{% endif %}>
                     <i class="fas fa-cog"></i> 
-                </a>Ayarlar</li>
+                </a></li>
                 <li><a href="{% url 'user_logout' %}">
                     <i class="fas fa-sign-out-alt"></i> 
-                </a>Çıkış Yap</li>
+                </a></li>
             </ul>
         </div>
     </nav>
