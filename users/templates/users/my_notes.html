@@ -2512,7 +2512,7 @@ document.addEventListener('DOMContentLoaded', function() {
             universityInfo.style.paddingTop = `${topPadding}px`;
 
             // Ensure year is positioned correctly
-            yearText.style.marginTop = '5px';
+            yearText.style.marginTop = '5px'; // Exact 5px gap
         }
     }
 
@@ -2520,7 +2520,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-    // Throttle function for performance
+    // Throttle fonksiyonu performans için
     function throttle(func, limit) {
         let inThrottle;
         return function() {
@@ -2614,8 +2614,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Scroll event'i için throttle
         window.addEventListener('scroll', throttledUpdateCardPositions);
     }
-
-    updateCardPositions();
 });
 </script>
+<style>
+    .yearbook-glass {
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+    .yearbook-glass:hover {
+        transform: scale(1);
+    }
+</style>
 {% endblock %}
