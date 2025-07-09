@@ -2417,6 +2417,10 @@ function updateImageTheme() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Prevent multiple initializations
+    if (window.pageInitialized) return;
+    window.pageInitialized = true;
+
     // Update image theme on load
     updateImageTheme();
 
@@ -2427,31 +2431,31 @@ document.addEventListener('DOMContentLoaded', function() {
         attributeFilter: ['data-theme']
     });
 
-    // Get DOM elements with null check
+    // DOM elementlerini al ve null kontrolü yap
     const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
     const container = document.querySelector('.yearbook-container');
 
-    // If no cards found, exit function
+    // Eğer kart yoksa fonksiyonları çalıştırma
     if (!cards.length) {
         console.warn('No cards found, skipping card positioning');
         return;
     }
 
-    // Add initial loading state to prevent FOUC
-    cards.forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    });
+    // Add loading state to prevent premature calculations
+    let isInitializing = true;
+    let initializationTimer;
 
     function alignUniversityInfo() {
+        // Skip if still initializing
+        if (isInitializing) return;
+        
         const notlarimText = document.querySelector('.benim');
         const universityInfo = document.querySelector('.university-info');
         const universityName = document.querySelector('.cover-subtitle');
         const yearText = document.querySelector('.year');
 
         if (notlarimText && universityInfo && universityName && yearText) {
-            // Use requestAnimationFrame to ensure layout is complete
+            // Use requestAnimationFrame to ensure DOM is ready
             requestAnimationFrame(() => {
                 // Get the position and dimensions of NOTLARIM text
                 const notlarimRect = notlarimText.getBoundingClientRect();
@@ -2510,7 +2514,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Apply padding
                 universityInfo.style.paddingTop = `${topPadding}px`;
                 yearText.style.marginTop = '5px';
-            });
+            }); // Exact 5px gap
+
         }
     }
 
@@ -2532,16 +2537,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Improved updateCardPositions with better performance
-    function updateCardPositions() {
-        if (!document.body || !cards.length) return;
+        function updateCardPositions() {
+        // Skip if still initializing or DOM not ready
+        if (isInitializing || !document.body || !cards.length) return;
 
-        // Use requestAnimationFrame for smooth animations
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const windowHeight = window.innerHeight;
+
+        // Use requestAnimationFrame for smooth updates
         requestAnimationFrame(() => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const windowHeight = window.innerHeight;
-
             cards.forEach((card, index) => {
+                // Kart görünür değilse skip et
                 if (!card.offsetParent) return;
 
                 try {
@@ -2549,18 +2555,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     const cardCenter = cardRect.top + cardRect.height/2;
                     const progress = Math.min(1, Math.max(0, (windowHeight/2 - cardCenter) / windowHeight));
 
+                    // Y ekseninde hafif hareket
                     const translateY = progress * 20 * (index % 2 ? 1 : -1);
+
+                    // 3D rotasyon
                     const rotateX = progress * 5;
                     const rotateY = progress * 2 * (index % 2 ? 1 : -1);
+
+                    // Opacity
                     const opacity = 1 - progress * 0.2;
 
-                    // Use transform3d for better performance
                     card.style.transform = `
-                        translate3d(0, ${translateY}px, 0)
+                        translateY(${translateY}px)
                         rotateX(${rotateX}deg)
                         rotateY(${rotateY}deg)
                     `;
                     card.style.opacity = opacity;
+                    card.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease`;
                 } catch (error) {
                     console.error('Error updating card position:', error);
                 }
@@ -2568,42 +2579,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize cards with fade-in animation
-    function initializeCards() {
-        // Wait for images to load before showing cards
-        const images = document.querySelectorAll('img');
-        const imagePromises = Array.from(images).map(img => {
-            return new Promise(resolve => {
-                if (img.complete) {
-                    resolve();
-                } else {
-                    img.onload = resolve;
-                    img.onerror = resolve; // Resolve even on error
-                }
-            });
-        });
-
-        Promise.all(imagePromises).then(() => {
-            // Show cards with staggered animation
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100); // Stagger by 100ms
-            });
-
-            // Run positioning functions after cards are visible
-            setTimeout(() => {
-                alignUniversityInfo();
-                updateCardPositions();
-            }, 200);
-        });
-    }
-
     // Throttled scroll handler
-    const throttledUpdateCardPositions = throttle(updateCardPositions, 16);
+    const throttledUpdateCardPositions = throttle(updateCardPositions, 16); // ~60fps
 
-    // Lenis smooth scroll configuration
+    // Lenis smooth scroll konfigürasyonu
     const lenis = new Lenis({
         duration: 1.5,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -2620,24 +2599,73 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     requestAnimationFrame(raf);
 
-    // Event listeners
+    // Event listener'ları sadece gerekli elementler varsa ekle
     if (cards.length > 0) {
-        // Initialize cards after DOM is ready
-        initializeCards();
+        // Wait for all images to load and DOM to be fully ready
+        const images = document.querySelectorAll('img');
+        let imagesLoaded = 0;
+        let totalImages = images.length;
 
-        // Debounced resize handler
+        function checkImagesLoaded() {
+            imagesLoaded++;
+            if (imagesLoaded >= totalImages) {
+                // All images loaded, now safe to initialize
+                initializeAfterLoad();
+            }
+        }
+
+        function initializeAfterLoad() {
+            // Clear any existing timer
+            if (initializationTimer) clearTimeout(initializationTimer);
+            
+            // Set initialization timer - this prevents premature calculations
+            initializationTimer = setTimeout(() => {
+                isInitializing = false;
+                
+                // Now safe to run positioning functions
+                requestAnimationFrame(() => {
+                    alignUniversityInfo();
+                    updateCardPositions();
+                });
+            }, 300); // Wait 300ms after images load
+        }
+
+        // Listen for image load events
+        if (totalImages > 0) {
+            images.forEach(img => {
+                if (img.complete) {
+                    checkImagesLoaded();
+                } else {
+                    img.addEventListener('load', checkImagesLoaded);
+                    img.addEventListener('error', checkImagesLoaded); // Also count errors
+                }
+            });
+        } else {
+            // No images, initialize immediately
+            initializeAfterLoad();
+        }
+
+        // Resize event'i için debounce
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                alignUniversityInfo();
-                updateCardPositions();
+                if (!isInitializing) {
+                    alignUniversityInfo();
+                    updateCardPositions();
+                }
             }, 150);
         });
 
-        // Only attach scroll listener after initial load
-        setTimeout(() => {
-            window.addEventListener('scroll', throttledUpdateCardPositions);
-        }, 500);
+        // Scroll event'i için throttle - only after initialization
+        window.addEventListener('scroll', () => {
+            if (!isInitializing) {
+                throttledUpdateCardPositions();
+            }
+        });
     }
+
+    updateCardPositions();
 });
+</script>
+{% endblock %}
