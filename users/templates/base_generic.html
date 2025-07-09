@@ -62,13 +62,6 @@
             --text-overlay-bg: rgba(255, 255, 255, 0.2);
             --text-overlay-color: #000000;
             --inset-highlight: inset 0 0 8px rgba(255, 255, 255, 0.3);
-            
-            /* Glass Ring Effects */
-            --glass-ring-bg: rgba(255, 255, 255, 0.1);
-            --glass-ring-border: rgba(255, 255, 255, 0.2);
-            --glass-ring-hover: rgba(255, 255, 255, 0.15);
-            --glass-ring-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
-            --glass-ring-glow: rgba(255, 255, 255, 0.3);
         }
 
         /* Black Theme */
@@ -101,13 +94,6 @@
             /* Pink Accents */
             --pink-accent: #fcc3c3;
             --pink-accent-shadow: 0 0 12px rgba(252, 195, 195, 0.2);
-            
-            /* Glass Ring Effects */
-            --glass-ring-bg: rgba(255, 255, 255, 0.05);
-            --glass-ring-border: rgba(255, 255, 255, 0.1);
-            --glass-ring-hover: rgba(255, 255, 255, 0.08);
-            --glass-ring-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            --glass-ring-glow: rgba(255, 255, 255, 0.2);
         }
 
         /* Common styles for all elements */
@@ -170,7 +156,7 @@
         }
 
         .logo img {
-            height: 75px !important;
+            height: 75px !important; /* 70px'den 85px'e çıkarıldı */
             width: auto;
             margin-right: 8px;
         }
@@ -181,61 +167,82 @@
 
         .nav-links {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             list-style: none;
-            margin-right: 50px;
-            align-items: center;
-            height: 100%;
+            margin-right: 50px; /* Sola kaydırma için */
         }
 
-        .nav-links li {
-            position: relative;
-            height: 50px;
+        .nav-links {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            gap: 20px;
+            list-style: none;
+            margin-right: 50px;
         }
 
         .nav-links a {
-            position: relative;
             color: var(--white);
             text-decoration: none;
             padding: 12px 20px;
-            border-radius: 50px;
+            border-radius: 50px; /* Tam yuvarlak halkalar */
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            background: var(--glass-ring-bg);
-            border: 1px solid var(--glass-ring-border);
+            position: relative;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            z-index: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             overflow: hidden;
-            min-width: 45px;
-            justify-content: center;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Glass ring outer glow effect */
+        /* Cam halka efekti için inner glow */
         .nav-links a::before {
             content: '';
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: var(--glass-ring-border);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             border-radius: 50px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: opacity 0.3s ease;
             z-index: -1;
-            blur: 4px;
         }
 
-        /* Inner floating effect */
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            text-decoration: none !important;
+        }
+
+        .nav-links a:hover::before {
+            opacity: 1;
+        }
+
+        /* Aktif durum için cam halka tasarımı */
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--background-color);
+            font-weight: 600;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-links a.active::before {
+            opacity: 1;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+        }
+
+        /* Ripple animasyon efekti */
         .nav-links a::after {
             content: '';
             position: absolute;
@@ -243,60 +250,40 @@
             left: 50%;
             width: 0;
             height: 0;
-            background: radial-gradient(circle, var(--glass-ring-glow) 0%, transparent 70%);
             border-radius: 50%;
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: rgba(255, 255, 255, 0.3);
             transform: translate(-50%, -50%);
+            transition: width 0.4s ease, height 0.4s ease;
             z-index: -1;
-        }
-
-        .nav-links a:hover {
-            background: var(--glass-ring-hover);
-            border-color: var(--glass-ring-glow);
-            transform: translateY(-6px) scale(1.05);
-            box-shadow: 
-                var(--glass-ring-shadow),
-                0 0 20px var(--glass-ring-glow),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            text-decoration: none !important;
-        }
-
-        /* Hover effects */
-        .nav-links a:hover::before {
-            opacity: 1;
-            transform: scale(1.1);
-            box-shadow: 0 0 30px var(--glass-ring-glow);
         }
 
         .nav-links a:hover::after {
             width: 100%;
             height: 100%;
-            opacity: 0.3;
         }
 
-        /* Active state */
-        .nav-links a.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: var(--white);
-            font-weight: 600;
-            border-color: var(--glass-ring-glow);
-            box-shadow: 
-                0 8px 25px rgba(255, 255, 255, 0.15),
-                0 0 20px var(--glass-ring-glow),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+        /* Font Awesome ikonlar için özel stiller */
+        .nav-links a i {
+            text-decoration: none !important;
+            border-bottom: none !important;
+            outline: none !important;
+            transition: transform 0.3s ease;
         }
 
-        .nav-links a.active::before {
-            opacity: 0.8;
-            transform: scale(1.05);
+        .nav-links a:hover i {
+            transform: rotate(10deg) scale(1.1);
         }
 
-        .nav-links a.active::after {
-            width: 80%;
-            height: 80%;
-            opacity: 0.2;
+        /* Mobil responsive ayarlar */
+        @media (max-width: 768px) {
+            .nav-links a {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            .nav-links a:hover {
+                transform: translateY(-2px) scale(1.02);
+            }
         }
 
         /* Remove underlines and borders from Font Awesome icons */
@@ -304,11 +291,6 @@
             text-decoration: none !important;
             border-bottom: none !important;
             outline: none !important;
-            transition: all 0.3s ease;
-        }
-
-        .nav-links a:hover i {
-            transform: translateY(-1px);
         }
 
         /* Override browser User-Agent styles */
@@ -318,70 +300,6 @@
             appearance: none;
             border: none !important;
             outline: none !important;
-        }
-
-        /* Remove all possible lines globally */
-        .nav-links * {
-            border: none !important;
-            box-shadow: none !important;
-            text-decoration: none !important;
-            outline: none !important;
-            background-image: none !important;
-        }
-
-        /* Chrome-specific styles */
-        .nav-links {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Floating animation keyframes */
-        @keyframes float {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-3px) scale(1.02); }
-        }
-
-        .nav-links a:hover {
-            animation: float 2s ease-in-out infinite;
-        }
-
-        /* Ripple effect on click */
-        .nav-links a {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-links a:active {
-            transform: translateY(-4px) scale(0.98);
-        }
-
-        /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
-            .nav-links {
-                gap: 8px;
-            }
-            
-            .nav-links a {
-                padding: 10px 16px;
-                font-size: 13px;
-            }
-        }
-
-        /* Smooth entrance animation for navigation items */
-        .nav-links a {
-            animation: fadeInUp 0.6s ease-out forwards;
-            animation-delay: calc(var(--delay, 0) * 0.1s);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         /* Remove all possible lines globally */
