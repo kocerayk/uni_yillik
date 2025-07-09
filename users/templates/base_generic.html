@@ -343,25 +343,102 @@
             z-index: 1001;
         }
 
+        /* Desktop Navigation Links - Yuvarlak Aktif Efekt */
+.nav-links a {
+    color: var(--white);
+    text-decoration: none;
+    padding: 12px 16px;
+    border-radius: 50px; /* Tam yuvarlak */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.nav-links a:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    text-decoration: none !important;
+}
+
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--primary-color);
+    font-weight: 600;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.nav-links a.active::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        rgba(255, 255, 255, 0.6) 0%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        rgba(255, 255, 255, 0.6) 100%);
+    border-radius: 50px;
+    z-index: -1;
+    animation: activeGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes activeGlow {
+    0% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+/* Icon animasyonu için */
+.nav-links a i {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-decoration: none !important;
+    border-bottom: none !important;
+    outline: none !important;
+}
+
+.nav-links a:hover i {
+    transform: scale(1.1);
+}
+
+.nav-links a.active i {
+    transform: scale(1.15);
+    color: var(--primary-color);
+}
+
         /* Mobile Menu Styles - Updated with rounded corners and navbar color */
         @media (max-width: 48em) {
             :root {
                 /* Mobile menu variables */
-                --mobile-menu-width: 120px; /* Reduced width */
-                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.85);
-                --mobile-menu-blur: blur(10px);
+                --mobile-menu-width: 280px;
+                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.98);
+                --mobile-menu-blur: none;
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
+                --mobile-menu-radius: 0 0 0 var(--border-radius);
                 --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+                --mobile-menu-padding: 80px 20px 20px; /* Rounded left corners */
 
-                /* Menu Items (Rings) */
-                --menu-item-size: 60px;
+                /* Menu Items - Keep existing glass styling */
+                --menu-item-height: 60px;
+                --menu-item-padding: 0 1.5rem;
                 --menu-item-bg: rgba(255, 255, 255, 0.1);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
                 --menu-item-bg-active: rgba(255, 255, 255, 0.25);
-                --menu-item-border: 1px solid rgba(255, 255, 255, 0.2);
-                --menu-item-text: var(--text-color);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
                 --menu-item-text-active: #fff;
-                --menu-item-icon-size: 1.5rem;
                 --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
                 /* Mobile Button Variables */
@@ -375,14 +452,28 @@
 
             /* Black Theme Mobile Menu Overrides */
             :root[data-theme="black"] {
-                --mobile-menu-bg: rgba(42, 42, 42, 0.85);
+                /* Keep the same glass-color as navbar for consistency */
+                --mobile-menu-bg: var(--glass-color);
+                --mobile-menu-border: var(--border);
                 --menu-item-bg: rgba(255, 255, 255, 0.05);
                 --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
                 --menu-item-bg-active: rgba(255, 255, 255, 0.2);
-                --menu-item-text: #f5f5f5;
+                --menu-item-text: rgba(255, 255, 255, 0.95);
+                --menu-item-text-active: #fff;
             }
 
-            /* Mobile Menu Button */
+            /* Black Theme Mobile Menu Overrides */
+            :root[data-theme="black"] {
+                --mobile-menu-bg: rgba(42, 42, 42, 0.95);
+                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.15);
+                --menu-item-bg: rgba(255, 255, 255, 0.05);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
+                --menu-item-text-active: #fff;
+            }
+
+            /* Mobile Menu Button - Fixed Position */
             .mobile-menu-btn {
                 display: flex;
                 align-items: center;
@@ -416,100 +507,331 @@
                 transform: translateY(-50%) scale(0.95);
             }
 
-            /* Close Button State */
-            .mobile-menu-btn.active {
-                transform: translateY(-50%) rotate(45deg);
-            }
-
-            .mobile-menu-btn.active:hover {
-                transform: translateY(-50%) rotate(45deg) scale(1.05);
-            }
-
-            /* Navigation Links Container */
+            /* Navigation Links Container - Updated with theme colors */
             .nav-links {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
                 position: fixed;
                 top: 0;
                 right: 0;
-                height: 100%;
                 width: var(--mobile-menu-width);
-                padding: 0;
-                gap: 1.5rem;
-                background: var(--mobile-menu-bg);
-                backdrop-filter: var(--mobile-menu-blur);
-                -webkit-backdrop-filter: var(--mobile-menu-blur);
-                transform: translateX(100%);
-                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-                z-index: 1000;
+                height: 100vh;
+
+                /* Theme-based background with opacity */
+                background: rgba(var(--background-color-rgb), 0.98) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+
+                /* Border and radius */
+                border-left: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0 0 0 var(--border-radius);
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+
+                /* Layout */
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
+                padding: calc(var(--nav-height) + 20px) 20px 20px 20px;
+                margin: 0;
                 list-style: none;
+
+                /* Animation */
+                transform: translateX(100%);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                z-index: 1001;
+
+                /* Ensure rounded corners are visible */
+                overflow: hidden;
+            }
+
+            .nav-links.active {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            /* Menu Items - Glass Effect */
+            /* Menu Items - Keep existing glass effect */
+            .nav-links a {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                padding: var(--menu-item-padding);
+                margin: 0;
+
+                /* Styling - Keep existing glass effect */
+                background: var(--menu-item-bg);
+                color: var(--menu-item-text);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1rem;
+
+                /* Layout */
+                border: none;
+                border-radius: 0;
+                text-align: left;
+                gap: 1rem;
+
+                /* Animation */
+                transform: translateX(30px);
+                opacity: 0;
+                transition: var(--menu-item-transition);
+
+                /* Enhanced Glass effect */
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                position: relative;
+            }
+
+            .nav-links.active a {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            /* Icon styling */
+            .nav-links a i {
+                font-size: 1.2rem;
+                width: 24px;
+                text-align: center;
+                color: inherit;
+                opacity: 0.8;
+                transition: all 0.3s ease;
+            }
+
+            /* Hover effects - Enhanced Glass */
+            .nav-links a:hover {
+                background: var(--menu-item-bg-hover);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                transform: translateX(-4px);
+            }
+
+            .nav-links a:hover::before {
+                opacity: 1;
+            }
+
+            .nav-links a:hover i {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            /* Active state - Strong Glass Effect */
+            .nav-links a.active {
+                background: var(--menu-item-bg-active);
+                color: var(--menu-item-text-active);
+                font-weight: 600;
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-left: 4px solid var(--primary-color);
+            }
+
+            .nav-links a.active::before {
+                opacity: 1;
+                background: linear-gradient(90deg,
+                    var(--primary-color) 0%,
+                    rgba(255, 255, 255, 0.3) 50%,
+                    transparent 100%);
+            }
+
+            .nav-links a.active i {
+                opacity: 1;
+                color: var(--primary-color);
+                transform: scale(1.1);
+            }
+
+
+            /* Staggered animation for menu items */
+            .nav-links.active a:nth-child(1) { transition-delay: 0.1s; }
+            .nav-links.active a:nth-child(2) { transition-delay: 0.15s; }
+            .nav-links.active a:nth-child(3) { transition-delay: 0.2s; }
+            .nav-links.active a:nth-child(4) { transition-delay: 0.25s; }
+            .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
+        }
+
+        /* Smaller mobile screens - keep rounded corners */
+        @media (max-width: 480px) {
+            :root {
+                --mobile-menu-width: 260px;
+                --mobile-menu-radius: 40px 0 0 40px; /* Slightly smaller radius for smaller screens */
+            }
+
+            .mobile-menu-btn {
+                right: 1.25rem;
+                font-size: 1.2rem;
+            }
+
+            .nav-links a {
+                font-size: 0.95rem;
+            }
+
+            .nav-links a i {
+                font-size: 1.1rem;
+                width: 22px;
+            }
+        }
+
+        /* Very small screens */
+        /* Very small screens - keep rounded corners */
+        @media (max-width: 400px) {
+            :root {
+                --mobile-menu-width: 240px;
+                --mobile-menu-radius: 35px 0 0 35px; /* Even smaller radius for very small screens */
+            }
+
+            .mobile-menu-btn {
+                right: 1rem;
+                font-size: 1.1rem;
+            }
+
+            .nav-links a {
+                font-size: 0.9rem;
+            }
+
+            .nav-links a i {
+                font-size: 1rem;
+                width: 20px;
+            }
+
+            /* Prevent body scroll when menu is open */
+            body.menu-open {
+                overflow: hidden;
+                height: 100vh;
+            }
+        }
+
+        @media (max-width: 48em) {
+            :root[data-theme="black"] .logo img {
+                content: url("{% static 'yearbook/images/a (99).png' %}");
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                right: 1.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 1002;
+                width: var(--mobile-btn-size);
+                height: var(--mobile-btn-size);
+                border-radius: 12px;
+                background: var(--mobile-btn-bg);
+                color: var(--white);
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: var(--mobile-btn-transition);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                box-shadow: var(--mobile-btn-shadow);
+                border: var(--mobile-btn-border);
+            }
+
+            .mobile-menu-btn:hover {
+                background: var(--mobile-btn-bg-active);
+                transform: translateY(-50%) scale(1.05);
+            }
+
+            .mobile-menu-btn:active {
+                transform: translateY(-50%) scale(0.95);
+            }
+
+            .mobile-menu-btn.active {
+                background: var(--mobile-btn-bg-active);
+            }
+
+            /* Navigation Links Container - Updated with rounded corners and navbar styling */
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: var(--mobile-menu-width);
+                height: 100vh;
+
+                /* Updated background to match navbar */
+                background: var(--mobile-menu-bg);
+                backdrop-filter: blur(var(--mobile-menu-blur));
+                -webkit-backdrop-filter: blur(var(--mobile-menu-blur));
+
+                /* Updated border and radius */
                 border-left: var(--mobile-menu-border);
+                border-radius: var(--mobile-menu-radius);
                 box-shadow: var(--mobile-menu-shadow);
+                display: flex;
+                flex-direction: column;
+                padding: var(--mobile-menu-padding);
+                margin: 0;
+                list-style: none;
+                transform: translateX(100%);
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 1001;
+
+                /* Ensure rounded corners are visible */
+                overflow: hidden;
             }
 
             .nav-links.active {
                 transform: translateX(0);
             }
 
+            /* Menu Items - Taller Design */
             .nav-links li {
-                list-style: none;
-                padding: 0;
+                width: 100%;
                 margin: 0;
+                padding: 0;
             }
 
-            /* Menu Items - The Rings */
             .nav-links a {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                width: var(--menu-item-size);
-                height: var(--menu-item-size);
-                border-radius: 50%;
+                height: var(--menu-item-height);
+                padding: var(--menu-item-padding);
                 background: var(--menu-item-bg);
-                border: var(--menu-item-border);
                 color: var(--menu-item-text);
                 text-decoration: none;
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                transform: scale(0.5);
-                opacity: 0;
-                transition: var(--menu-item-transition);
+                font-weight: 500;
+                font-size: 0.95rem;
+                transition: var(--transition);
+                border-left: 3px solid transparent;
+                margin: 4px 0;
+                border-radius: 8px;
             }
 
             .nav-links a i {
-                font-size: var(--menu-item-icon-size);
-                color: inherit;
+                font-size: 1.1rem;
+                width: 24px;
+                text-align: center;
+                margin-right: 12px;
+                opacity: 0.9;
                 transition: all 0.3s ease;
             }
 
-            .nav-links.active a {
-                transform: scale(1);
-                opacity: 1;
-            }
-
+            /* Hover & Active States */
             .nav-links a:hover {
                 background: var(--menu-item-bg-hover);
-                transform: scale(1.1);
+                color: var(--menu-item-text-active);
             }
 
             .nav-links a.active {
                 background: var(--menu-item-bg-active);
                 color: var(--menu-item-text-active);
-                box-shadow: 0 0 15px var(--primary-color);
+                font-weight: 600;
+                border-left: 3px solid var(--white);
             }
 
             .nav-links a.active i {
-                color: var(--primary-color);
+                color: var(--white);
             }
 
-            /* Staggered animation for menu items */
-            .nav-links.active li:nth-child(1) a { transition-delay: 0.1s; }
-            .nav-links.active li:nth-child(2) a { transition-delay: 0.15s; }
-            .nav-links.active li:nth-child(3) a { transition-delay: 0.2s; }
-            .nav-links.active li:nth-child(4) a { transition-delay: 0.25s; }
-            .nav-links.active li:nth-child(5) a { transition-delay: 0.3s; }
+            /* Close Button State */
+            .mobile-menu-btn.active {
+                transform: translateY(-50%) rotate(90deg);
+            }
+
+            .mobile-menu-btn.active:hover {
+                transform: translateY(-50%) rotate(90deg) scale(1.05);
+            }
 
             /* Body Scroll Lock */
             body.menu-open {
