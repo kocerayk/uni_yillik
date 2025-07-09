@@ -520,15 +520,18 @@
         position: relative;
     }
     
-    @media (max-width: 768px) {
+    /* 600px ve altı için düzeltmeler */
+    @media (max-width: 600px) {
         .yearbook-container {
-            padding: 12px;
-            margin: 12px auto;
+            padding: 8px;
+            gap: 40px;
+            min-height: calc(100vh - var(--nav-height) - 50px);
         }
 
-        .yearbook-content {
-            grid-template-columns: 1fr;
-            gap: 15px;
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 100%;
+            height: 700px;
         }
 
         .yearbook-glass {
@@ -1310,10 +1313,149 @@
         }
     }
 
+    /* 400px ve altı için düzeltmeler */
     @media (max-width: 400px) {
         .yearbook-container {
             padding: 5px;
             gap: 50px;
+        }
+
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 100%;
+            height: 640px;
+            padding: 12px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .yearbook-content,
+        .yearbook-cover-content {
+            gap: 12px;
+            height: 100%;
+        }
+
+        .profile-section,
+        .review-section,
+        .cover-profile-section {
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .profile-photo {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 6px;
+        }
+
+        .profile-photo .initials {
+            font-size: 1.6rem;
+        }
+
+        .profile-name {
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+
+        .profile-class {
+            font-size: 0.7rem;
+            margin-bottom: 6px;
+        }
+
+        .profile-details {
+            gap: 4px;
+        }
+
+        .detail-item {
+            font-size: 0.75rem;
+        }
+
+        .detail-item i {
+            font-size: 0.75rem;
+        }
+
+        .review-section {
+            min-height: 0;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-content {
+            font-size: 0.78rem;
+            line-height: 1.3;
+            max-height: 160px;
+            overflow-y: auto;
+            padding-right: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--card-paper-bg);
+            flex: 1;
+        }
+        
+        .review-content::-webkit-scrollbar {
+            width: 2px;
+        }
+        
+        .review-content::-webkit-scrollbar-track {
+            background: var(--card-paper-bg);
+            border-radius: 1px;
+        }
+        
+        .review-content::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 1px;
+        }
+
+        .review-date {
+            font-size: 0.65rem;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .image-container {
+            height: 280px;
+            padding: 12px 12px 35px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .image-container::before,
+        .yearbook-cover .image-container::before {
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 35px;
+            border-radius: 5px;
+        }
+
+        .graduation-img {
+            width: calc(100% - 24px);
+            height: calc(100% - 47px);
+            top: 12px;
+            left: 12px;
+            border-radius: 2px;
+        }
+
+        .yearbook-cover .graduation-img {
+            width: calc(100% - 24px);
+            height: calc(100% - 47px);
+            top: 12px;
+            left: 12px;
+            border-radius: 2px;
+        }
+
+        .benim-notlarim {
+            height: 80px;
+            max-width: 170px;
+            padding: 0 5px;
+            flex-shrink: 0;
+        }
+
+        .benim {
+            font-size: 35px;
+            line-height: 0.85;
         }
 
         .yearbook-glass,
@@ -1556,7 +1698,82 @@
     }
 
 
+    /* 900px ve altı için temel düzeltmeler */
     @media (max-width: 900px) {
+        .yearbook-container {
+            padding: 10px;
+            gap: 80px;
+            max-width: 100%;
+        }
+
+        .yearbook-glass,
+        .yearbook-cover {
+            width: 98%;
+            height: 800px;
+            padding: 18px;
+            top: calc(var(--nav-height) + 40px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .yearbook-content,
+        .yearbook-cover-content {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .profile-section,
+        .review-section,
+        .cover-profile-section {
+            padding: 16px;
+            flex-shrink: 0;
+        }
+
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        .profile-name {
+            font-size: 1.2rem;
+        }
+
+        .profile-class {
+            font-size: 0.8rem;
+        }
+
+        .review-section {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .review-content {
+            font-size: 0.88rem;
+            line-height: 1.5;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--card-paper-bg);
+        }
+        
+        .review-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .review-content::-webkit-scrollbar-track {
+            background: var(--card-paper-bg);
+            border-radius: 2px;
+        }
+        
+        .review-content::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 2px;
+        }
+
         .benim-notlarim {
             font-size: 72px;
             position: absolute;
