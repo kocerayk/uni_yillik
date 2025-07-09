@@ -172,80 +172,28 @@
             margin-right: 50px; /* Sola kaydırma için */
         }
 
-        /* Desktop Navigation Links - Yuvarlak Aktif Efekt */
         .nav-links a {
             color: var(--white);
             text-decoration: none;
-            padding: 12px 16px;
-            border-radius: 50px; /* Tam yuvarlak */
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 8px;
-            position: relative;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
         }
 
         .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
             text-decoration: none !important;
         }
 
-        .nav-links a.active {
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--primary-color);
-            font-weight: 600;
-            transform: translateY(-4px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .nav-links a.active::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, 
-                rgba(255, 255, 255, 0.6) 0%, 
-                rgba(255, 255, 255, 0.3) 50%, 
-                rgba(255, 255, 255, 0.6) 100%);
-            border-radius: 50px;
-            z-index: -1;
-            animation: activeGlow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes activeGlow {
-            0% {
-                opacity: 0.5;
-                transform: scale(1);
-            }
-            100% {
-                opacity: 0.8;
-                transform: scale(1.02);
-            }
-        }
-
-        /* Icon animation */
+        /* Remove underlines and borders from Font Awesome icons */
         .nav-links a i {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             text-decoration: none !important;
             border-bottom: none !important;
             outline: none !important;
-        }
-
-        .nav-links a:hover i {
-            transform: scale(1.1);
-        }
-
-        .nav-links a.active i {
-            transform: scale(1.15);
-            color: var(--primary-color);
         }
 
         /* Override browser User-Agent styles */
@@ -385,374 +333,78 @@
             }
         }
 
-        /* Mobile Menu Styles - Minimal ve Dar Tasarım */
+        /* Mobile Menu Styles */
+        .nav-links {
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn {
+            transition: var(--transition);
+            z-index: 1001;
+        }
+
+        /* Mobile Menu Styles - Updated with rounded corners and navbar color */
         @media (max-width: 48em) {
             :root {
-                /* Ultra minimal mobile menu variables */
-                --mobile-menu-width: 6rem; /* Menu butonunun 2 katı (3rem x 2) */
-                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.95);
+                /* Mobile menu variables */
+                --mobile-menu-width: 120px; /* Reduced width */
+                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.85);
+                --mobile-menu-blur: blur(10px);
                 --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
-                --mobile-menu-radius: 0 0 0 var(--border-radius);
-                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
-                --mobile-menu-padding: calc(var(--nav-height) + 15px) 8px 15px; /* Çok minimal padding */
+                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
 
-                /* Menu Items - Cam halka butonlar */
-                --menu-item-size: 48px; /* Biraz daha büyük cam halkalar */
-                --menu-item-bg: rgba(255, 255, 255, 0.08);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.22);
+                /* Menu Items (Rings) */
+                --menu-item-size: 60px;
+                --menu-item-bg: rgba(255, 255, 255, 0.1);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.25);
                 --menu-item-border: 1px solid rgba(255, 255, 255, 0.2);
-                --menu-item-border-hover: 1px solid rgba(255, 255, 255, 0.35);
-                --menu-item-border-active: 1px solid rgba(255, 255, 255, 0.5);
-                --menu-item-text: rgba(255, 255, 255, 0.9);
+                --menu-item-text: var(--text-color);
                 --menu-item-text-active: #fff;
-                --menu-item-transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-                --menu-item-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                --menu-item-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
-                --menu-item-shadow-active: 0 6px 24px rgba(0, 0, 0, 0.2);
+                --menu-item-icon-size: 1.5rem;
+                --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+                /* Mobile Button Variables */
+                --mobile-btn-size: 3rem;
+                --mobile-btn-bg: rgba(255, 255, 255, 0.2);
+                --mobile-btn-bg-active: rgba(255, 255, 255, 0.3);
+                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.3);
+                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
 
             /* Black Theme Mobile Menu Overrides */
             :root[data-theme="black"] {
-                --mobile-menu-bg: rgba(42, 42, 42, 0.95);
-                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.15);
-                --menu-item-bg: rgba(255, 255, 255, 0.03);
-                --menu-item-bg-hover: rgba(255, 255, 255, 0.08);
-                --menu-item-bg-active: rgba(255, 255, 255, 0.12);
-                --menu-item-border: 1px solid rgba(255, 255, 255, 0.1);
-                --menu-item-border-hover: 1px solid rgba(255, 255, 255, 0.25);
-                --menu-item-border-active: 1px solid rgba(255, 255, 255, 0.4);
+                --mobile-menu-bg: rgba(42, 42, 42, 0.85);
+                --menu-item-bg: rgba(255, 255, 255, 0.05);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
+                --menu-item-text: #f5f5f5;
             }
 
-            /* Navigation Links Container - Minimal ve Dar */
-            .nav-links {
-                position: fixed;
-                top: 0;
-                right: 0;
-                width: var(--mobile-menu-width);
-                height: 100vh;
-
-                background: var(--mobile-menu-bg);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-
-                border-left: var(--mobile-menu-border);
-                border-radius: var(--mobile-menu-radius);
-                box-shadow: var(--mobile-menu-shadow);
-                
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                padding: var(--mobile-menu-padding);
-                gap: 10px; /* Yuvarlaklar arası daha az boşluk */
-                
-                margin: 0;
-                list-style: none;
-                transform: translateX(100%);
-                opacity: 0;
-                pointer-events: none;
-                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-                z-index: 1001;
-                overflow: hidden;
-            }
-
-            .nav-links.active {
-                transform: translateX(0);
-                opacity: 1;
-                pointer-events: all;
-            }
-
-            /* Menu Items - Yuvarlak Tasarım */
-            .nav-links li {
-                width: var(--menu-item-size);
-                height: var(--menu-item-size);
-                margin: 0;
-                padding: 0;
-            }
-
-            .nav-links a {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 100%;
-                height: 100%;
-                
-                background: var(--menu-item-bg);
-                color: var(--menu-item-text);
-                text-decoration: none;
-                
-                border-radius: 50%;
-                border: var(--menu-item-border);
-                box-shadow: var(--menu-item-shadow);
-                
-                transition: var(--menu-item-transition);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                
-                /* Animasyon için başlangıç pozisyonu */
-                transform: translateX(30px) scale(0.8);
-                opacity: 0;
-                
-                position: relative;
-                overflow: hidden;
-            }
-
-            .nav-links.active a {
-                transform: translateX(0) scale(1);
-                opacity: 1;
-            }
-
-            /* Icon styling - Daha küçük ikonlar */
-            .nav-links a i {
-                font-size: 1.2rem;
-                color: inherit;
-                opacity: 0.9;
-                transition: all 0.3s ease;
-                text-decoration: none !important;
-                border: none !important;
-            }
-
-            /* Hover effects - Yuvarlak büyüme */
-            .nav-links a:hover {
-                background: var(--menu-item-bg-hover);
-                border-color: var(--menu-item-border-hover);
-                box-shadow: var(--menu-item-shadow-hover);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                transform: translateX(0) scale(1.1);
-            }
-
-            .nav-links a:hover i {
-                opacity: 1;
-                transform: scale(1.1);
-            }
-
-            /* Active state - Güçlü glow efekti */
-            .nav-links a.active {
-                background: var(--menu-item-bg-active);
-                color: var(--menu-item-text-active);
-                border-color: var(--menu-item-border-active);
-                box-shadow: var(--menu-item-shadow-active);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                transform: translateX(0) scale(1.15);
-            }
-
-            .nav-links a.active::before {
-                content: '';
-                position: absolute;
-                top: -2px;
-                left: -2px;
-                right: -2px;
-                bottom: -2px;
-                background: linear-gradient(45deg, 
-                    rgba(255, 255, 255, 0.4) 0%, 
-                    rgba(255, 255, 255, 0.2) 50%, 
-                    rgba(255, 255, 255, 0.4) 100%);
-                border-radius: 50%;
-                z-index: -1;
-                animation: activeGlow 2s ease-in-out infinite alternate;
-            }
-
-            @keyframes activeGlow {
-                0% {
-                    opacity: 0.5;
-                    transform: scale(1);
-                }
-                100% {
-                    opacity: 0.8;
-                    transform: scale(1.05);
-                }
-            }
-
-            .nav-links a.active i {
-                opacity: 1;
-                color: var(--primary-color);
-                transform: scale(1.2);
-            }
-
-            /* Staggered animation for menu items */
-            .nav-links.active a:nth-child(1) { transition-delay: 0.1s; }
-            .nav-links.active a:nth-child(2) { transition-delay: 0.15s; }
-            .nav-links.active a:nth-child(3) { transition-delay: 0.2s; }
-            .nav-links.active a:nth-child(4) { transition-delay: 0.25s; }
-            .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
-        }
-
-        /* Küçük mobil ekranlar için daha da minimal */
-        @media (max-width: 480px) {
-            :root {
-                --mobile-menu-width: 5.5rem; /* Daha da dar */
-                --menu-item-size: 42px;
-            }
-            
-            .nav-links a i {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Çok küçük ekranlar */
-        @media (max-width: 400px) {
-            :root {
-                --mobile-menu-width: 5rem; /* En dar */
-                --menu-item-size: 38px;
-            }
-            
-            .nav-links a i {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 360px) {
-            :root {
-                --mobile-menu-width: 4.5rem; /* Ultra dar */
-                --menu-item-size: 36px;
-            }
-            
-            .nav-links a i {
-                font-size: 0.95rem;
-            }
-        }
-
-            /* Icon styling */
-            .nav-links a i {
-                font-size: 1.2rem;
-                width: 24px;
-                text-align: center;
-                color: inherit;
-                opacity: 0.8;
-                transition: all 0.3s ease;
-            }
-
-            /* Hover effects - Enhanced Glass */
-            .nav-links a:hover {
-                background: var(--menu-item-bg-hover);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                transform: translateX(-4px);
-            }
-
-            .nav-links a:hover::before {
-                opacity: 1;
-            }
-
-            .nav-links a:hover i {
-                opacity: 1;
-                transform: scale(1.1);
-            }
-
-            /* Active state - Strong Glass Effect */
-            .nav-links a.active {
-                background: var(--menu-item-bg-active);
-                color: var(--menu-item-text-active);
-                font-weight: 600;
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-left: 4px solid var(--primary-color);
-            }
-
-            .nav-links a.active::before {
-                opacity: 1;
-                background: linear-gradient(90deg,
-                    var(--primary-color) 0%,
-                    rgba(255, 255, 255, 0.3) 50%,
-                    transparent 100%);
-            }
-
-            .nav-links a.active i {
-                opacity: 1;
-                color: var(--primary-color);
-                transform: scale(1.1);
-            }
-
-
-            /* Staggered animation for menu items */
-            .nav-links.active a:nth-child(1) { transition-delay: 0.1s; }
-            .nav-links.active a:nth-child(2) { transition-delay: 0.15s; }
-            .nav-links.active a:nth-child(3) { transition-delay: 0.2s; }
-            .nav-links.active a:nth-child(4) { transition-delay: 0.25s; }
-            .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
-        }
-
-        /* Smaller mobile screens - keep rounded corners */
-        @media (max-width: 480px) {
-            :root {
-                --mobile-menu-width: 260px;
-                --mobile-menu-radius: 40px 0 0 40px; /* Slightly smaller radius for smaller screens */
-            }
-
-            .mobile-menu-btn {
-                right: 1.25rem;
-                font-size: 1.2rem;
-            }
-
-            .nav-links a {
-                font-size: 0.95rem;
-            }
-        }
-
-            .nav-links a i {
-                font-size: 1.1rem;
-                width: 22px;
-            }
-        }
-
-        /* Very small screens */
-        /* Very small screens - keep rounded corners */
-        @media (max-width: 400px) {
-            :root {
-                --mobile-menu-width: 240px;
-                --mobile-menu-radius: 35px 0 0 35px; /* Even smaller radius for very small screens */
-            }
-
-            .mobile-menu-btn {
-                right: 1rem;
-                font-size: 1.1rem;
-            }
-
-            .nav-links a {
-                font-size: 0.9rem;
-            }
-
-            .nav-links a i {
-                font-size: 1rem;
-                width: 20px;
-            }
-
-            /* Prevent body scroll when menu is open */
-            body.menu-open {
-                overflow: hidden;
-                height: 100vh;
-            }
-        }
-
-        @media (max-width: 48em) {
-            :root[data-theme="black"] .logo img {
-                content: url("{% static 'yearbook/images/a (99).png' %}");
-            }
-
+            /* Mobile Menu Button */
             .mobile-menu-btn {
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                width: var(--mobile-btn-size);
+                height: var(--mobile-btn-size);
                 position: fixed;
                 right: 1.5rem;
                 top: 50%;
                 transform: translateY(-50%);
                 z-index: 1002;
-                width: var(--mobile-btn-size);
-                height: var(--mobile-btn-size);
-                border-radius: 12px;
+                border: none;
+                border-radius: 16px;
                 background: var(--mobile-btn-bg);
                 color: var(--white);
-                font-size: 1.2rem;
+                font-size: 1.3rem;
                 cursor: pointer;
                 transition: var(--mobile-btn-transition);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
-                box-shadow: var(--mobile-btn-shadow);
                 border: var(--mobile-btn-border);
+                box-shadow: var(--mobile-btn-shadow);
             }
 
             .mobile-menu-btn:hover {
@@ -764,101 +416,100 @@
                 transform: translateY(-50%) scale(0.95);
             }
 
+            /* Close Button State */
             .mobile-menu-btn.active {
-                background: var(--mobile-btn-bg-active);
+                transform: translateY(-50%) rotate(45deg);
             }
 
-            /* Navigation Links Container - Updated with rounded corners and navbar styling */
+            .mobile-menu-btn.active:hover {
+                transform: translateY(-50%) rotate(45deg) scale(1.05);
+            }
+
+            /* Navigation Links Container */
             .nav-links {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
                 position: fixed;
                 top: 0;
                 right: 0;
+                height: 100%;
                 width: var(--mobile-menu-width);
-                height: 100vh;
-
-                /* Updated background to match navbar */
+                padding: 0;
+                gap: 1.5rem;
                 background: var(--mobile-menu-bg);
-                backdrop-filter: blur(var(--mobile-menu-blur));
-                -webkit-backdrop-filter: blur(var(--mobile-menu-blur));
-
-                /* Updated border and radius */
-                border-left: var(--mobile-menu-border);
-                border-radius: var(--mobile-menu-radius);
-                box-shadow: var(--mobile-menu-shadow);
-                display: flex;
-                flex-direction: column;
-                padding: var(--mobile-menu-padding);
-                margin: 0;
-                list-style: none;
+                backdrop-filter: var(--mobile-menu-blur);
+                -webkit-backdrop-filter: var(--mobile-menu-blur);
                 transform: translateX(100%);
-                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 1001;
-
-                /* Ensure rounded corners are visible */
-                overflow: hidden;
+                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                z-index: 1000;
+                list-style: none;
+                border-left: var(--mobile-menu-border);
+                box-shadow: var(--mobile-menu-shadow);
             }
 
             .nav-links.active {
                 transform: translateX(0);
             }
 
-            /* Menu Items - Taller Design */
             .nav-links li {
-                width: 100%;
-                margin: 0;
+                list-style: none;
                 padding: 0;
+                margin: 0;
             }
 
+            /* Menu Items - The Rings */
             .nav-links a {
                 display: flex;
                 align-items: center;
-                height: var(--menu-item-height);
-                padding: var(--menu-item-padding);
+                justify-content: center;
+                width: var(--menu-item-size);
+                height: var(--menu-item-size);
+                border-radius: 50%;
                 background: var(--menu-item-bg);
+                border: var(--menu-item-border);
                 color: var(--menu-item-text);
                 text-decoration: none;
-                font-weight: 500;
-                font-size: 0.95rem;
-                transition: var(--transition);
-                border-left: 3px solid transparent;
-                margin: 4px 0;
-                border-radius: 8px;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                transform: scale(0.5);
+                opacity: 0;
+                transition: var(--menu-item-transition);
             }
 
             .nav-links a i {
-                font-size: 1.1rem;
-                width: 24px;
-                text-align: center;
-                margin-right: 12px;
-                opacity: 0.9;
+                font-size: var(--menu-item-icon-size);
+                color: inherit;
                 transition: all 0.3s ease;
             }
 
-            /* Hover & Active States */
+            .nav-links.active a {
+                transform: scale(1);
+                opacity: 1;
+            }
+
             .nav-links a:hover {
                 background: var(--menu-item-bg-hover);
-                color: var(--menu-item-text-active);
+                transform: scale(1.1);
             }
 
             .nav-links a.active {
                 background: var(--menu-item-bg-active);
                 color: var(--menu-item-text-active);
-                font-weight: 600;
-                border-left: 3px solid var(--white);
+                box-shadow: 0 0 15px var(--primary-color);
             }
 
             .nav-links a.active i {
-                color: var(--white);
+                color: var(--primary-color);
             }
 
-            /* Close Button State */
-            .mobile-menu-btn.active {
-                transform: translateY(-50%) rotate(90deg);
-            }
-
-            .mobile-menu-btn.active:hover {
-                transform: translateY(-50%) rotate(90deg) scale(1.05);
-            }
+            /* Staggered animation for menu items */
+            .nav-links.active li:nth-child(1) a { transition-delay: 0.1s; }
+            .nav-links.active li:nth-child(2) a { transition-delay: 0.15s; }
+            .nav-links.active li:nth-child(3) a { transition-delay: 0.2s; }
+            .nav-links.active li:nth-child(4) a { transition-delay: 0.25s; }
+            .nav-links.active li:nth-child(5) a { transition-delay: 0.3s; }
 
             /* Body Scroll Lock */
             body.menu-open {
