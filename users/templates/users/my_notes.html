@@ -2446,16 +2446,78 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(initializeCardSystem, 50);
         });
     }
+    const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
+    const container = document.querySelector('.yearbook-container');
 
-    function initializeCardSystem() {
-        // DOM elementlerini al ve null kontrolü yap
-        const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
-        const container = document.querySelector('.yearbook-container');
+    function alignUniversityInfo() {
+        const notlarimText = document.querySelector('.benim');
+        const universityInfo = document.querySelector('.university-info');
+        const universityName = document.querySelector('.cover-subtitle');
+        const yearText = document.querySelector('.year');
 
-        // Eğer kart yoksa fonksiyonları çalıştırma
-        if (!cards.length) {
-            console.warn('No cards found, skipping card positioning');
-            return;
+        if (notlarimText && universityInfo && universityName && yearText) {
+            // Get the position and dimensions of NOTLARIM text
+            const notlarimRect = notlarimText.getBoundingClientRect();
+
+            // Set university info container to match NOTLARIM height
+            universityInfo.style.height = `${notlarimRect.height}px`;
+
+            // Configure university name styling
+            universityName.style.display = 'block';
+            universityName.style.visibility = 'visible';
+            universityName.style.position = 'relative';
+            universityName.style.maxWidth = `${notlarimRect.width}px`; // Match NOTLARIM width
+            universityName.style.width = '100%'; // Use full width
+            universityName.style.textAlign = 'right'; // Right align text
+            universityName.style.whiteSpace = 'nowrap'; // Prevent wrapping
+            universityName.style.overflow = 'hidden'; // Hide overflow
+            universityName.style.textOverflow = 'ellipsis'; // Show ellipsis if needed
+            universityName.style.marginBottom = '5px'; // Exact 5px gap to year
+
+            // Get the school name
+            const schoolName = universityName.textContent.trim();
+
+            // Start with a large size and reduce until it fits
+            const maxPossibleSize = 36; // Maximum font size
+            const minSize = 16; // Minimum font size
+
+            // Reset to measure
+            universityName.style.fontSize = `${maxPossibleSize}px`;
+
+            // Binary search to find the largest font size that fits
+            let low = minSize;
+            let high = maxPossibleSize;
+            let bestSize = minSize;
+
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                universityName.style.fontSize = `${mid}px`;
+
+                if (universityName.scrollWidth <= notlarimRect.width) {
+                    bestSize = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+
+            // Set the best size found
+            universityName.style.fontSize = `${bestSize}px`;
+
+            // Calculate vertical positioning to ensure everything stays within NOTLARIM height
+            const universityNameHeight = universityName.offsetHeight;
+            const yearHeight = yearText.offsetHeight;
+
+            // Calculate total height needed (university name + 5px gap + year)
+            const totalContentHeight = universityNameHeight + 5 + yearHeight;
+
+            // Calculate top padding to center content within NOTLARIM height
+            const topPadding = Math.max(0, (notlarimRect.height - totalContentHeight) / 2);
+
+            // Apply padding
+            universityInfo.style.paddingTop = `${topPadding}px`;
+
+            // Ensure year is positioned correctly
         }
 
         function alignUniversityInfo() {
@@ -2535,7 +2597,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
 
-        // Throttle function for performance
+        // Throttle fonksiyonu performans için
         function throttle(func, limit) {
             let inThrottle;
             return function() {
@@ -2550,14 +2612,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function updateCardPositions() {
-            // Wait if DOM is not ready
+            // Eğer henüz DOM hazır değilse bekle
             if (!document.body || !cards.length) return;
 
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const windowHeight = window.innerHeight;
 
             cards.forEach((card, index) => {
-                // Skip if card is not visible
+                // Kart görünür değilse skip et
                 if (!card.offsetParent) return;
 
                 try {
@@ -2565,10 +2627,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const cardCenter = cardRect.top + cardRect.height/2;
                     const progress = Math.min(1, Math.max(0, (windowHeight/2 - cardCenter) / windowHeight));
 
-                    // Slight movement on Y axis
+                    // Y ekseninde hafif hareket
                     const translateY = progress * 20 * (index % 2 ? 1 : -1);
 
-                    // 3D rotation
+                    // 3D rotasyon
                     const rotateX = progress * 5;
                     const rotateY = progress * 2 * (index % 2 ? 1 : -1);
 
@@ -2591,7 +2653,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Throttled scroll handler
         const throttledUpdateCardPositions = throttle(updateCardPositions, 16); // ~60fps
 
-        // Lenis smooth scroll configuration
+        // Lenis smooth scroll konfigürasyonu
         const lenis = new Lenis({
             duration: 1.5,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -2612,9 +2674,9 @@ document.addEventListener('DOMContentLoaded', function() {
         alignUniversityInfo();
         updateCardPositions();
 
-        // Add event listeners only if elements exist
+        // Event listener'ları sadece gerekli elementler varsa ekle
         if (cards.length > 0) {
-            // Debounce for resize event
+            // Resize event'i için debounce
             let resizeTimeout;
             window.addEventListener('resize', () => {
                 clearTimeout(resizeTimeout);
@@ -2624,7 +2686,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 100);
             });
 
-            // Throttled scroll event
+            // Scroll event'i için throttle
             window.addEventListener('scroll', throttledUpdateCardPositions);
         }
     }
@@ -2632,3 +2694,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start the initialization process
     waitForImagesAndInitialize();
 });
+</script>
+{% endblock %}
