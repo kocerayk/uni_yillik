@@ -1146,39 +1146,43 @@
             padding: 8px;
             gap: 30px;
             min-height: calc(100vh - var(--nav-height) - 50px);
+            width: 100%;
             overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .yearbook-glass,
         .yearbook-cover {
             width: 100%;
             height: auto;
-            min-height: 500px;
-            padding: 15px;
+            min-height: 700px;
+            padding: 12px;
             border-radius: 16px;
             top: calc(var(--nav-height) + 20px);
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
             position: relative;
-            margin-bottom: 20px;
+            margin: 0 auto;
+            box-sizing: border-box;
         }
 
-        .yearbook-cover-content {
+        .yearbook-cover-content,
+        .yearbook-content {
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             gap: 15px;
-        }
-
-        .yearbook-content {
-            gap: 15px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         
         .image-container {
-            margin-top: 0;
-            margin-bottom: auto;
+            margin: 0 auto 15px;
+            width: calc(100% - 24px);
+            height: 300px;
+            padding: 10px;
+            box-sizing: border-box;
         }
         
         .graduation-img {
@@ -1197,8 +1201,22 @@
         .profile-section,
         .review-section,
         .cover-profile-section {
-            padding: 14px;
+            padding: 12px;
             border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        .review-section {
+            overflow-y: auto;
+            max-height: 300px;
+            margin-top: 10px;
+        }
+
+        .review-content {
+            max-height: none !important;
+            padding-right: 5px;
         }
 
 
@@ -1736,28 +1754,7 @@
         }
 
         .review-content {
-            max-height: 300px;
-            padding: 10px;
-            margin: 10px 0;
-            overflow-y: auto;
-        }
-        
-        .review-section {
-            position: relative;
-            width: 100%;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        
-        .yearbook-content {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .profile-section {
-            width: 100%;
-            margin-bottom: 0;
+            max-height: 340px;
         }
     }
 </style>
