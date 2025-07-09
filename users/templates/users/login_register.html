@@ -1023,6 +1023,29 @@
                         return;
                     }
 
+                    // CLIENT-SIDE PASSWORD VALIDATION - Check if passwords match
+                    const password1 = formData.get('password1');
+                    const password2 = formData.get('password2');
+                    
+                    if (password1 !== password2) {
+                        showMessage('Şifreler eşleşmiyor. Lütfen her iki şifre alanına da aynı şifreyi giriniz.', 'error', 'registerMessages');
+                        
+                        // Highlight password fields
+                        const password1Field = document.getElementById('password1');
+                        const password2Field = document.getElementById('password2');
+                        if (password1Field) password1Field.style.borderColor = 'var(--error-color)';
+                        if (password2Field) password2Field.style.borderColor = 'var(--error-color)';
+                        
+                        return;
+                    }
+
+                    // Additional password validations
+                    const validationError = validateFormData(formData);
+                    if (validationError) {
+                        showMessage(validationError, 'error', 'registerMessages');
+                        return;
+                    }
+
                     // Log form data and verification info
                     const formDataObj = Object.fromEntries(formData.entries());
                     console.log('Form data:', formDataObj);
@@ -1092,6 +1115,26 @@
                         if (!response.ok) {
                             const errorText = await response.text();
                             console.error('Server error:', errorText);
+                            
+                            // Try to parse the error response
+                            try {
+                                const errorData = JSON.parse(errorText);
+                                if (errorData.errors && errorData.errors.password2) {
+                                    // Handle password mismatch error from server
+                                    showMessage('Şifreler eşleşmiyor. Lütfen her iki şifre alanına da aynı şifreyi giriniz.', 'error', 'registerMessages');
+                                    
+                                    // Highlight password fields
+                                    const password1Field = document.getElementById('password1');
+                                    const password2Field = document.getElementById('password2');
+                                    if (password1Field) password1Field.style.borderColor = 'var(--error-color)';
+                                    if (password2Field) password2Field.style.borderColor = 'var(--error-color)';
+                                    
+                                    return;
+                                }
+                            } catch (parseError) {
+                                console.error('Could not parse error response:', parseError);
+                            }
+                            
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
 
@@ -1120,13 +1163,26 @@
                             if (data.errors) {
                                 // Handle field-specific errors
                                 Object.entries(data.errors).forEach(([field, errors]) => {
-                                    if (Array.isArray(errors)) {
-                                        errors.forEach(error => {
-                                            showMessage(`${field}: ${error}`, 'error', 'registerMessages');
-                                        });
+                                    let errorMessage = '';
+                                    
+                                    if (field === 'password2' && Array.isArray(errors)) {
+                                        // Special handling for password mismatch
+                                        errorMessage = 'Şifreler eşleşmiyor. Lütfen her iki şifre alanına da aynı şifreyi giriniz.';
+                                        
+                                        // Highlight password fields
+                                        const password1Field = document.getElementById('password1');
+                                        const password2Field = document.getElementById('password2');
+                                        if (password1Field) password1Field.style.borderColor = 'var(--error-color)';
+                                        if (password2Field) password2Field.style.borderColor = 'var(--error-color)';
                                     } else {
-                                        showMessage(`${field}: ${errors}`, 'error', 'registerMessages');
+                                        if (Array.isArray(errors)) {
+                                            errorMessage = errors.join(', ');
+                                        } else {
+                                            errorMessage = errors;
+                                        }
                                     }
+                                    
+                                    showMessage(errorMessage, 'error', 'registerMessages');
                                 });
                             } else {
                                 showMessage(data.error || 'Kayıt başarısız!', 'error', 'registerMessages');
@@ -1134,29 +1190,7 @@
                         }
                     } catch (error) {
                         console.error('Error during form submission:', error);
-                        if (error.response) {
-                            // Handle JSON response with field errors
-                            error.response.json().then(errData => {
-                                if (errData.field_errors) {
-                                    // Handle field-specific errors
-                                    Object.entries(errData.field_errors).forEach(([field, messages]) => {
-                                        const errorElement = document.getElementById(`${field}-error`);
-                                        if (errorElement && messages && messages.length > 0) {
-                                            errorElement.textContent = messages[0];
-                                            errorElement.style.display = 'block';
-                                        }
-                                    });
-                                }
-                                // Show general error message if exists
-                                if (errData.error) {
-                                    showMessage(errData.error, 'error');
-                                }
-                            }).catch(() => {
-                                showMessage('Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
-                            });
-                        } else {
-                            showMessage(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
-                        }
+                        showMessage('Bir hata oluştu. Lütfen tekrar deneyin.', 'error', 'registerMessages');
                     } finally {
                         // Re-enable submit button
                         if (submitButton) {
