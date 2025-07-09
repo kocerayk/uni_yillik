@@ -158,15 +158,9 @@
         color: #f0f0f0; /* off-white text */
     }
 
-    /* Boş not kartının margin-top'ını kaldır */
     .yearbook-glass {
-        margin-top: 0px; /* 600px yerine 0px yap */
-        transform-style: preserve-3d;
-    }
-
-    /* Sadece not varsa margin ekle */
-    .yearbook-glass:not(:first-child) {
         margin-top: 600px;
+        transform-style: preserve-3d;
     }
 
     .staggered-card {
@@ -2408,141 +2402,50 @@ function showMessage(message, type) {
     alert(`${type.toUpperCase()}: ${message}`);
 }
 
-// Function to update image theme
+// Add at the top of your script section
+let isInitialized = false;
+let initializationTimeout;
+
+// Debounce function for better performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Optimized image theme update
 function updateImageTheme() {
     const graduationImg = document.getElementById('graduationImage');
-    if (graduationImg) {
+    if (graduationImg && graduationImg.complete) {
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'pink';
-        // Only apply filter if it's not the error placeholder
-        if (!graduationImg.src.includes('data:image/svg+xml')) {
-            graduationImg.style.filter = currentTheme === 'black' ? 'brightness(0.9) contrast(1.1)' : 'none';
-        } else {
-            graduationImg.style.filter = 'none';
-        }
+        
+        // Use requestAnimationFrame for smooth updates
+        requestAnimationFrame(() => {
+            if (!graduationImg.src.includes('data:image/svg+xml')) {
+                graduationImg.style.filter = currentTheme === 'black' ? 'brightness(0.9) contrast(1.1)' : 'none';
+            } else {
+                graduationImg.style.filter = 'none';
+            }
+        });
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Update image theme on load
-    updateImageTheme();
+// Optimized card position updates
+function updateCardPositions() {
+    if (!isInitialized || !document.body || !cards.length) return;
 
-    // Update image theme when theme changes
-    const themeObserver = new MutationObserver(updateImageTheme);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme']
-    });
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
 
-    // DOM elementlerini al ve null kontrolü yap
-    const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
-    const container = document.querySelector('.yearbook-container');
-
-    // Eğer kart yoksa fonksiyonları çalıştırma
-    if (!cards.length) {
-        console.warn('No cards found, skipping card positioning');
-        return;
-    }
-
-    function alignUniversityInfo() {
-        const notlarimText = document.querySelector('.benim');
-        const universityInfo = document.querySelector('.university-info');
-        const universityName = document.querySelector('.cover-subtitle');
-        const yearText = document.querySelector('.year');
-
-        if (notlarimText && universityInfo && universityName && yearText) {
-            // Get the position and dimensions of NOTLARIM text
-            const notlarimRect = notlarimText.getBoundingClientRect();
-
-            // Set university info container to match NOTLARIM height
-            universityInfo.style.height = `${notlarimRect.height}px`;
-
-            // Configure university name styling
-            universityName.style.display = 'block';
-            universityName.style.visibility = 'visible';
-            universityName.style.position = 'relative';
-            universityName.style.maxWidth = `${notlarimRect.width}px`; // Match NOTLARIM width
-            universityName.style.width = '100%'; // Use full width
-            universityName.style.textAlign = 'right'; // Right align text
-            universityName.style.whiteSpace = 'nowrap'; // Prevent wrapping
-            universityName.style.overflow = 'hidden'; // Hide overflow
-            universityName.style.textOverflow = 'ellipsis'; // Show ellipsis if needed
-            universityName.style.marginBottom = '5px'; // Exact 5px gap to year
-
-            // Get the school name
-            const schoolName = universityName.textContent.trim();
-
-            // Start with a large size and reduce until it fits
-            const maxPossibleSize = 36; // Maximum font size
-            const minSize = 16; // Minimum font size
-
-            // Reset to measure
-            universityName.style.fontSize = `${maxPossibleSize}px`;
-
-            // Binary search to find the largest font size that fits
-            let low = minSize;
-            let high = maxPossibleSize;
-            let bestSize = minSize;
-
-            while (low <= high) {
-                const mid = Math.floor((low + high) / 2);
-                universityName.style.fontSize = `${mid}px`;
-
-                if (universityName.scrollWidth <= notlarimRect.width) {
-                    bestSize = mid;
-                    low = mid + 1;
-                } else {
-                    high = mid - 1;
-                }
-            }
-
-            // Set the best size found
-            universityName.style.fontSize = `${bestSize}px`;
-
-            // Calculate vertical positioning to ensure everything stays within NOTLARIM height
-            const universityNameHeight = universityName.offsetHeight;
-            const yearHeight = yearText.offsetHeight;
-
-            // Calculate total height needed (university name + 5px gap + year)
-            const totalContentHeight = universityNameHeight + 5 + yearHeight;
-
-            // Calculate top padding to center content within NOTLARIM height
-            const topPadding = Math.max(0, (notlarimRect.height - totalContentHeight) / 2);
-
-            // Apply padding
-            universityInfo.style.paddingTop = `${topPadding}px`;
-
-            // Ensure year is positioned correctly
-            yearText.style.marginTop = '5px'; // Exact 5px gap
-        }
-    }
-
-    function easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    // Throttle fonksiyonu performans için
-    function throttle(func, limit) {
-        let inThrottle;
-        return function() {
-            const args = arguments;
-            const context = this;
-            if (!inThrottle) {
-                func.apply(context, args);
-                inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
-            }
-        }
-    }
-
-    function updateCardPositions() {
-        // Eğer henüz DOM hazır değilse bekle
-        if (!document.body || !cards.length) return;
-
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const windowHeight = window.innerHeight;
-
+    // Use requestAnimationFrame for smooth animations
+    requestAnimationFrame(() => {
         cards.forEach((card, index) => {
-            // Kart görünür değilse skip et
             if (!card.offsetParent) return;
 
             try {
@@ -2550,14 +2453,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const cardCenter = cardRect.top + cardRect.height/2;
                 const progress = Math.min(1, Math.max(0, (windowHeight/2 - cardCenter) / windowHeight));
 
-                // Y ekseninde hafif hareket
                 const translateY = progress * 20 * (index % 2 ? 1 : -1);
-
-                // 3D rotasyon
                 const rotateX = progress * 5;
                 const rotateY = progress * 2 * (index % 2 ? 1 : -1);
-
-                // Opacity
                 const opacity = 1 - progress * 0.2;
 
                 card.style.transform = `
@@ -2571,58 +2469,145 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error updating card position:', error);
             }
         });
-    }
-
-    // Throttled scroll handler
-    const throttledUpdateCardPositions = throttle(updateCardPositions, 16); // ~60fps
-
-    // Lenis smooth scroll konfigürasyonu
-    const lenis = new Lenis({
-        duration: 1.5,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        direction: 'vertical',
-        gestureDirection: 'vertical',
-        smooth: true,
-        smoothTouch: false,
-        touchMultiplier: 2,
     });
+}
 
-    function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
+// Optimized alignment function
+const alignUniversityInfo = debounce(() => {
+    if (!isInitialized) return;
+    
+    const notlarimText = document.querySelector('.benim');
+    const universityInfo = document.querySelector('.university-info');
+    const universityName = document.querySelector('.cover-subtitle');
+    const yearText = document.querySelector('.year');
+
+    if (notlarimText && universityInfo && universityName && yearText) {
+        requestAnimationFrame(() => {
+            const notlarimRect = notlarimText.getBoundingClientRect();
+            
+            universityInfo.style.height = `${notlarimRect.height}px`;
+            universityName.style.display = 'block';
+            universityName.style.visibility = 'visible';
+            universityName.style.position = 'relative';
+            universityName.style.maxWidth = `${notlarimRect.width}px`;
+            universityName.style.width = '100%';
+            universityName.style.textAlign = 'right';
+            universityName.style.whiteSpace = 'nowrap';
+            universityName.style.overflow = 'hidden';
+            universityName.style.textOverflow = 'ellipsis';
+            universityName.style.marginBottom = '5px';
+
+            const maxPossibleSize = 36;
+            const minSize = 16;
+            let bestSize = minSize;
+
+            universityName.style.fontSize = `${maxPossibleSize}px`;
+
+            let low = minSize;
+            let high = maxPossibleSize;
+
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                universityName.style.fontSize = `${mid}px`;
+
+                if (universityName.scrollWidth <= notlarimRect.width) {
+                    bestSize = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+
+            universityName.style.fontSize = `${bestSize}px`;
+
+            const universityNameHeight = universityName.offsetHeight;
+            const yearHeight = yearText.offsetHeight;
+            const totalContentHeight = universityNameHeight + 5 + yearHeight;
+            const topPadding = Math.max(0, (notlarimRect.height - totalContentHeight) / 2);
+
+            universityInfo.style.paddingTop = `${topPadding}px`;
+            yearText.style.marginTop = '5px';
+        });
     }
-    requestAnimationFrame(raf);
+}, 100);
 
-    // Event listener'ları sadece gerekli elementler varsa ekle
-    if (cards.length > 0) {
-        // İlk çalıştırmayı geciktir
-        setTimeout(() => {
+// Modified DOMContentLoaded handler
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear any existing timeout
+    if (initializationTimeout) {
+        clearTimeout(initializationTimeout);
+    }
+
+    // Delay initialization to prevent lag
+    initializationTimeout = setTimeout(() => {
+        const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
+        const container = document.querySelector('.yearbook-container');
+
+        if (!cards.length) {
+            console.warn('No cards found, skipping card positioning');
+            return;
+        }
+
+        // Mark as initialized
+        isInitialized = true;
+
+        // Initial setup
+        updateImageTheme();
+        alignUniversityInfo();
+        updateCardPositions();
+
+        // Set up optimized event listeners
+        const debouncedResize = debounce(() => {
             alignUniversityInfo();
             updateCardPositions();
-        }, 100);
+        }, 150);
 
-        // Resize event'i için debounce
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                alignUniversityInfo();
-                updateCardPositions();
-            }, 100);
+        const throttledScroll = throttle(updateCardPositions, 16);
+
+        window.addEventListener('resize', debouncedResize);
+        window.addEventListener('scroll', throttledScroll, { passive: true });
+
+        // Theme observer with debounce
+        const debouncedUpdateTheme = debounce(updateImageTheme, 100);
+        const themeObserver = new MutationObserver(debouncedUpdateTheme);
+        themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme']
         });
 
-        // Scroll event'i için throttle
-        window.addEventListener('scroll', throttledUpdateCardPositions);
+        // Lenis smooth scroll setup
+        const lenis = new Lenis({
+            duration: 1.5,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+    }, 200); // Increased delay to prevent first-load lag
+});
+
+// Optimized throttle function
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
     }
+}
 });
 </script>
-<style>
-    .yearbook-glass {
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
-    }
-    .yearbook-glass:hover {
-        transform: scale(1);
-    }
-</style>
 {% endblock %}
