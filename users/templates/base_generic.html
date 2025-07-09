@@ -343,8 +343,18 @@
             z-index: 1001;
         }
 
+        /* Desktop görünümde metinleri gizle */
+        .nav-text {
+            display: none;
+        }
+
         /* Mobile Menu Styles - Updated with rounded corners and navbar color */
         @media (max-width: 48em) {
+            .nav-text {
+                display: inline;
+                margin-left: 0.5rem;
+            }
+
             :root {
                 /* Mobile menu variables */
                 --mobile-menu-width: 280px;
@@ -903,18 +913,23 @@
             <ul class="nav-links">
                 <li><a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active"{% endif %}>
                     <i class="fas fa-user"></i> 
+                    <span class="nav-text">Profil</span>
                 </a></li>
                 <li><a href="{% url 'yearbook' %}" {% if request.resolver_match.url_name == 'yearbook' %}class="active"{% endif %}>
                     <i class="fas fa-book"></i> 
+                    <span class="nav-text">Yıllık</span>
                 </a></li>
                 <li><a href="{% url 'my_notes' %}" {% if request.resolver_match.url_name == 'my_notes' %}class="active"{% endif %}>
                     <i class="fas fa-pen"></i> 
+                    <span class="nav-text">Notlarım</span>
                 </a></li>
                 <li><a href="{% url 'settings_view' %}" {% if request.resolver_match.url_name == 'settings_view' %}class="active"{% endif %}>
                     <i class="fas fa-cog"></i> 
+                    <span class="nav-text">Ayarlar</span>
                 </a></li>
                 <li><a href="{% url 'user_logout' %}">
                     <i class="fas fa-sign-out-alt"></i> 
+                    <span class="nav-text">Çıkış Yap</span>
                 </a></li>
             </ul>
         </div>
