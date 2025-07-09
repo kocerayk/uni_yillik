@@ -1064,35 +1064,45 @@
         }
 
         .profile-section,
-        .review-section,
         .cover-profile-section {
-            padding: 16px;
+            padding: 12px;
             flex-shrink: 0;
         }
 
+        .review-section {
+            padding: 16px;
+            min-height: 0;
+            overflow: hidden;
+            flex: 1;
+        }
+
         .profile-photo {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 10px;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 8px;
         }
 
         .profile-name {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
         .profile-class {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
         }
 
-        .review-section {
-            min-height: 0;
-            overflow: hidden;
+        .profile-details {
+            gap: 6px;
+        }
+
+        .detail-item {
+            font-size: 0.82rem;
         }
 
         .review-content {
             font-size: 0.88rem;
             line-height: 1.5;
-            max-height: 250px;
+            max-height: 320px;
             overflow-y: auto;
             padding-right: 8px;
             scrollbar-width: thin;
@@ -1207,38 +1217,15 @@
         }
 
         .profile-section,
-        .review-section,
         .cover-profile-section {
-            padding: 12px;
+            padding: 10px;
             border-radius: 12px;
             flex-shrink: 0;
         }
 
-        .profile-photo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 8px;
-        }
-
-        .profile-name {
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-        }
-
-        .profile-class {
-            font-size: 0.75rem;
-            margin-bottom: 8px;
-        }
-
-        .profile-details {
-            gap: 6px;
-        }
-
-        .detail-item {
-            font-size: 0.8rem;
-        }
-
         .review-section {
+            padding: 12px;
+            border-radius: 12px;
             min-height: 0;
             overflow: hidden;
             flex: 1;
@@ -1246,10 +1233,34 @@
             flex-direction: column;
         }
 
+        .profile-photo {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 6px;
+        }
+
+        .profile-name {
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+
+        .profile-class {
+            font-size: 0.7rem;
+            margin-bottom: 6px;
+        }
+
+        .profile-details {
+            gap: 4px;
+        }
+
+        .detail-item {
+            font-size: 0.75rem;
+        }
+
         .review-content {
             font-size: 0.82rem;
             line-height: 1.4;
-            max-height: 200px;
+            max-height: 280px;
             overflow-y: auto;
             padding-right: 8px;
             scrollbar-width: thin;
@@ -1278,7 +1289,7 @@
         }
 
         .yearbook-cover .graduation-img {
-            width: calc(100% - 30px);
+            width: calc(100% - 30px) !important;
             height: calc(100% - 55px);
             top: 15px;
             left: 15px;
