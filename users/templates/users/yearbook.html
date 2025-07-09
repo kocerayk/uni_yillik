@@ -1064,44 +1064,35 @@
         }
 
         .profile-section,
+        .review-section,
         .cover-profile-section {
-            padding: 12px;
+            padding: 16px;
             flex-shrink: 0;
         }
 
-        .review-section {
-            padding: 16px;
-            min-height: 0;
-            overflow: hidden;
-            flex: 1;
-        }
-
         .profile-photo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 8px;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
         }
 
         .profile-name {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
         }
 
         .profile-class {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
         }
 
-        .profile-details {
-            gap: 6px;
-        }
-
-        .detail-item {
-            font-size: 0.82rem;
+        .review-section {
+            min-height: 0;
+            overflow: hidden;
         }
 
         .review-content {
             font-size: 0.88rem;
             line-height: 1.5;
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
             padding-right: 8px;
             scrollbar-width: thin;
@@ -1137,26 +1128,30 @@
         }
 
         .graduation-img {
-            width: calc(100% - 36px);
+            width: 90% !important;
+            left: 5% !important;
+            margin: 0 auto;
             height: calc(100% - 68px);
             top: 18px;
-            left: 18px;
         }
 
         .yearbook-cover .graduation-img {
-            width: calc(100% - 36px);
+            width: 90% !important;
+            left: 5% !important;
+            margin: 0 auto;
             height: calc(100% - 68px);
             top: 18px;
-            left: 18px;
         }
 
         .benim-notlarim {
-            height: 120px;
-            gap: 0;
+            height: 60px;
+            margin-top: auto;
+            margin-bottom: 20px;
+            flex-shrink: 0;
         }
 
         .benim {
-            font-size: 60px;
+            font-size: 40px;
         }
     }
 
@@ -1199,7 +1194,7 @@
             margin-top: 0;
             margin-bottom: auto;
             flex-shrink: 0;
-            height: 300px;
+            height: 380px;
         }
         
         .graduation-img {
@@ -1216,15 +1211,38 @@
         }
 
         .profile-section,
+        .review-section,
         .cover-profile-section {
-            padding: 8px;
+            padding: 12px;
             border-radius: 12px;
             flex-shrink: 0;
         }
 
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 8px;
+        }
+
+        .profile-name {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .profile-class {
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+
+        .profile-details {
+            gap: 6px;
+        }
+
+        .detail-item {
+            font-size: 0.8rem;
+        }
+
         .review-section {
-            padding: 14px;
-            border-radius: 12px;
             min-height: 0;
             overflow: hidden;
             flex: 1;
@@ -1232,47 +1250,15 @@
             flex-direction: column;
         }
 
-        .profile-photo {
-            width: 70px;
-            height: 70px;
-            margin-bottom: 6px;
-        }
-
-        .profile-name {
-            font-size: 1rem;
-            margin-bottom: 3px;
-        }
-
-        .profile-class {
-            font-size: 0.7rem;
-            margin-bottom: 6px;
-        }
-
-        .profile-details {
-            gap: 4px;
-        }
-
-        .detail-item {
-            font-size: 0.78rem;
-        }
-
         .review-content {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             line-height: 1.4;
-            max-height: 250px;
+            max-height: 140px;
             overflow-y: auto;
             padding-right: 8px;
             scrollbar-width: thin;
             scrollbar-color: var(--accent-color) var(--card-paper-bg);
             flex: 1;
-        }
-        
-        .image-container {
-            height: 350px;
-            padding: 15px 15px 40px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            flex-shrink: 0;
         }
         
         .review-content::-webkit-scrollbar {
@@ -1296,19 +1282,19 @@
         }
 
         .yearbook-cover .graduation-img {
-            width: calc(100% - 30px);
+            width: 90% !important;
+            left: 5% !important;
+            margin: 0 auto;
             height: calc(100% - 55px);
             top: 15px;
-            left: 15px;
-            border-radius: 3px;
         }
 
         .benim-notlarim {
             height: 60px;
             max-width: 200px;
-            gap: 0;
-            margin: 0 auto;
+            margin: 0 auto 20px;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .benim {
@@ -1399,7 +1385,7 @@
         .review-content {
             font-size: 0.78rem;
             line-height: 1.3;
-            max-height: 160px;
+            max-height: 120px;
             overflow-y: auto;
             padding-right: 6px;
             scrollbar-width: thin;
@@ -1428,7 +1414,7 @@
         }
 
         .image-container {
-            height: 280px;
+            height: 320px;
             padding: 12px 12px 35px;
             margin-bottom: 12px;
             border-radius: 8px;
@@ -1445,18 +1431,20 @@
         }
 
         .graduation-img {
-            width: calc(100% - 24px);
+            width: 90% !important;
+            left: 5% !important;
+            margin: 0 auto;
             height: calc(100% - 47px);
             top: 12px;
-            left: 12px;
             border-radius: 2px;
         }
 
         .yearbook-cover .graduation-img {
-            width: calc(100% - 24px);
+            width: 90% !important;
+            left: 5% !important;
+            margin: 0 auto;
             height: calc(100% - 47px);
             top: 12px;
-            left: 12px;
             border-radius: 2px;
         }
 
