@@ -2291,6 +2291,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateCardPositions() {
+        const coverCard = document.querySelector('.yearbook-cover');
+        if (!coverCard) return;
+
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const windowHeight = window.innerHeight;
         const containerTop = container.offsetTop;
@@ -2316,7 +2319,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const easedProgress = easeInOutCubic(Math.max(0, Math.min(1, scrollProgress)));
 
             if (scrollProgress > 0) {
-                // No scaling effect, only vertical translation
                 const translateY = Math.min(0, -easedProgress * 30);
                 card.style.transform = `translateY(${translateY}px)`;
                 card.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
