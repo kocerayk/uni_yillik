@@ -173,20 +173,32 @@
         }
 
         .nav-links a {
+            position: relative;
             color: var(--white);
             text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 12px;
-            transition: var(--transition);
+            padding: 12px 20px;
+            border-radius: 50px;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            text-decoration: none !important;
+            font-weight: 500;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            
+            /* Glass ring effect */
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 
+                0 0 0 0 rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            
+            /* Floating effect preparation */
+            transform: translateY(0) scale(1);
+            z-index: 1;
         }
 
         /* Remove underlines and borders from Font Awesome icons */
@@ -214,17 +226,82 @@
             background-image: none !important;
         }
 
-        /* Chrome-specific styles */
-        .nav-links {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-font-smoothing: antialiased;
+        /* Restore box-shadow only for the link elements */
+        .nav-links a {
+            box-shadow: 
+                0 0 0 0 rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .nav-links a:hover {
+            box-shadow: 
+                0 12px 25px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 30px rgba(255, 255, 255, 0.1) !important;
         }
 
         .nav-links a.active {
-            background: var(--white);
+            background: rgba(255, 255, 255, 0.95);
             color: var(--background-color);
+            border-color: rgba(255, 255, 255, 0.8);
             font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .nav-links a.active:hover {
+            transform: translateY(-10px) scale(1.08);
+            box-shadow: 
+                0 15px 30px rgba(0, 0, 0, 0.25),
+                0 0 0 2px rgba(255, 255, 255, 1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                0 0 50px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Icon styling for desktop */
+        .nav-links a i {
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            opacity: 0.9;
+        }
+
+        .nav-links a:hover i {
+            opacity: 1;
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .nav-links a.active i {
+            opacity: 1;
+            color: inherit;
+        }
+
+        /* Subtle pulse animation for active elements */
+        .nav-links a.active {
+            animation: gentlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 8px 20px rgba(0, 0, 0, 0.2),
+                    0 0 0 1px rgba(255, 255, 255, 0.9),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                    0 0 40px rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                box-shadow: 
+                    0 8px 20px rgba(0, 0, 0, 0.2),
+                    0 0 0 1px rgba(255, 255, 255, 0.9),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                    0 0 50px rgba(255, 255, 255, 0.3);
+            }
         }
 
         /* Mobile Navigation */
