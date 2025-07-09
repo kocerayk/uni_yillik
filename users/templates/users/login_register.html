@@ -1000,9 +1000,9 @@
             // Form submission
             const registerForm = document.getElementById('registerFormElement');
             if (registerForm) {
-                console.log('Register form found, attaching submit handler');
+
                 registerForm.addEventListener('submit', async function(e) {
-                    console.log('Form submit event triggered');
+
                     e.preventDefault();
 
                     // Clear previous error messages
@@ -1095,7 +1095,7 @@
                     }
 
                     try {
-                        console.log('Sending request to:', form.action);
+
                         const response = await fetch(form.action, {
                             method: 'POST',
                             body: formData,
@@ -1189,7 +1189,7 @@
                             }
                         }
                     } catch (error) {
-                        console.error('Error during form submission:', error);
+                        console.error('Error during form submission');
                         showMessage('Bir hata oluştu. Lütfen tekrar deneyin.', 'error', 'registerMessages');
                     } finally {
                         // Re-enable submit button
@@ -1200,7 +1200,7 @@
                     }
                 });
             } else {
-                console.error('Register form not found!');
+
             }
 
             // Email verification handling
@@ -1211,35 +1211,28 @@
             let verificationCode = '';
             let verificationEmail = '';
 
-            console.log('Email input element:', emailInput); // Debug için
-
             if (emailInput) {
-                console.log('Email input found, adding blur listener');
                 
                 emailInput.addEventListener('blur', async function(e) {
                     const email = this.value.trim();
-                    console.log('Email blur event triggered with value:', email);
                     
                     if (!email) {
-                        console.log('Email is empty, skipping verification');
                         return;
                     }
 
                     // Email format validation
                     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                     if (!emailRegex.test(email)) {
-                        console.log('Invalid email format');
                         showMessage('Geçerli bir e-posta adresi girin', 'error', 'registerMessages');
                         return;
                     }
 
                     try {
-                        console.log('Sending verification code request for email:', email);
+                        
                         verificationEmail = email;
                         
                         // CSRF token'ı al
                         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                        console.log('CSRF token:', csrfToken);
                         
                         const response = await fetch('{% url "send_verification_code" %}', {
                             method: 'POST',
@@ -1252,16 +1245,12 @@
                             body: JSON.stringify({ email: email })
                         });
 
-                        console.log('Verification code response status:', response.status);
-
                         if (!response.ok) {
                             const errorText = await response.text();
-                            console.error('Server error response:', errorText);
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
 
                         const data = await response.json();
-                        console.log('Verification code response data:', data);
 
                         if (data.success) {
                             verificationCode = data.code;
@@ -1271,7 +1260,6 @@
                             showMessage('Doğrulama kodu e-posta adresinize gönderildi', 'success', 'registerMessages');
                         } else {
                             verificationEmail = '';
-                            verificationEmail = ''; // Reset on failure
                             showMessage(data.error || 'Doğrulama kodu gönderilemedi', 'error', 'registerMessages');
                         }
                     } catch (error) {
@@ -1290,7 +1278,6 @@
                     const enteredCode = this.value;
                     if (enteredCode.length === 6) {
                         try {
-                            console.log('Verifying code on server...');
                             const response = await fetch('{% url "verify_email_code" %}', {
                                 method: 'POST',
                                 credentials: 'same-origin',
@@ -1305,9 +1292,7 @@
                                 })
                             });
 
-                            console.log('Verification response status:', response.status);
                             const data = await response.json();
-                            console.log('Verification response data:', data);
 
                             if (data.success) {
                                 registerSubmit.disabled = false;
@@ -1423,7 +1408,6 @@
 
         async function handleFormSubmit(e) {
             e.preventDefault();
-            console.log('Form submission started');
             
             const form = e.target;
             const registerMessages = document.getElementById('registerMessages');
@@ -1435,17 +1419,9 @@
             // Client-side validation
             const formData = new FormData(form);
             
-            // Debug: Log all form data
-            console.log('=== Form Data Debug ===');
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-            }
-            console.log('=====================');
-
             const validationError = validateFormData(formData);
 
             if (validationError) {
-                console.log('Validation error:', validationError);
                 showMessage(validationError, 'error', 'registerMessages');
                 return;
             }
@@ -1453,14 +1429,7 @@
             try {
                 // Get CSRF token from form data
                 const csrftoken = formData.get('csrfmiddlewaretoken');
-                console.log('CSRF Token from form:', csrftoken);
                 
-                // Debug: Log request details
-                console.log('=== Request Debug ===');
-                console.log('URL:', form.action);
-                console.log('Method: POST');
-                console.log('===================');
-
                 const response = await fetch(form.action, {
                     method: 'POST',
                     body: formData,
@@ -1471,21 +1440,12 @@
                     credentials: 'same-origin'
                 });
 
-                // Debug: Log response details
-                console.log('=== Response Debug ===');
-                console.log('Status:', response.status);
-                console.log('Status Text:', response.statusText);
-                console.log('Headers:', Object.fromEntries(response.headers.entries()));
-                console.log('====================');
-
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('Server error response:', errorText);
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await processResponse(response);
-                console.log('Processed response data:', data);
                 handleResponseData(data, registerMessages);
 
             } catch (error) {
@@ -1501,20 +1461,16 @@
 
         async function processResponse(response) {
             if (response.redirected) {
-                console.log('Response redirected to:', response.url);
                 window.location.href = response.url;
                 return null;
             }
 
             const contentType = response.headers.get('content-type');
-            console.log('Response content type:', contentType);
 
             const responseText = await response.text();
-            console.log('Raw response:', responseText);
 
             try {
                 const data = JSON.parse(responseText);
-                console.log('Parsed data:', data);
                 return data;
             } catch (e) {
                 console.error('Failed to parse response as JSON:', e);
@@ -1524,33 +1480,26 @@
         }
 
         function handleResponseData(data, messageContainer) {
-            console.log('Handling response data:', data);
             
             if (!data) {
-                console.log('No data to handle');
                 return;
             }
 
             if (data.success) {
-                console.log('Success response:', data.message);
                 showMessage(data.message || 'Kayıt başarılı!', 'success', 'registerMessages');
                 if (data.redirect_url) {
-                    console.log('Redirecting to:', data.redirect_url);
                     setTimeout(() => {
                         window.location.href = data.redirect_url;
                     }, 1500);
                 }
             } else {
-                console.log('Error response:', data);
                 if (data.errors) {
                     if (Array.isArray(data.errors)) {
                         data.errors.forEach(error => {
-                            console.log('Array error:', error);
                             showMessage(error, 'error', 'registerMessages');
                         });
                     } else {
                         Object.entries(data.errors).forEach(([field, errors]) => {
-                            console.log('Field error:', field, errors);
                             if (Array.isArray(errors)) {
                                 errors.forEach(error => {
                                     showMessage(`${field}: ${error}`, 'error', 'registerMessages');
