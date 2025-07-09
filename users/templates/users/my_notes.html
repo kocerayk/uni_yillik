@@ -158,9 +158,15 @@
         color: #f0f0f0; /* off-white text */
     }
 
+    /* Boş not kartının margin-top'ını kaldır */
     .yearbook-glass {
-        margin-top: 600px;
+        margin-top: 0px; /* 600px yerine 0px yap */
         transform-style: preserve-3d;
+    }
+
+    /* Sadece not varsa margin ekle */
+    .yearbook-glass:not(:first-child) {
+        margin-top: 600px;
     }
 
     .staggered-card {
@@ -2426,8 +2432,16 @@ document.addEventListener('DOMContentLoaded', function() {
         attributes: true,
         attributeFilter: ['data-theme']
     });
+
+    // DOM elementlerini al ve null kontrolü yap
     const cards = document.querySelectorAll('.yearbook-cover, .yearbook-glass');
     const container = document.querySelector('.yearbook-container');
+
+    // Eğer kart yoksa fonksiyonları çalıştırma
+    if (!cards.length) {
+        console.warn('No cards found, skipping card positioning');
+        return;
+    }
 
     function alignUniversityInfo() {
         const notlarimText = document.querySelector('.benim');
@@ -2498,48 +2512,71 @@ document.addEventListener('DOMContentLoaded', function() {
             universityInfo.style.paddingTop = `${topPadding}px`;
 
             // Ensure year is positioned correctly
-            yearText.style.marginTop = '5px'; // Exact 5px gap
-
+            yearText.style.marginTop = '5px';
         }
     }
-
-    // Run alignment on load and resize
-    alignUniversityInfo();
-    window.addEventListener('resize', alignUniversityInfo);
 
     function easeInOutCubic(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-        function updateCardPositions() {
+    // Throttle function for performance
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        }
+    }
+
+    function updateCardPositions() {
+        // Eğer henüz DOM hazır değilse bekle
+        if (!document.body || !cards.length) return;
+
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const windowHeight = window.innerHeight;
 
         cards.forEach((card, index) => {
-            const cardRect = card.getBoundingClientRect();
-            const cardCenter = cardRect.top + cardRect.height/2;
-            const progress = Math.min(1, Math.max(0, (windowHeight/2 - cardCenter) / windowHeight));
+            // Kart görünür değilse skip et
+            if (!card.offsetParent) return;
 
-            // Y ekseninde hafif hareket
-            const translateY = progress * 20 * (index % 2 ? 1 : -1);
+            try {
+                const cardRect = card.getBoundingClientRect();
+                const cardCenter = cardRect.top + cardRect.height/2;
+                const progress = Math.min(1, Math.max(0, (windowHeight/2 - cardCenter) / windowHeight));
 
-            // 3D rotasyon
-            const rotateX = progress * 5;
-            const rotateY = progress * 2 * (index % 2 ? 1 : -1);
+                // Y ekseninde hafif hareket
+                const translateY = progress * 20 * (index % 2 ? 1 : -1);
 
-            // Opacity
-            const opacity = 1 - progress * 0.2;
+                // 3D rotasyon
+                const rotateX = progress * 5;
+                const rotateY = progress * 2 * (index % 2 ? 1 : -1);
 
-            card.style.transform = `
-                translateY(${translateY}px)
-                rotateX(${rotateX}deg)
-                rotateY(${rotateY}deg)
-            `;
-            card.style.opacity = opacity;
-            card.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease`;
+                // Opacity
+                const opacity = 1 - progress * 0.2;
+
+                card.style.transform = `
+                    translateY(${translateY}px)
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY}deg)
+                `;
+                card.style.opacity = opacity;
+                card.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease`;
+            } catch (error) {
+                console.error('Error updating card position:', error);
+            }
         });
     }
 
+    // Throttled scroll handler
+    const throttledUpdateCardPositions = throttle(updateCardPositions, 16); // ~60fps
+
+    // Lenis smooth scroll konfigürasyonu
     const lenis = new Lenis({
         duration: 1.5,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -2556,8 +2593,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     requestAnimationFrame(raf);
 
-    window.addEventListener('scroll', updateCardPositions);
-    window.addEventListener('resize', updateCardPositions);
+    // Event listener'ları sadece gerekli elementler varsa ekle
+    if (cards.length > 0) {
+        // İlk çalıştırmayı geciktir
+        setTimeout(() => {
+            alignUniversityInfo();
+            updateCardPositions();
+        }, 100);
+
+        // Resize event'i için debounce
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                alignUniversityInfo();
+                updateCardPositions();
+            }, 100);
+        });
+
+        // Scroll event'i için throttle
+        window.addEventListener('scroll', throttledUpdateCardPositions);
+    }
 
     updateCardPositions();
 });
