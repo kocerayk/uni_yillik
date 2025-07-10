@@ -25,8 +25,9 @@ urlpatterns = [
     
     path('admin/', admin.site.urls),
 
-    # User-related views
+    # SEO related
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('robots.txt', views.robots_txt, name='robots_txt'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/update-photo/', views.update_profile_photo, name='update_profile_photo'),
     path('profile/update-graduation-photo/', views.update_graduation_photo, name='update_graduation_photo'),

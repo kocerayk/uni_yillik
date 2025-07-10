@@ -1949,6 +1949,15 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Sitemap: https://www.yillik.site/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
 def profile_view(request):
     try:
         user = request.user

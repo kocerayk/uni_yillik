@@ -12,6 +12,9 @@ class School(models.Model):
 
     def __str__(self):
         return self.name
+        
+    def get_absolute_url(self):
+        return f"/school/{self.id}/"
 
 # Mezuniyet yıllarını tutan model
 class GraduationYear(models.Model):
