@@ -27,6 +27,9 @@ class GraduationYear(models.Model):
 
     def __str__(self):
         return str(self.year)
+        
+    def get_absolute_url(self):
+        return f"/graduation-year/{self.year}/"
 
 # Özel kullanıcı modelimiz
 class CustomUser(AbstractUser):
