@@ -2,7 +2,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from model_utils import FieldTracker
-from django.urls import reverse
 
 
 # Üniversiteleri tutan model
@@ -13,10 +12,6 @@ class School(models.Model):
 
     def __str__(self):
         return self.name
-        
-    def get_absolute_url(self):
-        # Return a URL for the school - you can customize this based on your needs
-        return reverse('school_dashboard')  # or create a specific school detail view
 
 # Mezuniyet yıllarını tutan model
 class GraduationYear(models.Model):
@@ -29,10 +24,6 @@ class GraduationYear(models.Model):
 
     def __str__(self):
         return str(self.year)
-        
-    def get_absolute_url(self):
-        # Return a URL for the graduation year - customize as needed
-        return reverse('yearbook')  # or create a specific graduation year view
 
 # Özel kullanıcı modelimiz
 class CustomUser(AbstractUser):

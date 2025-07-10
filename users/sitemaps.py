@@ -7,7 +7,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = 'monthly'
 
     def items(self):
-        return ['login_register', 'yearbook']
+        return ['profile', 'login_register', 'school_dashboard']
 
     def location(self, item):
         return reverse(item)
@@ -20,17 +20,14 @@ class SchoolSitemap(Sitemap):
         return School.objects.all()
 
     def lastmod(self, obj):
-        # If you have a modified date field, use it here
-        # return obj.modified_date
-        return None
+        return obj.updated_at if hasattr(obj, 'updated_at') else None
 
 class GraduationYearSitemap(Sitemap):
-    changefreq = 'yearly'
+    changefreq = 'monthly'
     priority = 0.6
 
     def items(self):
         return GraduationYear.objects.all()
 
     def lastmod(self, obj):
-        # If you have a modified date field, use it here
-        return None
+        return None  # Mezuniyet yılları genellikle sık değişmez

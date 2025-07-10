@@ -47,13 +47,6 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 ALLOWED_HOSTS = ['209.38.229.98', 'yillik.site', 'www.yillik.site']
 
-# SEO Settings
-SITE_ID = 1
-
-# For better URL structure and performance
-APPEND_SLASH = True
-USE_ETAGS = True
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -63,7 +56,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
     'django.contrib.sitemaps',
     'users',
 ]
@@ -76,7 +68,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.sites.middleware.CurrentSiteMiddleware',
 ]
 
 ROOT_URLCONF = 'uni_yillik.urls'
