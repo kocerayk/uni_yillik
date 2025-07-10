@@ -897,9 +897,9 @@
                 font-size: 0.85rem;
             }
 
-            /* Logo boyutlandırma güncellemeleri */
+            /* Logo boyutlandırma güncellemeleri - Mobil için küçültülmüş */
             .logo img {
-                height: 81px !important; /* Ana boyut */
+                height: 70px !important; /* Ana boyut küçültüldü */
                 width: auto;
                 margin-right: 8px;
                 transition: var(--transition);
@@ -910,46 +910,46 @@
                 content: url("{% static 'yearbook/images/a (99).png' %}");
             }
 
-            /* Mobil uyumlu logo boyutlandırma */
+            /* Mobil uyumlu logo boyutlandırma - Küçültülmüş */
             @media (max-width: 1100px) {
-                .logo img {
-                    height: 65px !important;
-                }
-            }
-
-            @media (max-width: 900px) {
-                .logo img {
-                    height: 60px !important;
-                }
-            }
-
-            @media (max-width: 768px) {
                 .logo img {
                     height: 55px !important;
                 }
             }
 
-            @media (max-width: 600px) {
+            @media (max-width: 900px) {
                 .logo img {
                     height: 50px !important;
                 }
             }
 
-            @media (max-width: 480px) {
+            @media (max-width: 768px) {
                 .logo img {
                     height: 45px !important;
                 }
             }
 
-            @media (max-width: 400px) {
+            @media (max-width: 600px) {
                 .logo img {
                     height: 40px !important;
                 }
             }
 
+            @media (max-width: 480px) {
+                .logo img {
+                    height: 35px !important;
+                }
+            }
+
+            @media (max-width: 400px) {
+                .logo img {
+                    height: 32px !important;
+                }
+            }
+
             @media (max-width: 360px) {
                 .logo img {
-                    height: 38px !important;
+                    height: 30px !important;
                 }
             }
         }
