@@ -1734,6 +1734,41 @@ Bu mesaj otomatik olarak gönderilmiştir.
 
 
 # ----------------------------------------------------------------------
+# SEO Views
+# ----------------------------------------------------------------------
+def robots_txt(request):
+    """Generate robots.txt file dynamically"""
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /profile/",
+        "Disallow: /settings/",
+        "Disallow: /delete-account/",
+        "Disallow: /send-message/",
+        "Disallow: /my-notes/",
+        "Disallow: /feedback/",
+        "Disallow: /download-user-data/",
+        "Disallow: /friend/",
+        "Disallow: /view-friend/",
+        "",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}"
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+def public_landing(request):
+    """Public landing page for SEO purposes"""
+    if request.user.is_authenticated:
+        return redirect('school_dashboard')
+    
+    context = {
+        'title': 'Yıllık - Üniversite Mezunları İçin Sosyal Platform',
+        'description': 'Üniversite mezunları için özel sosyal platform. Mezun arkadaşlarınızla yeniden bağlantı kurun.',
+        'keywords': 'üniversite, mezun, yıllık, sosyal platform, arkadaş, bağlantı'
+    }
+    return render(request, 'users/public_landing.html', context)
+
+# ----------------------------------------------------------------------
 # Kullanıcı Arama View'u: Kullanıcı adı, okul veya mezuniyet yılına göre arama yapar.
 # ----------------------------------------------------------------------
 def search_users(request):
@@ -1942,8 +1977,9 @@ def get_graduation_years(request):
 
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import logging
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 

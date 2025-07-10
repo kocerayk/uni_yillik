@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
+from django.http import HttpResponse
 from users import views
 from django.contrib.sitemaps.views import sitemap
 from users.sitemaps import StaticViewSitemap, SchoolSitemap, GraduationYearSitemap
@@ -12,6 +13,20 @@ def home_redirect(request):
         return redirect('school_dashboard')
     else:
         return redirect('login_register')
+
+def robots_txt(request):
+    """Generate robots.txt file"""
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /profile/",
+        "Disallow: /settings/",
+        "Disallow: /delete-account/",
+        "",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}"
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
 
 sitemaps = {
     'static': StaticViewSitemap,
@@ -24,6 +39,9 @@ urlpatterns = [
     path('', home_redirect, name='home'),
     
     path('admin/', admin.site.urls),
+
+    # SEO files
+    path('robots.txt', robots_txt, name='robots_txt'),
 
     # User-related views
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
