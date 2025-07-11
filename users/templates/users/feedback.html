@@ -727,7 +727,34 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Toast notification system
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch('{% url "feedback" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast("Geri bildiriminiz başarıyla gönderildi!", "success");
+                    form.reset();
+                } else {
+                    showToast(data.error || "Bir hata oluştu!", "error");
+                }
+            })
+            .catch(error => {
+                showToast("Bir hata oluştu!", "error");
+            });
+        });
+        
         function showToast(message, type) {
             const toastContainer = document.getElementById('toastContainer');
             
@@ -767,15 +794,6 @@
                 }, 300);
             }, 4000);
         }
-        
-        // Convert Django messages to toasts
-        // Using JavaScript-safe approach for Django template tags
-        /* Django messages handling */
-        {% if messages %}
-            {% for message in messages %}
-                showToast("{{ message|escapejs }}", "{{ message.tags|escapejs }}");
-            {% endfor %}
-        {% endif %}
     });
 </script>
 

@@ -1643,7 +1643,6 @@ def settings_view(request):
 # Kullanıcıların yilliksite@gmail.com adresine geri bildirim göndermesini sağlar
 # ----------------------------------------------------------------------
 
-
 @csrf_protect
 @require_http_methods(["GET", "POST"])
 def feedback_view(request):
@@ -1653,23 +1652,31 @@ def feedback_view(request):
         
         # Form doğrulama
         if not email or not message_content:
-            messages.error(request, 'Lütfen tüm alanları doldurun.')
-            return render(request, 'users/feedback.html')
+            return JsonResponse({
+                'success': False, 
+                'error': 'Lütfen tüm alanları doldurun.'
+            })
         
         # Email format doğrulama
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, email):
-            messages.error(request, 'Lütfen geçerli bir e-posta adresi girin.')
-            return render(request, 'users/feedback.html')
+            return JsonResponse({
+                'success': False, 
+                'error': 'Lütfen geçerli bir e-posta adresi girin.'
+            })
         
         # Mesaj uzunluğu kontrolü
         if len(message_content) < 10:
-            messages.error(request, 'Geri bildiriminiz en az 10 karakter olmalıdır.')
-            return render(request, 'users/feedback.html')
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geri bildiriminiz en az 10 karakter olmalıdır.'
+            })
         
         if len(message_content) > 1000:
-            messages.error(request, 'Geri bildiriminiz en fazla 1000 karakter olabilir.')
-            return render(request, 'users/feedback.html')
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geri bildiriminiz en fazla 1000 karakter olabilir.'
+            })
         
         # E-posta gönderme (Resend ile)
         try:
@@ -1719,15 +1726,19 @@ Bu mesaj otomatik olarak gönderilmiştir.
             print(f"Resend response: {response}")  # Debug için
             
             if response.get('id'):
-                messages.success(request, 'Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!')
-                return redirect('feedback_view')
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!'
+                })
             else:
                 raise Exception(f"Resend gönderim hatası: {response}")
-            
+                
         except Exception as e:
             print(f"Email gönderme hatası: {str(e)}")  # Debug için
-            messages.error(request, 'Geri bildirim gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.')
-            return render(request, 'users/feedback.html')
+            return JsonResponse({
+                'success': False, 
+                'error': 'Geri bildirim gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+            })
     
     # GET request için template'i render et
     return render(request, 'users/feedback.html')
