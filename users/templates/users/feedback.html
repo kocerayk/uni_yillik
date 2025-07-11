@@ -734,7 +734,7 @@
             
             const formData = new FormData(form);
             
-            fetch('{% url "feedback" %}', {
+            fetch('{% url "feedback_view" %}', {
                 method: 'POST',
                 body: formData,
                 headers: {
