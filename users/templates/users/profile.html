@@ -1406,28 +1406,32 @@
         document.getElementById('photoInput').click();
     });
 
-    // Share Profile Functionality
+    // Share Profile Functionality - Düzeltilmiş Versiyon
     async function shareProfile() {
         try {
-            // Kullanıcının okul ve yıl bilgilerini al
-            const userSchool = '{{ user.school.name }}';
-            const userGraduationYear = '{{ user.graduation_year.year }}';
+            // Kullanıcının okul ve yıl bilgilerini al - Django template'ten güvenli şekilde
+            const userSchool = '{{ user.school.name|escapejs }}';
+            const userGraduationYear = '{{ user.graduation_year.year|escapejs }}';
+            const userName = '{{ user.get_full_name|escapejs }}';
+            
+            // Paylaşım URL'sini sabit olarak ayarla
+            const shareUrl = 'https://yillik.site/login/';
             
             // Daha güzel bir paylaşım metni
-            const shareText = `👋 {{ user.get_full_name }}'in üni yıllık profilini keşfet!\n\n` +
+            const shareText = `👋 ${userName}'in üni yıllık profilini keşfet!\n\n` +
                             `🏫 ${userSchool}\n` +
                             `🎓 ${userGraduationYear} mezunu\n\n` +
                             `💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!`;
             
             if (navigator.share) {
                 await navigator.share({
-                    title: '{{ user.get_full_name }} - Üni Yıllık Profili',
+                    title: `${userName} - Üni Yıllık Profili`,
                     text: shareText,
-                    url: window.location.href
+                    url: shareUrl
                 });
             } else {
                 // Fallback for browsers that don't support Web Share API
-                const shareContent = `${shareText}\n\n${window.location.href}`;
+                const shareContent = `${shareText}\n\n${shareUrl}`;
                 const dummy = document.createElement('input');
                 document.body.appendChild(dummy);
                 dummy.value = shareContent;
@@ -1440,6 +1444,24 @@
             console.error('Error sharing:', error);
             showMessage('Paylaşım başarısız', 'error');
         }
+    }
+
+    // Test için - konsola yazdırma fonksiyonu
+    function testShareData() {
+        const userSchool = '{{ user.school.name|escapejs }}';
+        const userGraduationYear = '{{ user.graduation_year.year|escapejs }}';
+        const userName = '{{ user.get_full_name|escapejs }}';
+        
+        console.log('Test Data:');
+        console.log('Name:', userName);
+        console.log('School:', userSchool);
+        console.log('Year:', userGraduationYear);
+        
+        return {
+            name: userName,
+            school: userSchool,
+            year: userGraduationYear
+        };
     }
 
     // Enhanced tooltip positioning
