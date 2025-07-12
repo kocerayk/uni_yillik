@@ -1406,30 +1406,39 @@
         document.getElementById('photoInput').click();
     });
 
-    // Share Profile Functionality - Düzeltilmiş Versiyon
+    // Share Profile Functionality - En basit test versiyonu
     async function shareProfile() {
         try {
-            // Kullanıcının okul ve yıl bilgilerini al - Django template'ten güvenli şekilde
-            const userSchool = '{{ user.school.name|escapejs }}';
-            const userGraduationYear = '{{ user.graduation_year.year|escapejs }}';
-            const userName = '{{ user.get_full_name|escapejs }}';
+            console.log('shareProfile fonksiyonu çalıştı');
+            
+            // Önce veriyi konsola yazdıralım
+            const userSchool = '{{ user.school.name }}';
+            const userGraduationYear = '{{ user.graduation_year.year }}';
+            const userName = '{{ user.get_full_name }}';
+            
+            console.log('Template verileri:');
+            console.log('userName:', userName);
+            console.log('userSchool:', userSchool);
+            console.log('userGraduationYear:', userGraduationYear);
             
             // Paylaşım URL'sini sabit olarak ayarla
             const shareUrl = 'https://yillik.site/login/';
             
-            // Daha güzel bir paylaşım metni
-            const shareText = `👋 ${userName}'in üni yıllık profilini keşfet!\n\n` +
-                            `🏫 ${userSchool}\n` +
-                            `🎓 ${userGraduationYear} mezunu\n\n` +
-                            `💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!`;
+            // Basit paylaşım metni
+            const shareText = `${userName}'in üni yıllık profilini keşfet!\n\nOkul: ${userSchool}\nMezuniyet: ${userGraduationYear}\n\nBenimle iletişime geçmek için bu döneme kaydolabilirsin!`;
+            
+            console.log('Paylaşım metni:', shareText);
+            console.log('Paylaşım URL:', shareUrl);
             
             if (navigator.share) {
+                console.log('Web Share API destekleniyor');
                 await navigator.share({
                     title: `${userName} - Üni Yıllık Profili`,
                     text: shareText,
                     url: shareUrl
                 });
             } else {
+                console.log('Web Share API desteklenmiyor, fallback kullanılıyor');
                 // Fallback for browsers that don't support Web Share API
                 const shareContent = `${shareText}\n\n${shareUrl}`;
                 const dummy = document.createElement('input');
@@ -1438,30 +1447,70 @@
                 dummy.select();
                 document.execCommand('copy');
                 document.body.removeChild(dummy);
+                console.log('Kopyalanan içerik:', shareContent);
                 showMessage('Profil linki ve bilgileri kopyalandı', 'success');
             }
         } catch (error) {
-            console.error('Error sharing:', error);
+            console.error('Paylaşım hatası:', error);
             showMessage('Paylaşım başarısız', 'error');
         }
     }
 
-    // Test için - konsola yazdırma fonksiyonu
-    function testShareData() {
-        const userSchool = '{{ user.school.name|escapejs }}';
-        const userGraduationYear = '{{ user.graduation_year.year|escapejs }}';
-        const userName = '{{ user.get_full_name|escapejs }}';
+    // Debug fonksiyonu - konsola yazdırma için
+    function debugShareData() {
+        console.log('=== DEBUG SHARE DATA ===');
         
-        console.log('Test Data:');
-        console.log('Name:', userName);
-        console.log('School:', userSchool);
-        console.log('Year:', userGraduationYear);
+        // Template verileri
+        const userSchool = '{{ user.school.name }}';
+        const userGraduationYear = '{{ user.graduation_year.year }}';
+        const userName = '{{ user.get_full_name }}';
+        
+        console.log('Template Values:');
+        console.log('- userName:', userName);
+        console.log('- userSchool:', userSchool);
+        console.log('- userGraduationYear:', userGraduationYear);
+        
+        // Sayfa bilgileri
+        console.log('Page Info:');
+        console.log('- Current URL:', window.location.href);
+        console.log('- Share URL:', 'https://yillik.site/login/');
+        
+        // Share API desteği
+        console.log('Browser Support:');
+        console.log('- Web Share API:', navigator.share ? 'Destekleniyor' : 'Desteklenmiyor');
         
         return {
             name: userName,
             school: userSchool,
             year: userGraduationYear
         };
+    }
+
+    // Test için basit fonksiyon
+    function testShare() {
+        console.log('Test Share çalıştırılıyor...');
+        const testText = 'Test paylaşım metni\nhttps://yillik.site/login/';
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Test Paylaşım',
+                text: testText,
+                url: 'https://yillik.site/login/'
+            }).then(() => {
+                console.log('Test paylaşım başarılı');
+            }).catch(error => {
+                console.error('Test paylaşım hatası:', error);
+            });
+        } else {
+            console.log('Web Share API desteklenmiyor, kopyalama testi yapılıyor');
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = testText;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            console.log('Test metin kopyalandı:', testText);
+        }
     }
 
     // Enhanced tooltip positioning
