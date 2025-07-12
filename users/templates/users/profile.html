@@ -1406,110 +1406,140 @@
         document.getElementById('photoInput').click();
     });
 
-    // Share Profile Functionality - En basit test versiyonu
+    // Share Profile Functionality - Final Çözüm
     async function shareProfile() {
         try {
             console.log('shareProfile fonksiyonu çalıştı');
             
-            // Önce veriyi konsola yazdıralım
+            // Kullanıcı bilgilerini al
             const userSchool = '{{ user.school.name }}';
             const userGraduationYear = '{{ user.graduation_year.year }}';
             const userName = '{{ user.get_full_name }}';
             
-            console.log('Template verileri:');
-            console.log('userName:', userName);
-            console.log('userSchool:', userSchool);
-            console.log('userGraduationYear:', userGraduationYear);
+            // URL parametreleri ile bilgileri ekle
+            const shareUrl = `https://yillik.site/login/?ref=${encodeURIComponent(userName)}&school=${encodeURIComponent(userSchool)}&year=${encodeURIComponent(userGraduationYear)}`;
             
-            // Paylaşım URL'sini sabit olarak ayarla
-            const shareUrl = 'https://yillik.site/login/';
-            
-            // Basit paylaşım metni
-            const shareText = `${userName}'in üni yıllık profilini keşfet!\n\nOkul: ${userSchool}\nMezuniyet: ${userGraduationYear}\n\nBenimle iletişime geçmek için bu döneme kaydolabilirsin!`;
+            // Paylaşım metni - emoji ve bilgiler ile
+            const shareText = `👋 ${userName}'in üni yıllık profilini keşfet!\n\n🏫 ${userSchool}\n🎓 ${userGraduationYear} mezunu\n\n💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!`;
             
             console.log('Paylaşım metni:', shareText);
             console.log('Paylaşım URL:', shareUrl);
             
             if (navigator.share) {
                 console.log('Web Share API destekleniyor');
-                await navigator.share({
-                    title: `${userName} - Üni Yıllık Profili`,
-                    text: shareText,
-                    url: shareUrl
-                });
+                
+                // Farklı paylaşım formatlarını dene
+                try {
+                    // Önce tam bilgi ile dene
+                    await navigator.share({
+                        title: `${userName} - Üni Yıllık Profili`,
+                        text: shareText,
+                        url: shareUrl
+                    });
+                    console.log('Paylaşım başarılı (tam bilgi)');
+                } catch (error) {
+                    console.log('Tam bilgi paylaşımı başarısız, sadece URL deneniyor:', error);
+                    try {
+                        // Sadece URL ile dene
+                        await navigator.share({
+                            title: `${userName} - Üni Yıllık Profili`,
+                            url: shareUrl
+                        });
+                        console.log('Paylaşım başarılı (sadece URL)');
+                    } catch (error2) {
+                        console.log('URL paylaşımı da başarısız:', error2);
+                        // Fallback'e geç
+                        throw error2;
+                    }
+                }
             } else {
                 console.log('Web Share API desteklenmiyor, fallback kullanılıyor');
-                // Fallback for browsers that don't support Web Share API
+                // Fallback - tüm bilgileri kopyala
                 const shareContent = `${shareText}\n\n${shareUrl}`;
+                
                 const dummy = document.createElement('input');
                 document.body.appendChild(dummy);
                 dummy.value = shareContent;
                 dummy.select();
                 document.execCommand('copy');
                 document.body.removeChild(dummy);
+                
                 console.log('Kopyalanan içerik:', shareContent);
-                showMessage('Profil linki ve bilgileri kopyalandı', 'success');
+                showMessage('Profil linki ve bilgileri kopyalandı!', 'success');
             }
         } catch (error) {
             console.error('Paylaşım hatası:', error);
+            // Hata durumunda fallback
+            fallbackShare();
+        }
+    }
+
+    // Fallback paylaşım fonksiyonu
+    function fallbackShare() {
+        try {
+            const userSchool = '{{ user.school.name }}';
+            const userGraduationYear = '{{ user.graduation_year.year }}';
+            const userName = '{{ user.get_full_name }}';
+            
+            const shareUrl = `https://yillik.site/login/?ref=${encodeURIComponent(userName)}&school=${encodeURIComponent(userSchool)}&year=${encodeURIComponent(userGraduationYear)}`;
+            const shareText = `👋 ${userName}'in üni yıllık profilini keşfet!\n\n🏫 ${userSchool}\n🎓 ${userGraduationYear} mezunu\n\n💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!`;
+            
+            const shareContent = `${shareText}\n\n${shareUrl}`;
+            
+            // Clipboard API dene
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareContent).then(() => {
+                    console.log('Clipboard API ile kopyalandı');
+                    showMessage('Profil linki ve bilgileri kopyalandı!', 'success');
+                }).catch(() => {
+                    // Eski yöntem
+                    copyToClipboardOldWay(shareContent);
+                });
+            } else {
+                copyToClipboardOldWay(shareContent);
+            }
+        } catch (error) {
+            console.error('Fallback paylaşım hatası:', error);
             showMessage('Paylaşım başarısız', 'error');
         }
     }
 
-    // Debug fonksiyonu - konsola yazdırma için
-    function debugShareData() {
-        console.log('=== DEBUG SHARE DATA ===');
-        
-        // Template verileri
-        const userSchool = '{{ user.school.name }}';
-        const userGraduationYear = '{{ user.graduation_year.year }}';
-        const userName = '{{ user.get_full_name }}';
-        
-        console.log('Template Values:');
-        console.log('- userName:', userName);
-        console.log('- userSchool:', userSchool);
-        console.log('- userGraduationYear:', userGraduationYear);
-        
-        // Sayfa bilgileri
-        console.log('Page Info:');
-        console.log('- Current URL:', window.location.href);
-        console.log('- Share URL:', 'https://yillik.site/login/');
-        
-        // Share API desteği
-        console.log('Browser Support:');
-        console.log('- Web Share API:', navigator.share ? 'Destekleniyor' : 'Desteklenmiyor');
-        
-        return {
-            name: userName,
-            school: userSchool,
-            year: userGraduationYear
-        };
+    // Eski yöntem ile kopyala
+    function copyToClipboardOldWay(text) {
+        const dummy = document.createElement('textarea');
+        document.body.appendChild(dummy);
+        dummy.value = text;
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+        console.log('Eski yöntem ile kopyalandı:', text);
+        showMessage('Profil linki ve bilgileri kopyalandı!', 'success');
     }
 
-    // Test için basit fonksiyon
-    function testShare() {
-        console.log('Test Share çalıştırılıyor...');
-        const testText = 'Test paylaşım metni\nhttps://yillik.site/login/';
+    // Test fonksiyonu - URL parametreli
+    function testShareWithParams() {
+        console.log('=== URL Parametreli Test ===');
+        
+        const userName = 'Eray Koç';
+        const userSchool = '.Test Üniversitesi';
+        const userGraduationYear = '2026';
+        
+        const shareUrl = `https://yillik.site/login/?ref=${encodeURIComponent(userName)}&school=${encodeURIComponent(userSchool)}&year=${encodeURIComponent(userGraduationYear)}`;
+        
+        console.log('Test URL:', shareUrl);
         
         if (navigator.share) {
             navigator.share({
-                title: 'Test Paylaşım',
-                text: testText,
-                url: 'https://yillik.site/login/'
+                title: `${userName} - Üni Yıllık Profili`,
+                url: shareUrl
             }).then(() => {
-                console.log('Test paylaşım başarılı');
+                console.log('URL parametreli test başarılı');
             }).catch(error => {
-                console.error('Test paylaşım hatası:', error);
+                console.error('URL parametreli test hatası:', error);
             });
         } else {
-            console.log('Web Share API desteklenmiyor, kopyalama testi yapılıyor');
-            const dummy = document.createElement('input');
-            document.body.appendChild(dummy);
-            dummy.value = testText;
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
-            console.log('Test metin kopyalandı:', testText);
+            console.log('Web Share API desteklenmiyor');
+            copyToClipboardOldWay(shareUrl);
         }
     }
 
