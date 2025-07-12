@@ -1405,11 +1405,10 @@
     document.getElementById('photoDropArea').addEventListener('click', () => {
         document.getElementById('photoInput').click();
     });
-    // Share Profile Functionality - Düzeltilmiş Versiyon
+    
+    // Share Profile Functionality - Temizlenmiş Versiyon
     async function shareProfile() {
         try {
-            console.log('shareProfile fonksiyonu çalıştı');
-            
             // Kullanıcı bilgilerini al
             const userSchool = '{{ user.school.name }}';
             const userGraduationYear = '{{ user.graduation_year.year }}';
@@ -1426,34 +1425,24 @@
 
     💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!
 
-    🔗 ${loginUrl}
-
-    📝 Kayıt olurken referans: ${userName}`;
-            
-            console.log('Paylaşım metni:', shareText);
+    🔗 ${loginUrl}`;
             
             if (navigator.share) {
-                console.log('Web Share API destekleniyor');
-                
                 try {
                     // Sadece metin paylaş (URL parametresi yok)
                     await navigator.share({
                         title: `${userName} - Üni Yıllık Profili`,
                         text: shareText
                     });
-                    console.log('Paylaşım başarılı (sadece metin)');
                 } catch (error) {
-                    console.log('Metin paylaşımı başarısız, fallback kullanılıyor:', error);
                     // Fallback'e geç
                     throw error;
                 }
             } else {
-                console.log('Web Share API desteklenmiyor, fallback kullanılıyor');
                 // Fallback - tüm bilgileri kopyala
                 fallbackShare(shareText);
             }
         } catch (error) {
-            console.error('Paylaşım hatası:', error);
             // Hata durumunda fallback
             fallbackShare();
         }
@@ -1480,15 +1469,12 @@
 
     💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!
 
-    🔗 ${loginUrl}
-
-    📝 Kayıt olurken referans: ${userName}`;
+    🔗 ${loginUrl}`;
             }
             
             // Clipboard API dene
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(shareContent).then(() => {
-                    console.log('Clipboard API ile kopyalandı');
                     showMessage('Profil bilgileri kopyalandı!', 'success');
                 }).catch(() => {
                     // Eski yöntem
@@ -1498,7 +1484,6 @@
                 copyToClipboardOldWay(shareContent);
             }
         } catch (error) {
-            console.error('Fallback paylaşım hatası:', error);
             showMessage('Paylaşım başarısız', 'error');
         }
     }
@@ -1511,14 +1496,11 @@
         dummy.select();
         document.execCommand('copy');
         document.body.removeChild(dummy);
-        console.log('Eski yöntem ile kopyalandı:', text);
         showMessage('Profil bilgileri kopyalandı!', 'success');
     }
 
     // Test fonksiyonu - Sadece metin paylaşımı
     function testShareTextOnly() {
-        console.log('=== Sadece Metin Paylaşımı Test ===');
-        
         const userName = 'Eray Koç';
         const userSchool = '.Test Üniversitesi';
         const userGraduationYear = '2026';
@@ -1531,23 +1513,18 @@
 
     💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!
 
-    🔗 ${loginUrl}
-
-    📝 Kayıt olurken referans: ${userName}`;
-        
-        console.log('Test metni:', shareText);
+    🔗 ${loginUrl}`;
         
         if (navigator.share) {
             navigator.share({
                 title: `${userName} - Üni Yıllık Profili`,
                 text: shareText
             }).then(() => {
-                console.log('Sadece metin test başarılı');
+                // Test başarılı
             }).catch(error => {
-                console.error('Sadece metin test hatası:', error);
+                // Test hatası
             });
         } else {
-            console.log('Web Share API desteklenmiyor');
             copyToClipboardOldWay(shareText);
         }
     }
