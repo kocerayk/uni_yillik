@@ -1409,21 +1409,32 @@
     // Share Profile Functionality
     async function shareProfile() {
         try {
+            // Kullanıcının okul ve yıl bilgilerini al
+            const userSchool = '{{ user.school.name }}';
+            const userGraduationYear = '{{ user.graduation_year.year }}';
+            
+            // Daha güzel bir paylaşım metni
+            const shareText = `👋 {{ user.get_full_name }}'in üni yıllık profilini keşfet!\n\n` +
+                            `🏫 ${userSchool}\n` +
+                            `🎓 ${userGraduationYear} mezunu\n\n` +
+                            `💬 Benimle iletişime geçmek için bu döneme kaydolabilirsin!`;
+            
             if (navigator.share) {
                 await navigator.share({
                     title: '{{ user.get_full_name }} - Üni Yıllık Profili',
-                    text: '{{ user.get_full_name }} adlı kullanıcının profilini görüntüle',
+                    text: shareText,
                     url: window.location.href
                 });
             } else {
                 // Fallback for browsers that don't support Web Share API
+                const shareContent = `${shareText}\n\n${window.location.href}`;
                 const dummy = document.createElement('input');
                 document.body.appendChild(dummy);
-                dummy.value = window.location.href;
+                dummy.value = shareContent;
                 dummy.select();
                 document.execCommand('copy');
                 document.body.removeChild(dummy);
-                showMessage('Profil linki kopyalandı', 'success');
+                showMessage('Profil linki ve bilgileri kopyalandı', 'success');
             }
         } catch (error) {
             console.error('Error sharing:', error);
