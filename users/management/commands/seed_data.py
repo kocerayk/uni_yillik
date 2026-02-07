@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
         # Create graduation years
         created_years = 0
-        for year in range(2020, 2031):
+        for year in range(2000, 2031):
             _, created = GraduationYear.objects.get_or_create(year=year)
             if created:
                 created_years += 1
