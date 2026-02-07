@@ -1,0 +1,18 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Benim Yazdıklarım{% endblock %}
+
+{% block content %}
+  <h1>Benim Yazdıklarım</h1>
+  {% if notes %}
+    <ul>
+      {% for note in notes %}
+        <li>
+          <strong>{{ note.created_at }}:</strong> {{ note.content }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Henüz hiçbir notunuz bulunmamaktadır.</p>
+  {% endif %}
+{% endblock %}

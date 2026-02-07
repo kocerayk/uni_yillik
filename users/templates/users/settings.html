@@ -1,0 +1,1236 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Ayarlar{% endblock %}
+
+{% block content %}
+<style>
+
+    .settings-container {
+        --badge-width: 300px;
+        --content-max-width: 1200px;
+        --glass-opacity: 0.15;
+        --glass-border-opacity: 0.2;
+        --text-primary: rgba(255, 255, 255, 0.95);
+        --text-secondary: rgba(255, 255, 255, 0.7);
+        --text-tertiary: rgba(255, 255, 255, 0.5);
+        --focus-overlay: rgba(0, 0, 0, 0.3);
+        --tooltip-bg: rgba(0, 0, 0, 0.8);
+        --share-button-bg: rgba(255, 255, 255, 0.1);
+        --warning-text: #8E8E93;
+        --glass-bg: #f9a5a5;
+        --glass-border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity));
+        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --toggle-bg:rgba(255, 255, 255);
+        --border-radius: 24px;
+        --spacing: 24px;
+        --blur: 16px;
+        --transition: all 0.3s ease;
+        --nav-height: 70px;
+        --glass-color: rgba(255,255,255,var(--glass-opacity));
+        --card-radius: 24px;
+        --card-border: 1px solid rgba(255,255,255,var(--glass-border-opacity));
+        --card-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        --white: #fff;
+    }
+
+    .review-content {
+        width: 100%;
+        height: 100%;
+        min-height: 200px;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-color, #333);
+        font-size: 1rem;
+        line-height: 1.5;
+        resize: none;
+        transition: all 0.3s ease;
+    }
+
+    .review-content:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+
+    .send-btn {
+        align-self: flex-end;
+        padding: 12px 24px;
+        background: var(--primary-color, #fcc3c3);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .send-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .send-btn:active {
+        transform: translateY(0);
+    }
+
+    :root[data-theme="black"] .send-btn {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .settings-container {
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+        gap: var(--spacing);
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+        padding: var(--spacing);
+    }
+
+    .settings-sidebar {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--blur));
+        -webkit-backdrop-filter: blur(var(--blur));
+        border-radius: var(--border-radius);
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        padding: var(--spacing);
+        position: sticky;
+        top: calc(var(--nav-height) + var(--spacing));
+        height: fit-content;
+        transition: var(--transition);
+    }
+
+    .settings-card {
+        background: var(--glass-color);
+        backdrop-filter: blur(var(--blur));
+        -webkit-backdrop-filter: blur(var(--blur));
+        border-radius: var(--card-radius);
+        border: var(--card-border);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08); /* Hafif gölge */
+        padding: 30px;
+        transition: var(--transition);
+        overflow: hidden;
+    }
+
+    .sidebar-title {
+        color: var(--white);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .toggle-group {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .toggle-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        color: var(--white);
+        font-size: 0.95rem;
+        user-select: none;
+        transition: all 0.2s ease;
+    }
+
+    .toggle-option:hover {
+        opacity: 0.9;
+    }
+
+    .toggle-option input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .toggle-circle {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+        width: 24px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .toggle-option:hover .toggle-circle {
+        background-color: rgba(255, 255, 255, 0.15);
+        transform: scale(1.05);
+    }
+
+    .toggle-option input:checked ~ .toggle-circle {
+        background-color: var(--primary-color, #fcc3c3);
+        border-color: transparent;
+        box-shadow: 0 2px 8px rgba(252, 195, 195, 0.3);
+    }
+
+    :root[data-theme="black"] .toggle-option input:checked ~ .toggle-circle {
+        background-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+    
+    :root[data-theme="black"] .settings-sidebar {
+        background: #2a2a2a;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .checkmark-svg {
+        width: 16px;
+        height: 16px;
+        fill: white;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s ease;
+    }
+
+    .toggle-option input:checked ~ .toggle-circle .checkmark-svg {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .toggle-label {
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .toggle-option input:checked ~ .toggle-label {
+        color: var(--white);
+    }
+
+    .nav-menu {
+        list-style: none;
+        padding: 0;
+    }
+
+    .nav-item {
+        margin-bottom: 10px;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 15px;
+        border-radius: 12px;
+        color: var(--white);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link.active {
+        background: var(--white);
+        color: var(--primary-color);
+    }
+
+    .nav-link i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .settings-content {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .settings-card:hover {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.05);
+    }
+
+    .settings-card {
+        background: var(--glass-color);
+        backdrop-filter: blur(var(--blur));
+        -webkit-backdrop-filter: blur(var(--blur));
+        border-radius: var(--card-radius);
+        border: var(--card-border);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+        padding: 30px;
+        transition: var(--transition);
+    }
+
+    .settings-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .card-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        font-size: 1.5rem;
+        color: var(--white);
+    }
+
+    .card-title {
+        color: var(--white);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .setting-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 16px 0;
+    transition: var(--transition);
+    position: relative;
+}
+
+.setting-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.setting-item:hover {
+    background: transparent;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.setting-label {
+    font-weight: 500;
+    color: var(--white);
+    font-size: 1.1rem;
+}
+
+.setting-description {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.setting-item .btn {
+    flex-shrink: 0;
+}
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: var(--white);
+        font-size: 1rem;
+        transition: var(--transition);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(238, 110, 110, 0.2);
+    }
+
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--toggle-bg);
+        transition: .4s;
+        border-radius: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+    }
+
+    .toggle-slider:before {
+        content: '\2715';
+        color: white;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: var(--glass-bg);
+        transition: .4s;
+        border-radius: 50%;
+        z-index: 1;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: var(--toggle-bg);
+    }
+
+    input:checked + .toggle-slider:before {
+        content: '\2713';
+        transform: translateX(30px);
+        color: white;
+    }
+
+    .radio-group, .checkbox-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .radio-option, .checkbox-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--white);
+        font-size: 0.9rem;
+        cursor: pointer;
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .checkbox-option input, .radio-option input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .checkbox-option .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 24px;
+        width: 24px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .checkbox-option:hover input ~ .checkmark {
+        background-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .checkbox-option input:checked ~ .checkmark {
+        background-color: var(--glass-bg);
+        box-shadow: 0 0 10px rgba(252, 195, 195, 0.4);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .checkbox-option input:checked ~ .checkmark:after {
+        display: block;
+    }
+
+    .checkbox-option .checkmark:after {
+        left: 9px;
+        top: 5px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        opacity: 1;
+    }
+
+    .radio-option {
+        position: relative;
+        padding-left: 30px;
+        margin-right: 15px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .radio-option .radio-mark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .radio-option:hover .radio-mark {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .radio-option input:checked ~ .radio-mark {
+        background-color: var(--glass-bg);
+    }
+
+    .radio-mark:after {
+        content: "";
+        position: absolute;
+        display: none;
+        top: 6px;
+        left: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+    }
+
+    .radio-option input:checked ~ .radio-mark:after {
+        display: block;
+    }
+
+    .theme-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.2s ease;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .theme-circle.pink {
+        background-color: #fcc3c3;
+    }
+
+    .theme-circle.black {
+        background-color: #444444;
+    }
+    
+    /* Mobil uyum için media query'ler */
+    @media (max-width: 1100px) {
+        .settings-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 900px) {
+        .settings-container {
+            padding: 16px;
+        }
+    }
+    
+    @media (max-width: 600px) {
+        .btn,
+        .btn-primary,
+        .btn-danger,
+        .btn-outline,
+        .send-btn {
+            display: flex;
+            justify-content: center !important;
+            align-items: center;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .settings-card {
+            padding: 20px;
+        }
+    
+        .card-title {
+            font-size: 1.2rem;
+        }
+    
+        .setting-label {
+            font-size: 1rem;
+        }
+    
+        .setting-description {
+            font-size: 0.85rem;
+        }
+    }
+
+    .theme-circle svg {
+        width: 20px;
+        height: 20px;
+        fill: white;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s ease;
+    }
+
+    .radio-option input:checked ~ .theme-circle svg {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .radio-option input:checked ~ .theme-circle {
+        transform: scale(1.05);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    .radio-option input, .checkbox-option input {
+        margin: 0;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+.btn-primary {
+    align-self: flex-end;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.08); /* Daha hafif cam efekti */
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Daha ince border */
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500; /* Daha ince font ağırlığı */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    backdrop-filter: blur(6px); /* Cam efekti için */
+    text-shadow: none; /* Minimalizm için kaldırdık */
+    box-shadow: none; /* Başlangıçta gölge yok */
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+}
+
+.btn-primary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px); /* Çok hafif kaldırma efekti */
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary:hover::after {
+    transform: translateX(0);
+}
+
+/* Active state */
+.btn-primary:active {
+    transform: translateY(0);
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.1s ease;
+}
+
+/* İkon animasyonu (daha subtle) */
+.btn-primary i {
+    transition: transform 0.3s ease;
+}
+
+.btn-primary:hover i {
+    transform: translateX(2px); /* Daha küçük hareket */
+}
+
+/* Focus state (erişilebilirlik için) */
+.btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(238, 110, 110, 0.3);
+}
+
+/* Kayıt konseptine özel "Hesap Sil" butonu */
+.btn-danger {
+    background: rgba(255, 77, 77, 0.1);
+    border: 1px solid rgba(255, 77, 77, 0.3);
+    transition: all 0.4s ease;
+}
+
+.btn-danger:hover {
+    background: rgba(255, 77, 77, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.2);
+}
+
+/* Outlined butonlar için */
+.btn-outline {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-outline::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-outline:hover::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+    .btn-danger {
+        background: #ff4d4d;
+        color: var(--white);
+    }
+
+    .btn-danger:hover {
+        background: #e04545;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--white);
+    }
+
+    .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .card-footer {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .settings-container {
+            grid-template-columns: 1fr;
+        }
+
+        .settings-sidebar {
+            position: static;
+            margin-bottom: 30px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .setting-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .setting-item .toggle-switch,
+        .setting-item .radio-group,
+        .setting-item .checkbox-group,
+        .setting-item .radio-option{
+            align-self: flex-start;
+        }
+    }
+</style>
+
+<div class="settings-container">
+    <!-- Sidebar Navigation -->
+    <div class="settings-sidebar">
+        <h2 class="sidebar-title"><i class="fas fa-cog"></i> Ayarlar</h2>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#security" class="nav-link active">
+                    <i class="fas fa-shield-alt"></i> Güvenlik
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#notifications" class="nav-link">
+                    <i class="fas fa-bell"></i> Bildirimler
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#appearance" class="nav-link">
+                    <i class="fas fa-palette"></i> Tema & Görünüm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#data" class="nav-link">
+                    <i class="fas fa-database"></i> Veri & Geri Bildirim
+                </a>
+            </li>
+
+
+        </ul>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="settings-content">
+        <!-- Security Settings Card -->
+        <div id="security" class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="card-title">Güvenlik Ayarları</h3>
+            </div>
+            <div class="card-body">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Şifre değiştirme</div>
+                        <div class="setting-description">Hesabınızın şifresini güncelleyin</div>
+                    </div>
+                    <a href="{% url 'password_reset' %}" class="btn btn-outline">
+                        <i class="fas fa-key"></i> Şifre Değiştir
+                    </a>
+                </div>
+
+            </div>
+            <!-- Save button removed as requested -->
+        </div>
+
+        <!-- Notification Settings Card -->
+        <div id="notifications" class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3 class="card-title">Bildirim Ayarları</h3>
+            </div>
+            <div class="card-body">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">E-posta bildirimleri</div>
+                        <div class="setting-description">Önemli güncellemeler için e-posta alın</div>
+                    </div>
+                    <label class="toggle-option">
+                        <input type="checkbox" id="emailNotifications" {% if user.email_notifications_enabled %}checked{% endif %}>
+                        <span class="toggle-circle">
+                            <svg class="checkmark-svg" viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+                            </svg>
+                        </span>
+                        <span class="toggle-label">E-posta bildirimleri</span>
+                    </label>
+                </div>
+            </div>
+            <!-- Save button removed as requested -->
+        </div>
+
+        <!-- Theme & Appearance Card -->
+        <div id="appearance" class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <h3 class="card-title">Tema & Görünüm</h3>
+            </div>
+            <div class="card-body">
+
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Renk şeması</div>
+                        <div class="setting-description">Tercih ettiğiniz renk şemasını seçin</div>
+                    </div>
+                    <div class="radio-group" id="theme-selector">
+                        <label class="radio-option theme-option" data-theme="pink">
+                            <input type="radio" name="color" value="pink" checked>
+                            <span class="theme-circle pink" aria-label="Pembe Tema">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+                                </svg>
+                            </span>
+                            <span class="visually-hidden">Pembe</span>
+                        </label>
+                        <label class="radio-option theme-option" data-theme="black">
+                            <input type="radio" name="color" value="black">
+                            <span class="theme-circle black" aria-label="Siyah Tema">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+                                </svg>
+                            </span>
+                            <span class="visually-hidden">Siyah</span>
+                        </label>
+                    </div>
+                </div>
+
+
+            </div>
+            <!-- Save button removed as requested -->
+        </div>
+
+        <!-- Combined Data Management & Feedback Card -->
+        <div id="data" class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3 class="card-title">Veri & Geri Bildirim</h3>
+            </div>
+            <div class="card-body">
+                <!-- Data Management Section -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Veri indirme</div>
+                        <div class="setting-description">Hesap verilerinizin bir kopyasını indirin</div>
+                    </div>
+                    <a href="{% url 'download_user_data' %}" class="btn btn-outline">
+                        <i class="fas fa-download"></i> Verileri İndir
+                    </a>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Hesap silme</div>
+                        <div class="setting-description">Hesabınızı ve tüm verilerinizi kalıcı olarak silin</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="confirmDeleteAccount()">
+                        <i class="fas fa-trash-alt"></i> Hesabı Sil
+                    </button>
+                </div>
+
+                <!-- Feedback Section -->
+                <div class="setting-item" style="margin-bottom: -75px; padding-bottom: 0; border-bottom: none;">
+                    <div class="setting-info">
+                        <div class="setting-label">Geri Bildirim Gönder</div>
+                        <div class="setting-description">Görüş ve önerilerinizi bizimle paylaşın</div>
+                    </div>
+                    <a href="{% url 'feedback_view' %}" class="btn btn-outline">
+                        <i class="fas fa-paper-plane"></i> Geri Bildirim Gönder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Theme variables are now defined in base_generic.html -->
+
+<script>
+    function confirmDeleteAccount() {
+        if (confirm('Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+            if (confirm('Son kez soruyoruz: Tüm verileriniz kalıcı olarak silinecek. Devam etmek istiyor musunuz?')) {
+                // Form oluştur ve gönder
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{% url 'delete_account' %}";
+                
+                // CSRF token ekle
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (csrfToken) {
+                    form.appendChild(csrfToken.cloneNode());
+                } else {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrfmiddlewaretoken';
+                    csrfInput.value = '{{ csrf_token }}';
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Smooth scrolling for sidebar navigation
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        // Highlight nav item when scrolled to corresponding section
+        window.addEventListener('scroll', function() {
+            const dataSection = document.getElementById('data');
+            const dataLink = document.querySelector('a[href="#data"]');
+
+            if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+                navLinks.forEach(link => link.classList.remove('active'));
+                dataLink.classList.add('active');
+            }
+        });
+
+        // Improved highlight active section on scroll using IntersectionObserver
+        // navLinks is already declared above
+        const sections = document.querySelectorAll('.settings-card');
+
+        // Add extra space at the bottom of the last section to ensure it can be scrolled to
+        const lastSection = sections[sections.length - 1];
+        if (lastSection) {
+            const spacer = document.createElement('div');
+            spacer.style.height = '100px'; // Extra space to ensure last section is visible
+            lastSection.appendChild(spacer);
+        }
+
+        // Set up IntersectionObserver
+        const observerOptions = {
+            root: null, // viewport
+            rootMargin: '-10% 0px -80% 0px', // Adjust these values to control when sections are considered "visible"
+            threshold: 0 // Trigger when any part of the element is visible
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Get the id of the section that is currently visible
+                    const id = entry.target.getAttribute('id');
+
+                    // Update the active class on the navigation links
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections
+        sections.forEach(section => {
+            observer.observe(section);
+            // Add scroll-margin-top to ensure proper scrolling when clicking on nav links
+            section.style.scrollMarginTop = '100px';
+        });
+
+        // Handle click events on nav links
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Remove active class from all links
+                navLinks.forEach(l => l.classList.remove('active'));
+
+                // Add active class to clicked link
+                this.classList.add('active');
+
+                // Get the target section
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+
+                if (targetSection) {
+                    // Scroll to the target section with smooth behavior
+                    window.scrollTo({
+                        top: targetSection.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Theme Switching Functionality
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const rootElement = document.documentElement;
+
+        // Load saved theme from localStorage
+        const savedTheme = localStorage.getItem('uni-yillik-theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+
+            // Check the corresponding radio button
+            const radioToCheck = document.querySelector(`input[value="${savedTheme}"]`);
+            if (radioToCheck) {
+                radioToCheck.checked = true;
+            }
+        }
+
+        // Theme switching event listeners
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const theme = this.dataset.theme;
+                applyTheme(theme);
+                saveTheme(theme);
+
+                // Show success message for theme change
+                const card = this.closest('.settings-card');
+                const footer = card.querySelector('.card-footer');
+                const successMsg = document.createElement('div');
+                successMsg.className = 'success-message';
+                successMsg.style.color = '#fff';
+                successMsg.style.marginRight = '27px';
+                successMsg.style.marginTop = '27px';
+                successMsg.innerHTML = `<i class="fas fa-check-circle"></i> ${getThemeName(theme)} teması uygulandı`;
+
+                // Remove any existing success messages
+                const existingMsg = footer.querySelector('.success-message');
+                if (existingMsg) {
+                    existingMsg.remove();
+                }
+
+                const saveButton = footer.querySelector('.btn-primary');
+                footer.insertBefore(successMsg, saveButton);
+
+                // Remove the message after 3 seconds
+                setTimeout(() => {
+                    successMsg.remove();
+                }, 3000);
+            });
+        });
+
+        // Apply theme function
+        function applyTheme(theme) {
+            // Set the data-theme attribute on the root element
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+
+        // Save theme to localStorage
+        function saveTheme(theme) {
+            localStorage.setItem('uni-yillik-theme', theme);
+        }
+
+        // Get theme name in Turkish
+        function getThemeName(theme) {
+            const themeNames = {
+                'pink': 'Pembe',
+                'black': 'Siyah'
+            };
+            return themeNames[theme] || theme;
+        }
+    });
+    
+    // Handle email notifications toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailCheckbox = document.getElementById('emailNotifications');
+        
+        if (emailCheckbox) {
+            emailCheckbox.addEventListener('change', function() {
+                const isEnabled = this.checked;
+                
+                fetch('{% url "update_email_notifications" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        enabled: isEnabled
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status !== 'success') {
+                        // Revert the checkbox if there was an error
+                        emailCheckbox.checked = !isEnabled;
+                        console.error('Hata:', data.message || 'Bilinmeyen bir hata oluştu');
+                    }
+                })
+                .catch(error => {
+                    console.error('İstek hatası:', error);
+                    emailCheckbox.checked = !isEnabled; // Revert on error
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

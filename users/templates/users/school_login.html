@@ -1,0 +1,55 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Okul Girişi{% endblock %}
+
+{% block content %}
+  <h2>Okul ve Mezuniyet Yılı Girişi</h2>
+
+  {% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+  {% endif %}
+
+  <form method="post">
+      {% csrf_token %}
+
+      <!-- Okul Seçimi -->
+      <label>Okul:</label>
+      <select id="school-select" name="school_id" required>
+          <option value="" disabled selected>Okul Seçin</option>
+          {% for school in schools %}
+              <option value="{{ school.id }}">{{ school.name }}</option>
+          {% endfor %}
+      </select><br>
+
+      <!-- Mezuniyet Yılı Seçimi -->
+      <label>Mezuniyet Yılı:</label>
+      <select id="year-select" name="graduation_year" required>
+          <option value="" disabled selected>Önce okul seçin</option>
+      </select><br>
+
+      <!-- Şifre Girişi -->
+      <label>Şifre:</label>
+      <input type="password" name="password" placeholder="Okul Şifresi" required><br>
+
+      <button type="submit">Giriş Yap</button>
+  </form>
+
+  <!-- Dinamik seçim için script -->
+  <script>
+      const schoolSelect = document.getElementById('school-select');
+      const yearSelect = document.getElementById('year-select');
+      const yearsData = JSON.parse('{{ years_json|safe }}');
+
+      schoolSelect.addEventListener('change', function () {
+          const schoolId = this.value;
+          yearSelect.innerHTML = '<option value="" disabled selected>Mezuniyet Yılı Seçin</option>';
+          const filteredYears = yearsData.filter(year => year.school == schoolId);
+          filteredYears.forEach(year => {
+              const option = document.createElement('option');
+              option.value = year.year;
+              option.textContent = year.year;
+              yearSelect.appendChild(option);
+          });
+      });
+  </script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Login Kartı: Glassmorphism efektiyle -->
+        <div class="glass-card" id="login-card">
+            <h2>Giriş Yap</h2>
+            <form method="post" action="">
+                {% csrf_token %}
+                <!-- Django formu render edilebilir veya sade input kullanabilirsiniz -->
+                <input type="text" name="username" placeholder="Kullanıcı Adı" required>
+                <input type="password" name="password" placeholder="Şifre" required>
+                <button type="submit">Giriş Yap</button>
+            </form>
+            <p>Hesabınız yok mu?</p>
+            <!-- Kayıt formunu gösterecek buton -->
+            <button id="register-button">Kayıt Ol</button>
+        </div>
+        <!-- Kayıt Kartı: Başlangıçta gizli -->
+        <div class="glass-card hidden" id="register-card">
+            <h2>Kayıt Ol</h2>
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Kullanıcı Adı" required>
+                <input type="email" name="email" placeholder="E-posta" required>
+                <input type="password" name="password1" placeholder="Şifre" required>
+                <input type="password" name="password2" placeholder="Şifre Tekrar" required>
+                <button type="submit">Kayıt Ol</button>
+            </form>
+            <p>Hesabınız var mı?</p>
+            <button id="back-to-login-button">Giriş Yap</button>
+        </div>
+    </div>
+    <script>
+        // Form geçişleri için JavaScript
+        const loginCard = document.getElementById('login-card');
+        const registerCard = document.getElementById('register-card');
+        const registerButton = document.getElementById('register-button');
+        const backToLoginButton = document.getElementById('back-to-login-button');
+
+        registerButton.addEventListener('click', () => {
+            loginCard.classList.add('hidden');
+            registerCard.classList.remove('hidden');
+        });
+
+        backToLoginButton.addEventListener('click', () => {
+            registerCard.classList.add('hidden');
+            loginCard.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

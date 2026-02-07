@@ -1,0 +1,800 @@
+{% extends 'base_generic.html' %}
+{% load static %}
+{% block title %}Geri Bildirim Gönder{% endblock %}
+{% block content %}
+<style>
+    /* Using theme variables from base_generic.html */
+    :root[data-theme="pink"] {
+        --paper-color: #ffeeee;
+        --glass-frame: var(--yearbook-bg);
+        --shadow-color: rgba(238, 110, 110, 0.20);
+        --footer-height: 60px;
+    }
+    
+    :root[data-theme="black"] {
+        --paper-color: var(--card-paper-bg);
+        --glass-frame: var(--yearbook-bg);
+        --shadow-color: rgba(0, 0, 0, 0.7);
+        --footer-height: 60px;
+    }
+    
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Footer styling */
+    footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 100;
+        background: var(--glass-color, #fff);
+        backdrop-filter: blur(var(--blur, 12px));
+        -webkit-backdrop-filter: blur(var(--blur, 12px));
+        border-top: var(--border, 1px solid rgba(255,255,255,0.3));
+        height: var(--footer-height);
+    }
+    
+    .yearbook-container {
+        width: 100%;
+        height: calc(90vh - var(--nav-height) - var(--footer-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 10;
+        pointer-events: none;
+    }
+    
+    .yearbook-glass {
+        pointer-events: auto;
+        background: var(--yearbook-bg, #fcc3c3);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 24px;
+        box-shadow:
+            0 4px 12px var(--shadow-color),
+            inset 0 0 8px rgba(255, 255, 255, 0.3);
+        height: auto;
+        width: 1000px;
+        max-width: 90vw;
+        max-height: 70vh;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    :root[data-theme="black"] .yearbook-glass {
+        background: #444444;
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0; /* off-white text */
+    }
+    .yearbook-content {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 24px;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .profile-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .profile-photo {
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 15px;
+        border: 3px solid white;
+        box-shadow: 0 6px 12px var(--shadow-color);
+        position: relative;
+        background: #fff;
+    }
+
+    .profile-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .profile-info {
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    .profile-name {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 5px;
+    }
+
+    .profile-details {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        color: var(--text-color);
+        width: 100%;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .detail-item i {
+        color: var(--secondary-color);
+    }
+
+    .profile-section {
+        background: var(--paper-color);
+        border-radius: 19.2px;
+        padding: 20px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        height: 100%;
+        max-height: 65vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        /* Improve text clarity */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    .review-container {
+        height: 100%;
+        max-height: 65vh;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .email-section {
+        background: var(--paper-color);
+        border-radius: 19.2px;
+        padding: 15px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        display: flex;
+        flex-direction: column;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .review-section {
+        background: var(--paper-color);
+        border-radius: 19.2px;
+        padding: 20px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow: hidden;
+    }
+    
+    /* Modified card styles for black theme */
+    :root[data-theme="black"] .profile-section, 
+    :root[data-theme="black"] .email-section,
+    :root[data-theme="black"] .review-section {
+        background: #333333; /* darker gray background */
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f0f0f0; /* off-white text */
+    }
+
+    .review-content {
+        width: 100%;
+        height: 100%;
+        min-height: 250px;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-color, #333);
+        font-size: 1rem;
+        line-height: 1;
+        resize: none;
+        transition: all 0.3s ease;
+        overflow-y: auto; /* Only the textarea should scroll */
+    }
+    
+    /* Custom scrollbar for the textarea */
+    .review-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .review-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+    
+    .review-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+    }
+    
+    .review-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Dark theme scrollbar */
+    :root[data-theme="black"] .review-content::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    :root[data-theme="black"] .review-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    :root[data-theme="black"] .review-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .review-content:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+    
+    .send-btn {
+        align-self: flex-end;
+        padding: 10px 260px;
+        background: var(--glass-frame);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .send-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        background: #f8a8a8;
+    }
+    
+    .send-btn:active {
+        transform: translateY(0);
+    }
+    
+    :root[data-theme="black"] .send-btn {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .send-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .send-btn:hover::after {
+        animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+        0% {
+            transform: scale(0, 0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: scale(40, 40);
+            opacity: 0;
+        }
+    }
+    
+    .form-group {
+        margin-bottom: 0px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-color, #333);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text-color, #333);
+    }
+    
+    /* Alert messages */
+    .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    
+    .alert-success {
+        background-color: rgba(76, 175, 80, 0.2);
+        border: 1px solid rgba(76, 175, 80, 0.3);
+        color: #4CAF50;
+    }
+    
+    .alert-danger {
+        background-color: rgba(244, 67, 54, 0.2);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        color: #F44336;
+    }
+    
+    /* Mobil uyumluluk için media queries */
+    @media (max-width: 1100px) {
+        body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .yearbook-glass {
+            width: 95vw;
+            padding: 20px;
+            margin: 0 auto;
+        }
+        
+        .yearbook-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .yearbook-content {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 16px;
+            width: 100%;
+        }
+        
+        .profile-section {
+            max-height: none;
+            height: auto;
+            min-height: auto;
+            width: 100%;
+        }
+        
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 10px;
+        }
+        
+        .profile-name {
+            font-size: 1.4rem;
+        }
+        
+        .profile-info p {
+            font-size: 0.9rem;
+        }
+        
+        .yearbook-container {
+            height: calc(100vh - var(--nav-height) - var(--footer-height));
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+        
+        .yearbook-glass {
+            max-height: 85vh;
+        }
+        
+        .send-btn {
+            display: block;
+            margin: 15px auto 0;
+        }
+        
+        .review-container {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        body, html {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+        
+        .yearbook-glass {
+            padding: 16px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 100%;
+            max-height: 90vh;
+            box-sizing: border-box;
+        }
+        
+        .yearbook-content {
+            gap: 12px;
+        }
+        
+        .profile-section {
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .email-section {
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .review-section {
+            padding: 16px;
+            border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 8px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .profile-name {
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .profile-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        .profile-info p {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .detail-item {
+            font-size: 0.9rem;
+            justify-content: center;
+        }
+        
+        .feedback-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .send-btn {
+            padding: 12px 40px;
+            font-size: 0.95rem;
+            display: block;
+            margin: 15px auto 0;
+        }
+        
+        .review-content {
+            min-height: 180px;
+            font-size: 0.95rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        footer {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .yearbook-glass {
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .yearbook-content {
+            gap: 10px;
+        }
+        
+        .profile-section {
+            padding: 12px;
+            border-radius: 10px;
+        }
+        
+        .email-section {
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .review-section {
+            padding: 12px;
+            border-radius: 10px;
+        }
+        
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 6px;
+        }
+        
+        .profile-name {
+            font-size: 1.1rem;
+        }
+        
+        .profile-info p {
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+        
+        .detail-item {
+            font-size: 0.85rem;
+        }
+        
+        .feedback-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        
+        .send-btn {
+            padding: 10px 30px;
+            font-size: 0.9rem;
+            margin: 10px auto 0;
+            display: block;
+        }
+        
+        .review-content {
+            min-height: 150px;
+            font-size: 0.9rem;
+            padding: 8px;
+        }
+    }
+    
+    .form-control {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    /* Toast notification styling */
+    .toast-container {
+        position: absolute;
+        bottom: 80px; /* Position above the send button */
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+    }
+    
+    .toast {
+        min-width: 250px;
+        max-width: 350px;
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        opacity: 0;
+    }
+    
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .toast-success {
+        background-color: rgba(76, 175, 80, 0.9);
+        color: white;
+    }
+    
+    .toast-danger {
+        background-color: rgba(244, 67, 54, 0.9);
+        color: white;
+    }
+    
+    .toast-icon {
+        font-size: 1.2rem;
+    }
+    
+    .toast-message {
+        flex: 1;
+    }
+    
+    /* Icon styling */
+    .feedback-icon {
+        font-size: 3rem;
+        color: var(--secondary-color);
+        margin-bottom: 16px;
+    }
+    
+    :root[data-theme="black"] .feedback-icon {
+        color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+
+<div class="yearbook-container">
+    <div class="yearbook-glass">
+        <div class="yearbook-content">
+            <div class="profile-section">
+                <div class="feedback-icon">
+                    <i class="fas fa-comment-alt"></i>
+                </div>
+                <div class="profile-info">
+                    <h2 class="profile-name">Geri Bildirim</h2>
+                    <p>Görüş ve önerilerinizi bizimle paylaşın. Yıllık sitemizi geliştirmek için geri bildirimleriniz çok değerli.</p>
+                </div>
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>yilliksite@gmail.com</span>
+                    </div>
+                </div>
+            </div>
+            <div class="review-container">
+                <form method="post" style="height:100%;display:flex;flex-direction:column;gap:16px;">
+                    {% csrf_token %}
+                    <!-- Email Section - Top Container -->
+                    <div class="email-section">
+                        <div class="form-group">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="E-posta Adresiniz" required {% if user.is_authenticated %}value="{{ user.email }}"{% endif %}>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Section - Bottom Container -->
+                    <div class="review-section">
+                        <div class="form-group" style="height: 100%;">
+                            <textarea class="review-content" name="message" id="message" rows="8" placeholder="Geri Bildiriminiz" required></textarea>
+                        </div>
+                        
+                        <div style="position: relative; text-align: center;">
+                            <!-- Toast Container for Notifications -->
+                            <div class="toast-container" id="toastContainer"></div>
+                            <button type="submit" class="send-btn">Gönder</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch('{% url "feedback_view" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast("Geri bildiriminiz başarıyla gönderildi!", "success");
+                    form.reset();
+                } else {
+                    showToast(data.error || "Bir hata oluştu!", "error");
+                }
+            })
+            .catch(error => {
+                showToast("Bir hata oluştu!", "error");
+            });
+        });
+        
+        function showToast(message, type) {
+            const toastContainer = document.getElementById('toastContainer');
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            // Create icon based on type
+            const icon = document.createElement('div');
+            icon.className = 'toast-icon';
+            icon.innerHTML = type === 'success' 
+                ? '<i class="fas fa-check-circle"></i>' 
+                : '<i class="fas fa-exclamation-circle"></i>';
+            
+            // Create message element
+            const messageEl = document.createElement('div');
+            messageEl.className = 'toast-message';
+            messageEl.textContent = message;
+            
+            // Append elements to toast
+            toast.appendChild(icon);
+            toast.appendChild(messageEl);
+            
+            // Add toast to container
+            toastContainer.appendChild(toast);
+            
+            // Show toast with animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Remove toast after 4 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            }, 4000);
+        }
+    });
+</script>
+
+{% endblock %}

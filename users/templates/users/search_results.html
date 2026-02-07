@@ -1,0 +1,16 @@
+<!-- templates/users/search_results.html -->
+<form method="get" action="{% url 'search_users' %}">
+    <input type="text" name="username" placeholder="Kullanıcı adı" value="{{ request.GET.username }}">
+    <input type="text" name="school" placeholder="Üniversite" value="{{ request.GET.school }}">
+    <input type="number" name="year" placeholder="Yıl" value="{{ request.GET.year }}">
+    <button type="submit">Ara</button>
+</form>
+
+<h2>Arama Sonuçları</h2>
+<ul>
+    {% for user in users %}
+        <li>{{ user.username }} - {{ user.school }}</li>
+    {% empty %}
+        <li>Hiçbir kullanıcı bulunamadı.</li>
+    {% endfor %}
+</ul>

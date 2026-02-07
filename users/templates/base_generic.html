@@ -1,0 +1,1075 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<script>
+  // Apply theme immediately before any rendering to prevent flash of default theme
+  (function() {
+    const userTheme = localStorage.getItem('uni-yillik-theme') || 'pink';
+    document.documentElement.setAttribute('data-theme', userTheme);
+  })();
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Üniversite Yıllık{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Over+the+Rainbow&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'yearbook/images/favicon.png' %}">
+
+
+    <style>
+
+        :root {
+            --blur: 12px;
+            --border-radius: 24px;
+            --spacing: 40px;
+            --nav-height: 90px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --white: #fff;
+            --font-vcr: 'Over the Rainbow', cursive;
+            --background-color-rgb: 246, 154, 154; /* Pink theme RGB */
+        }
+
+        /* Pink Theme (Default) */
+        :root[data-theme="pink"] {
+            /* Primary Colors */
+            --primary-color: #ee6e6e;
+            --secondary-color: #fec5c5;
+            --background-color: #f69a9a;
+
+            /* Component Colors */
+            --glass-bg: #f9a5a5;
+            --glass-color: rgba(255, 255, 255, 0.25);
+            --card-paper-bg: #ffeeee;
+            --card-glass-bg: rgba(255, 255, 255, 0.15);
+            --yearbook-bg: #fcc3c3;
+
+            /* Text & Borders */
+            --text-color: #333;
+            --text-secondary: #555;
+            --border: 1px solid rgba(255, 255, 255, 0.3);
+            --year: rgba(255, 238, 238, 0.6);
+            --overlay: #000000;
+
+            /* Effects */
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+            /* Text Overlay */
+            --text-overlay-bg: rgba(255, 255, 255, 0.2);
+            --text-overlay-color: #000000;
+            --inset-highlight: inset 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Black Theme */
+        :root[data-theme="black"] {
+            /* Primary Colors */
+            --primary-color: #444444;
+            --secondary-color: #666666;
+            --background-color: #1a1a1a;
+            --background-color-rgb: 26, 26, 26; /* Black theme RGB */
+
+            /* Component Colors */
+            --glass-bg: #2a2a2a;
+            --glass-color: rgba(42, 42, 42, 0.7);
+            --card-paper-bg: #2e2e2e;
+            --card-glass-bg: rgba(50, 50, 50, 0.5);
+            --yearbook-bg: #2a2a2a;
+
+            /* Text & Borders */
+            --text-color: #f5f5f5;
+            --text-secondary: #bbbbbb;
+            --border: 1px solid rgba(255, 255, 255, 0.1);
+            --year: rgba(255, 255, 255, 0.15);
+            --overlay: #2e2e2e;
+
+            /* Effects */
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+            --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            --inset-highlight: inset 0 0 8px rgba(255, 255, 255, 0.15);
+
+            /* Pink Accents */
+            --pink-accent: #fcc3c3;
+            --pink-accent-shadow: 0 0 12px rgba(252, 195, 195, 0.2);
+        }
+
+        /* Common styles for all elements */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--background-color);
+            background-attachment: fixed;
+            color: var(--text-color);
+            padding-top: var(--nav-height);
+            overflow-x: hidden;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sticky Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            background: var(--glass-color);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border-bottom: var(--border);
+            z-index: 1000;
+            transition: var(--transition);
+            width: 100%;
+            overflow: visible;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--spacing);
+            position: relative;
+        }
+
+        .logo {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            padding: 0 50px;
+        }
+
+        .logo img {
+            height: 75px !important; /* 70px'den 85px'e çıkarıldı */
+            width: auto;
+            margin-right: 8px;
+        }
+
+        :root[data-theme="black"] .logo img {
+            content: url("{% static 'yearbook/images/a (33).png' %}");
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            list-style: none;
+            margin-right: 50px;
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+            z-index: 1;
+            position: relative;
+            text-decoration: none !important;
+            border-bottom: none !important;
+            outline: none !important;
+        }
+
+        /* Desktop görünümde cam halkalar */
+        @media (min-width: 48.1em) {
+            .nav-links a {
+                color: var(--white);
+                text-decoration: none;
+                padding: 0;
+                border-radius: 50%;
+                transition: var(--transition);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .nav-links a::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 50%;
+                transform: scale(0);
+                transition: transform 0.3s ease;
+            }
+
+            .nav-links a:hover::before {
+                transform: scale(1);
+            }
+
+            .nav-links a:hover {
+                background: rgba(255, 255, 255, 0.15);
+                transform: translateY(-2px) scale(1.05);
+                text-decoration: none !important;
+                box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+
+            .nav-links a i {
+                font-size: 16px;
+                z-index: 1;
+                position: relative;
+                text-decoration: none !important;
+                border-bottom: none !important;
+                outline: none !important;
+            }
+
+            .nav-links a.active {
+                background: rgba(255, 255, 255, 0.25);
+                color: var(--white);
+                font-weight: 600;
+                box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.4);
+            }
+
+            .nav-links a.active::before {
+                transform: scale(1);
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* Override browser User-Agent styles */
+        .nav-links li {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: none !important;
+            outline: none !important;
+        }
+
+        /* Remove all possible lines globally */
+        .nav-links * {
+            border: none !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+            outline: none !important;
+            background-image: none !important;
+        }
+
+        /* Chrome-specific styles */
+        .nav-links {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .nav-links a.active {
+            background: var(--white);
+            color: var(--background-color);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Mobile Navigation */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing);
+            min-height: calc(100vh - var(--nav-height) - 60px);
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Footer */
+        /* Text Overlay Styles */
+        .text-overlay.text-inline {
+            position: absolute;
+            bottom: 12px;
+            right: 22px;
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: normal;
+            color: var(--text-overlay-color);
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            justify-content: flex-end;
+            font-family: var(--font-vcr);
+            z-index: 2;
+            letter-spacing: 1px;
+            padding: 4px 8px;
+            background: var(--text-overlay-bg);
+            border-radius: 2px;
+            backdrop-filter: blur(4px);
+        }
+
+        .text-overlay.text-inline .cover-subtitle {
+            color: inherit;
+            font-family: inherit;
+        }
+
+        .text-overlay.text-inline .year {
+            font-weight: bold;
+            font-size: 14px;
+            color: inherit;
+            font-family: inherit;
+            position: relative;
+            top: -1px;
+        }
+
+        .text-overlay.text-inline .apostrophe {
+            font-size: 14px;
+            position: relative;
+            font-family: inherit;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--white);
+            background: var(--glass-color);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border-top: var(--border);
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1100px) {
+            .nav-container {
+                max-width: 90%;
+                padding: 0 20px;
+            }
+
+            main {
+                max-width: 90%;
+                padding: 30px 20px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            :root {
+                --spacing: 30px;
+                --nav-height: 65px;
+            }
+
+            .nav-links a {
+                padding: 6px 12px;
+                font-size: 0.95rem;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Mobile Menu Styles */
+        .nav-links {
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn {
+            transition: var(--transition);
+            z-index: 1001;
+        }
+
+        /* Desktop görünümde metinleri gizle */
+        .nav-text {
+            display: none;
+        }
+
+        /* Mobile Menu Styles - Updated with rounded corners and navbar color */
+        @media (max-width: 48em) {
+            .nav-text {
+                display: inline;
+                margin-left: 0.5rem;
+            }
+
+            :root {
+                /* Mobile menu variables */
+                --mobile-menu-width: 280px;
+                --mobile-menu-bg: rgba(var(--background-color-rgb), 0.98);
+                --mobile-menu-blur: none;
+                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.1);
+                --mobile-menu-radius: 0 0 0 var(--border-radius);
+                --mobile-menu-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+                --mobile-menu-padding: 80px 20px 20px; /* Rounded left corners */
+
+                /* Menu Items - Keep existing glass styling */
+                --menu-item-height: 60px;
+                --menu-item-padding: 0 1.5rem;
+                --menu-item-bg: rgba(255, 255, 255, 0.1);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.2);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.25);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
+                --menu-item-text-active: #fff;
+                --menu-item-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+                /* Mobile Button Variables */
+                --mobile-btn-size: 3rem;
+                --mobile-btn-bg: rgba(255, 255, 255, 0.2);
+                --mobile-btn-bg-active: rgba(255, 255, 255, 0.3);
+                --mobile-btn-border: 1px solid rgba(255, 255, 255, 0.3);
+                --mobile-btn-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                --mobile-btn-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+
+            /* Black Theme Mobile Menu Overrides */
+            :root[data-theme="black"] {
+                /* Keep the same glass-color as navbar for consistency */
+                --mobile-menu-bg: var(--glass-color);
+                --mobile-menu-border: var(--border);
+                --menu-item-bg: rgba(255, 255, 255, 0.05);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
+                --menu-item-text-active: #fff;
+            }
+
+            /* Black Theme Mobile Menu Overrides */
+            :root[data-theme="black"] {
+                --mobile-menu-bg: rgba(42, 42, 42, 0.95);
+                --mobile-menu-border: 1px solid rgba(255, 255, 255, 0.15);
+                --menu-item-bg: rgba(255, 255, 255, 0.05);
+                --menu-item-bg-hover: rgba(255, 255, 255, 0.15);
+                --menu-item-bg-active: rgba(255, 255, 255, 0.2);
+                --menu-item-text: rgba(255, 255, 255, 0.95);
+                --menu-item-text-active: #fff;
+            }
+
+            /* Mobile Menu Button - Fixed Position */
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: var(--mobile-btn-size);
+                height: var(--mobile-btn-size);
+                position: fixed;
+                right: 1.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 1002;
+                border: none;
+                border-radius: 16px;
+                background: var(--mobile-btn-bg);
+                color: var(--white);
+                font-size: 1.3rem;
+                cursor: pointer;
+                transition: var(--mobile-btn-transition);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: var(--mobile-btn-border);
+                box-shadow: var(--mobile-btn-shadow);
+            }
+
+            .mobile-menu-btn:hover {
+                background: var(--mobile-btn-bg-active);
+                transform: translateY(-50%) scale(1.05);
+            }
+
+            .mobile-menu-btn:active {
+                transform: translateY(-50%) scale(0.95);
+            }
+
+            /* Navigation Links Container - Updated with theme colors */
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: var(--mobile-menu-width);
+                height: 100vh;
+
+                /* Theme-based background with opacity */
+                background: rgba(var(--background-color-rgb), 0.98) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+
+                /* Border and radius */
+                border-left: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0 0 0 var(--border-radius);
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+
+                /* Layout */
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
+                padding: calc(var(--nav-height) + 20px) 20px 20px 20px;
+                margin: 0;
+                list-style: none;
+
+                /* Animation */
+                transform: translateX(100%);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                z-index: 1001;
+
+                /* Ensure rounded corners are visible */
+                overflow: hidden;
+            }
+
+            .nav-links.active {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            /* Menu Items - Glass Effect */
+            /* Menu Items - Keep existing glass effect */
+            .nav-links a {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                padding: var(--menu-item-padding);
+                margin: 0;
+
+                /* Styling - Keep existing glass effect */
+                background: var(--menu-item-bg);
+                color: var(--menu-item-text);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1rem;
+
+                /* Layout */
+                border: none;
+                border-radius: 0;
+                text-align: left;
+                gap: 1rem;
+
+                /* Animation */
+                transform: translateX(30px);
+                opacity: 0;
+                transition: var(--menu-item-transition);
+
+                /* Enhanced Glass effect */
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                position: relative;
+            }
+
+            .nav-links.active a {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            /* Icon styling */
+            .nav-links a i {
+                font-size: 1.2rem;
+                width: 24px;
+                text-align: center;
+                color: inherit;
+                opacity: 0.8;
+                transition: all 0.3s ease;
+            }
+
+            /* Hover effects - Enhanced Glass */
+            .nav-links a:hover {
+                background: var(--menu-item-bg-hover);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                transform: translateX(-4px);
+            }
+
+            .nav-links a:hover::before {
+                opacity: 1;
+            }
+
+            .nav-links a:hover i {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            /* Active state - Strong Glass Effect */
+            .nav-links a.active {
+                background: var(--menu-item-bg-active);
+                color: var(--menu-item-text-active);
+                font-weight: 600;
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-left: 4px solid var(--primary-color);
+            }
+
+            .nav-links a.active::before {
+                opacity: 1;
+                background: linear-gradient(90deg,
+                    var(--primary-color) 0%,
+                    rgba(255, 255, 255, 0.3) 50%,
+                    transparent 100%);
+            }
+
+            .nav-links a.active i {
+                opacity: 1;
+                color: var(--primary-color);
+                transform: scale(1.1);
+            }
+
+
+            /* Staggered animation for menu items */
+            .nav-links.active a:nth-child(1) { transition-delay: 0.1s; }
+            .nav-links.active a:nth-child(2) { transition-delay: 0.15s; }
+            .nav-links.active a:nth-child(3) { transition-delay: 0.2s; }
+            .nav-links.active a:nth-child(4) { transition-delay: 0.25s; }
+            .nav-links.active a:nth-child(5) { transition-delay: 0.3s; }
+        }
+
+        /* Smaller mobile screens - keep rounded corners */
+        @media (max-width: 480px) {
+            :root {
+                --mobile-menu-width: 260px;
+                --mobile-menu-radius: 40px 0 0 40px; /* Slightly smaller radius for smaller screens */
+            }
+
+            .mobile-menu-btn {
+                right: 1.25rem;
+                font-size: 1.2rem;
+            }
+
+            .nav-links a {
+                font-size: 0.95rem;
+            }
+
+            .nav-links a i {
+                font-size: 1.1rem;
+                width: 22px;
+            }
+        }
+
+        /* Very small screens */
+        /* Very small screens - keep rounded corners */
+        @media (max-width: 400px) {
+            :root {
+                --mobile-menu-width: 240px;
+                --mobile-menu-radius: 35px 0 0 35px; /* Even smaller radius for very small screens */
+            }
+
+            .mobile-menu-btn {
+                right: 1rem;
+                font-size: 1.1rem;
+            }
+
+            .nav-links a {
+                font-size: 0.9rem;
+            }
+
+            .nav-links a i {
+                font-size: 1rem;
+                width: 20px;
+            }
+
+            /* Prevent body scroll when menu is open */
+            body.menu-open {
+                overflow: hidden;
+                height: 100vh;
+            }
+        }
+
+        @media (max-width: 48em) {
+            :root[data-theme="black"] .logo img {
+                content: url("{% static 'yearbook/images/a (99).png' %}");
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                right: 1.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 1002;
+                width: var(--mobile-btn-size);
+                height: var(--mobile-btn-size);
+                border-radius: 12px;
+                background: var(--mobile-btn-bg);
+                color: var(--white);
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: var(--mobile-btn-transition);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                box-shadow: var(--mobile-btn-shadow);
+                border: var(--mobile-btn-border);
+            }
+
+            .mobile-menu-btn:hover {
+                background: var(--mobile-btn-bg-active);
+                transform: translateY(-50%) scale(1.05);
+            }
+
+            .mobile-menu-btn:active {
+                transform: translateY(-50%) scale(0.95);
+            }
+
+            .mobile-menu-btn.active {
+                background: var(--mobile-btn-bg-active);
+            }
+
+            /* Navigation Links Container - Updated with rounded corners and navbar styling */
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: var(--mobile-menu-width);
+                height: 100vh;
+
+                /* Updated background to match navbar */
+                background: var(--mobile-menu-bg);
+                backdrop-filter: blur(var(--mobile-menu-blur));
+                -webkit-backdrop-filter: blur(var(--mobile-menu-blur));
+
+                /* Updated border and radius */
+                border-left: var(--mobile-menu-border);
+                border-radius: var(--mobile-menu-radius);
+                box-shadow: var(--mobile-menu-shadow);
+                display: flex;
+                flex-direction: column;
+                padding: var(--mobile-menu-padding);
+                margin: 0;
+                list-style: none;
+                transform: translateX(100%);
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 1001;
+
+                /* Ensure rounded corners are visible */
+                overflow: hidden;
+            }
+
+            .nav-links.active {
+                transform: translateX(0);
+            }
+
+            /* Menu Items - Taller Design */
+            .nav-links li {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .nav-links a {
+                display: flex;
+                align-items: center;
+                height: var(--menu-item-height);
+                padding: var(--menu-item-padding);
+                background: var(--menu-item-bg);
+                color: var(--menu-item-text);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 0.95rem;
+                transition: var(--transition);
+                border-left: 3px solid transparent;
+                margin: 4px 0;
+                border-radius: 8px;
+            }
+
+            .nav-links a i {
+                font-size: 1.1rem;
+                width: 24px;
+                text-align: center;
+                margin-right: 12px;
+                opacity: 0.9;
+                transition: all 0.3s ease;
+            }
+
+            /* Hover & Active States */
+            .nav-links a:hover {
+                background: var(--menu-item-bg-hover);
+                color: var(--menu-item-text-active);
+            }
+
+            .nav-links a.active {
+                background: var(--menu-item-bg-active);
+                color: var(--menu-item-text-active);
+                font-weight: 600;
+                border-left: 3px solid var(--white);
+            }
+
+            .nav-links a.active i {
+                color: var(--white);
+            }
+
+            /* Close Button State */
+            .mobile-menu-btn.active {
+                transform: translateY(-50%) rotate(90deg);
+            }
+
+            .mobile-menu-btn.active:hover {
+                transform: translateY(-50%) rotate(90deg) scale(1.05);
+            }
+
+            /* Body Scroll Lock */
+            body.menu-open {
+                overflow: hidden;
+            }
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --spacing: 20px;
+                --nav-height: 60px;
+                --border-radius: 18px;
+            }
+
+            .nav-container {
+                max-width: 95%;
+                padding: 0 15px;
+            }
+
+            main {
+                max-width: 95%;
+                padding: 20px 15px;
+                padding-bottom: 60px; /* Extra space for footer */
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            footer {
+                padding: 15px 10px;
+                font-size: 0.9rem;
+            }
+            :root[data-theme="black"] .logo img {
+                content: url("{% static 'yearbook/images/a (99).png' %}");
+            }
+        }
+
+        @media (max-width: 400px) {
+            :root {
+                --spacing: 15px;
+                --nav-height: 55px;
+                --border-radius: 16px;
+            }
+
+            .nav-container {
+                max-width: 100%;
+                padding: 0 10px;
+            }
+
+            main {
+                max-width: 100%;
+                padding: 15px 10px;
+                padding-bottom: 50px;
+            }
+
+            .logo {
+                font-size: 1.25rem;
+            }
+
+            .mobile-menu-btn {
+                font-size: 1.25rem;
+                width: 2.75rem;
+                height: 2.75rem;
+                right: 1rem;
+            }
+
+            .nav-links a {
+                font-size: 0.9rem;
+                padding: 6px 10px;
+            }
+
+            footer {
+                padding: 12px 8px;
+                font-size: 0.85rem;
+            }
+
+            /* Logo boyutlandırma güncellemeleri - Mobil için küçültülmüş */
+            .logo img {
+                height: 70px !important; /* Ana boyut küçültüldü */
+                width: auto;
+                margin-right: 8px;
+                transition: var(--transition);
+            }
+
+            /* Siyah tema için logo değişikliği */
+            :root[data-theme="black"] .logo img {
+                content: url("{% static 'yearbook/images/a (99).png' %}");
+            }
+
+            /* Mobil uyumlu logo boyutlandırma - Küçültülmüş */
+            @media (max-width: 1100px) {
+                .logo img {
+                    height: 59px !important;
+                }
+            }
+
+            @media (max-width: 900px) {
+                .logo img {
+                    height: 54px !important;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .logo img {
+                    height: 49px !important;
+                }
+            }
+
+            @media (max-width: 600px) {
+                .logo img {
+                    height: 44px !important;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .logo img {
+                    height: 38px !important;
+                }
+            }
+
+            @media (max-width: 400px) {
+                .logo img {
+                    height: 36px !important;
+                }
+            }
+
+            @media (max-width: 360px) {
+                .logo img {
+                    height: 32px !important;
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'school_dashboard' %}" class="logo">
+                <img src="{% static 'yearbook/images/a (33).png' %}" alt="Logo" style="height: 70px; width: auto; margin-right: 8px;">
+            </a>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active"{% endif %}>
+                    <i class="fas fa-user"></i> 
+                    <span class="nav-text">Profil</span>
+                </a></li>
+                <li><a href="{% url 'yearbook' %}" {% if request.resolver_match.url_name == 'yearbook' %}class="active"{% endif %}>
+                    <i class="fas fa-book"></i> 
+                    <span class="nav-text">Yıllık</span>
+                </a></li>
+                <li><a href="{% url 'my_notes' %}" {% if request.resolver_match.url_name == 'my_notes' %}class="active"{% endif %}>
+                    <i class="fas fa-pen"></i> 
+                    <span class="nav-text">Notlarım</span>
+                </a></li>
+                <li><a href="{% url 'settings_view' %}" {% if request.resolver_match.url_name == 'settings_view' %}class="active"{% endif %}>
+                    <i class="fas fa-cog"></i> 
+                    <span class="nav-text">Ayarlar</span>
+                </a></li>
+                <li><a href="{% url 'user_logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> 
+                    <span class="nav-text">Çıkış Yap</span>
+                </a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; {% now "Y" %} Yıllık - Tüm hakları saklıdır.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu functionality
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const navLinks = document.querySelector('.nav-links');
+            const html = document.documentElement;
+            const body = document.body;
+
+            function toggleMenu() {
+                const isOpen = navLinks.classList.toggle('active');
+                mobileMenuBtn.classList.toggle('active', isOpen);
+                mobileMenuBtn.innerHTML = isOpen ?
+                    '<i class="fas fa-times"></i>' :
+                    '<i class="fas fa-bars"></i>';
+
+                // Prevent body scroll when menu is open
+                if (isOpen) {
+                    body.style.overflow = 'hidden';
+                    html.style.overflow = 'hidden';
+                } else {
+                    body.style.overflow = '';
+                    html.style.overflow = '';
+                }
+            }
+
+
+            mobileMenuBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleMenu();
+            });
+
+
+            // Close mobile menu when clicking outside or on a link
+            document.addEventListener('click', function(e) {
+                const isClickInsideNavbar = e.target.closest('.navbar');
+                const isClickOnNavLink = e.target.closest('.nav-links a');
+
+                if ((!isClickInsideNavbar || isClickOnNavLink) && navLinks.classList.contains('active')) {
+                    toggleMenu();
+                }
+            });
+
+            // Close menu when pressing Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && navLinks.classList.contains('active')) {
+                    toggleMenu();
+                }
+            });
+
+            // Add animation classes to menu items
+            const navLinksItems = document.querySelectorAll('.nav-links a');
+            navLinksItems.forEach((link, index) => {
+                // Add data-delay attribute for CSS animations
+                link.style.transitionDelay = `${(index + 2) * 0.1}s`;
+
+                // Close menu when clicking a link (with a small delay for the animation)
+                link.addEventListener('click', function() {
+                    setTimeout(() => {
+                        if (navLinks.classList.contains('active')) {
+                            toggleMenu();
+                        }
+                    }, 100);
+                });
+            });
+
+            // Theme loading from localStorage - for consistency with the immediate loading script
+            const savedTheme = localStorage.getItem('uni-yillik-theme');
+            if (savedTheme) {
+                // Apply the saved theme
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        });
+    </script>
+</body>
+</html>
