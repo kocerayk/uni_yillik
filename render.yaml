@@ -16,8 +16,21 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "yillik.site,www.yillik.site"
+        value: "yillik-site.onrender.com"
+      - key: DEFAULT_DOMAIN
+        value: "yillik-site.onrender.com"
+      - key: RESEND_API_KEY
+        sync: false  # Dashboard'dan manuel girilecek
+      - key: RESEND_FROM_EMAIL
+        value: "onboarding@resend.dev"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
 
 databases:
   - name: yillik-db
     plan: free
+

@@ -70,7 +70,3 @@ def update_school_logo(sender, instance, created, **kwargs):
             
     except Exception as e:
         logger.error(f"Unexpected error in update_school_logo: {str(e)}") 
-
-schools = School.objects.annotate(
-    name_tr=Collate('name', 'turkish_ci')
-).order_by('name_tr')

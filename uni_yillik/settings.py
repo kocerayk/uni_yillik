@@ -14,6 +14,9 @@ import os
 from dotenv import load_dotenv
 import resend
 import dj_database_url
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = BASE_DIR / '.env'
@@ -34,6 +37,9 @@ RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
 DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
 
+# Render.com deployment — domain env'den gelir
+DEFAULT_DOMAIN = os.getenv('DEFAULT_DOMAIN', '127.0.0.1:8000')
+
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 if DEBUG:
@@ -48,7 +54,7 @@ if DEBUG:
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'yillik.site,www.yillik.site').split(',')
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 
 # Application definition
 
@@ -60,6 +66,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
+    'cloudinary_storage',
+    'cloudinary',
     'users',
 ]
 
@@ -150,6 +158,20 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # collectstatic için
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
+# Cloudinary — Render.com free tier'da kalıcı disk yok, media dosyaları için
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', ''),
+}
+
+# Cloudinary yapılandırılmışsa media dosyalarını oraya yükle
+if os.getenv('CLOUDINARY_CLOUD_NAME'):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    # Yerel geliştirme — dosya sistemini kullan
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -170,20 +192,17 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Google API Settings
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID')
-
-# For password reset email construction
-DEFAULT_DOMAIN = '127.0.0.1:8000'
 GOOGLE_CSE_ID = "64ea4b8fcead34b1a"
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = not DEBUG
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = not DEBUG
 
 # Email backend - using console in development, no default in production
 # Note: We're using direct API calls to Resend, so we don't need Django's email backend
@@ -195,14 +214,11 @@ else:
     # since we're using direct Resend API calls for verification emails
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# For password reset email construction
-DEFAULT_DOMAIN = 'yillik.site'  # Production domain
-
 # Make sure cookies are sent with same-site requests
+# CSRF_TRUSTED_ORIGINS env'deki ALLOWED_HOSTS'tan dinamik oluşturulur
 CSRF_TRUSTED_ORIGINS = [
-    'https://yillik.site',
-    'https://www.yillik.site',
-    'https://209.38.229.98'
+    f'https://{host}' for host in ALLOWED_HOSTS
+    if host not in ('localhost', '127.0.0.1', '*')
 ]
 
 # Logging configuration
