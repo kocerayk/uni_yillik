@@ -34,7 +34,7 @@ else:
     print("✅ RESEND_API_KEY loaded in settings.py")
 
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@yillik.site')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
 DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
 
 # Render.com deployment — domain env'den gelir

@@ -93,7 +93,7 @@ def send_verification_email_resend(email, code, logger):
     
     # Check if API key is configured
     api_key = getattr(settings, 'RESEND_API_KEY', None)
-    from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')
+    from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'onboarding@resend.dev')
     
     logger.info(f"RESEND_API_KEY: {'Set' if api_key else 'Not set'}")
     logger.info(f"RESEND_FROM_EMAIL: {from_email}")
@@ -139,7 +139,7 @@ def send_verification_email_resend(email, code, logger):
                 <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
                 <p style="color: #6c757d; font-size: 14px; text-align: center;">
                     Bu email Yıllık Site tarafından gönderilmiştir.<br>
-                    <a href="https://yillik.site" style="color: #ee6e6e; text-decoration: none;">yillik.site</a>
+                    <a href="https://{getattr(settings, 'DEFAULT_DOMAIN', 'yillik-site.onrender.com')}" style="color: #ee6e6e; text-decoration: none;">{getattr(settings, 'DEFAULT_DOMAIN', 'yillik-site.onrender.com')}</a>
                 </p>
             </div>
         </body>
@@ -406,7 +406,7 @@ def send_verification_code(request):
                 
                 # Check configuration
                 api_key_status = 'Set' if getattr(settings, 'RESEND_API_KEY', None) else 'Not set'
-                from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'noreply@yillik.site')
+                from_email = getattr(settings, 'RESEND_FROM_EMAIL', 'onboarding@resend.dev')
                 
                 logger.info(f"RESEND_API_KEY: {api_key_status}")
                 logger.info(f"RESEND_FROM_EMAIL: {from_email}")
