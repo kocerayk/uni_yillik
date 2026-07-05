@@ -114,10 +114,13 @@ WSGI_APPLICATION = 'uni_yillik.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
+        default=os.getenv('DATABASE_URL', f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
         conn_max_age=600,
     )
 }
+
+if not os.getenv('DATABASE_URL'):
+    print("⚠️ WARNING: DATABASE_URL is not set! Using local SQLite database.")
 
 
 # Password validation
