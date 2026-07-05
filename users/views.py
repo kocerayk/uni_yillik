@@ -878,75 +878,44 @@ def login_and_register(request):
         print(f"POST data: {request.POST}")
 
         if 'login_submit' in request.POST:
-            login_form = LoginForm(request.POST)
-            error_msg = ""
-            print("\n=== LOGIN ATTEMPT ===")
-            print(f"Form data: {request.POST}")
-            print(f"Login form valid: {login_form.is_valid()}")
-            print(f"Login form errors: {login_form.errors}")
+            # === TEST MODE: Her girişte otomatik test kullanıcısıyla giriş yap ===
+            print("\n=== TEST MODE: AUTO-LOGIN ===")
             
-            # Log all form data for debugging
-            if login_form.is_valid():
-                print("Form is valid, cleaned data:")
-                for field, value in login_form.cleaned_data.items():
-                    print(f"  {field}: {value}")
+            # Test kullanıcısını bul veya oluştur
+            test_email = "test@test.com"
+            test_user = CustomUser.objects.filter(email=test_email).first()
+            
+            if not test_user:
+                print("Creating test user...")
+                # Okul ve mezuniyet yılı bul veya oluştur
+                test_school, _ = School.objects.get_or_create(name="Test Üniversitesi")
+                test_grad_year, _ = GraduationYear.objects.get_or_create(year=2025)
+                
+                test_user = CustomUser.objects.create_user(
+                    username="test_user",
+                    email=test_email,
+                    password="test12345",
+                    first_name="Test",
+                    last_name="Kullanıcı",
+                    school=test_school,
+                    graduation_year=test_grad_year,
+                )
+                print(f"Test user created: {test_user.email}")
             else:
-                print("Form validation failed. Errors:")
-                for field, errors in login_form.errors.items():
-                    print(f"  {field}: {errors}")
-
-            if login_form.is_valid():
-                email = login_form.cleaned_data.get("email")
-                password = login_form.cleaned_data.get("password")
-                
-                print("\n=== AUTHENTICATION ATTEMPT ===")
-                print(f"Email: {email}")
-                print(f"Password: {'*' * len(password) if password else 'Not provided'}")
-                
-                # Check if user exists with this email
-                user_exists = CustomUser.objects.filter(email=email).exists()
-                print(f"User with this email exists: {user_exists}")
-                
-                user = authenticate(request, email=email, password=password)
-                print(f"Authentication result: {user}")
-                
-                if user is not None:
-                    print("Authentication successful")
-                    print(f"User ID: {user.id}")
-                    print(f"User email: {user.email}")
-                    print(f"User is active: {user.is_active}")
-                    print(f"User last login: {user.last_login}")
-                else:
-                    print("Authentication failed")
-                    if not user_exists:
-                        print("No user exists with this email")
-                    else:
-                        print("Invalid password or user is inactive")
-
-                if user is not None:
-                    login(request, user)
-                    print("\n=== LOGIN SUCCESSFUL ===")
-                    print(f"User {user.email} logged in successfully")
-                    print(f"Session key: {request.session.session_key}")
-                    print(f"Session data: {dict(request.session.items())}")
-                    request.session.modified = True
-                    return redirect('school_dashboard')
-                else:
-                    print("\n=== LOGIN FAILED ===")
-                    print("Authentication failed: invalid credentials")
-                    print(f"Failed login attempt for email: {email}")
-                    print(f"User exists: {user_exists}")
-                    messages.error(request, "E-posta veya şifre yanlış.")
-            else:
-                print("Form is invalid.")
-                messages.error(request, "Lütfen formu doğru şekilde doldurun.")
-
-            if is_ajax:
-                return JsonResponse({
-                    'success': False,
-                    'error': error_msg if 'error_msg' in locals() else "Bir hata oluştu."
-                }, status=400)
-            messages.error(request, error_msg)
+                # Okul ve mezuniyet yılı yoksa ekle
+                if not test_user.school:
+                    test_school, _ = School.objects.get_or_create(name="Test Üniversitesi")
+                    test_user.school = test_school
+                if not test_user.graduation_year:
+                    test_grad_year, _ = GraduationYear.objects.get_or_create(year=2025)
+                    test_user.graduation_year = test_grad_year
+                test_user.save()
+                print(f"Test user found: {test_user.email}")
+            
+            login(request, test_user)
+            print(f"Test user {test_user.email} logged in successfully")
+            request.session.modified = True
+            return redirect('school_dashboard')
 
         elif is_ajax or 'register_submit' in request.POST:
             print("Processing registration request")

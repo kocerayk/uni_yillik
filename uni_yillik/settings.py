@@ -52,7 +52,9 @@ if DEBUG:
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-change-me-in-production-!@#$%^&*')
+if not os.getenv('SECRET_KEY'):
+    print("⚠️ WARNING: SECRET_KEY is not set in environment variables! Using fallback key. Set SECRET_KEY in Render dashboard.")
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 
