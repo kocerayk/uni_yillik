@@ -112,15 +112,47 @@ WSGI_APPLICATION = 'uni_yillik.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
-        conn_max_age=600,
-    )
-}
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-if not os.getenv('DATABASE_URL'):
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+        )
+    }
+    # Veritabanı bağlantısını test et
+    try:
+        import psycopg2
+        from urllib.parse import urlparse
+        parsed = urlparse(DATABASE_URL)
+        conn = psycopg2.connect(
+            host=parsed.hostname,
+            port=parsed.port or 5432,
+            user=parsed.username,
+            password=parsed.password,
+            dbname=parsed.path.lstrip('/'),
+            connect_timeout=5,
+        )
+        conn.close()
+        print("✅ PostgreSQL database connection successful")
+    except Exception as db_test_err:
+        print(f"⚠️ PostgreSQL connection FAILED: {db_test_err}")
+        print("⚠️ Falling back to SQLite database")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+else:
     print("⚠️ WARNING: DATABASE_URL is not set! Using local SQLite database.")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

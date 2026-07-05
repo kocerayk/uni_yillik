@@ -869,9 +869,14 @@ def login_and_register(request):
     login_form = LoginForm()
     register_form = CustomUserRegistrationForm()
     # Get all schools and sort them using the Turkish sorting function
-    schools = list(School.objects.all())
-    schools.sort(key=lambda x: turkish_sort_key(x.name))
-    graduation_years = GraduationYear.objects.all()
+    try:
+        schools = list(School.objects.all())
+        schools.sort(key=lambda x: turkish_sort_key(x.name))
+        graduation_years = GraduationYear.objects.all()
+    except Exception as db_err:
+        print(f"⚠️ Database error loading schools/graduation_years: {db_err}")
+        schools = []
+        graduation_years = []
 
     if request.method == 'POST':
         print(f"POST request received. AJAX: {is_ajax}")
@@ -881,41 +886,45 @@ def login_and_register(request):
             # === TEST MODE: Her girişte otomatik test kullanıcısıyla giriş yap ===
             print("\n=== TEST MODE: AUTO-LOGIN ===")
             
-            # Test kullanıcısını bul veya oluştur
-            test_email = "test@test.com"
-            test_user = CustomUser.objects.filter(email=test_email).first()
-            
-            if not test_user:
-                print("Creating test user...")
-                # Okul ve mezuniyet yılı bul veya oluştur
-                test_school, _ = School.objects.get_or_create(name="Test Üniversitesi")
-                test_grad_year, _ = GraduationYear.objects.get_or_create(year=2025)
+            try:
+                # Test kullanıcısını bul veya oluştur
+                test_email = "test@test.com"
+                test_user = CustomUser.objects.filter(email=test_email).first()
                 
-                test_user = CustomUser.objects.create_user(
-                    username="test_user",
-                    email=test_email,
-                    password="test12345",
-                    first_name="Test",
-                    last_name="Kullanıcı",
-                    school=test_school,
-                    graduation_year=test_grad_year,
-                )
-                print(f"Test user created: {test_user.email}")
-            else:
-                # Okul ve mezuniyet yılı yoksa ekle
-                if not test_user.school:
+                if not test_user:
+                    print("Creating test user...")
+                    # Okul ve mezuniyet yılı bul veya oluştur
                     test_school, _ = School.objects.get_or_create(name="Test Üniversitesi")
-                    test_user.school = test_school
-                if not test_user.graduation_year:
                     test_grad_year, _ = GraduationYear.objects.get_or_create(year=2025)
-                    test_user.graduation_year = test_grad_year
-                test_user.save()
-                print(f"Test user found: {test_user.email}")
-            
-            login(request, test_user)
-            print(f"Test user {test_user.email} logged in successfully")
-            request.session.modified = True
-            return redirect('school_dashboard')
+                    
+                    test_user = CustomUser.objects.create_user(
+                        username="test_user",
+                        email=test_email,
+                        password="test12345",
+                        first_name="Test",
+                        last_name="Kullanıcı",
+                        school=test_school,
+                        graduation_year=test_grad_year,
+                    )
+                    print(f"Test user created: {test_user.email}")
+                else:
+                    # Okul ve mezuniyet yılı yoksa ekle
+                    if not test_user.school:
+                        test_school, _ = School.objects.get_or_create(name="Test Üniversitesi")
+                        test_user.school = test_school
+                    if not test_user.graduation_year:
+                        test_grad_year, _ = GraduationYear.objects.get_or_create(year=2025)
+                        test_user.graduation_year = test_grad_year
+                    test_user.save()
+                    print(f"Test user found: {test_user.email}")
+                
+                login(request, test_user)
+                print(f"Test user {test_user.email} logged in successfully")
+                request.session.modified = True
+                return redirect('school_dashboard')
+            except Exception as db_err:
+                print(f"⚠️ Database error during auto-login: {db_err}")
+                messages.error(request, "Veritabanı bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin.")
 
         elif is_ajax or 'register_submit' in request.POST:
             print("Processing registration request")
